@@ -1,2 +1,0 @@
-# CA-Fluid-Simulation
-Projektmodul
