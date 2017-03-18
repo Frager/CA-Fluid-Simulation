@@ -2,55 +2,46 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CPUFluidCA : MonoBehaviour
+namespace CPUFluid
 {
-
-    public static int ELEMENT_COUNT = 1;
-    public int maxvolume;
-    public int gridSize = 8;
-
-    private Cell[,,] grid;
-    private Element[] Elements;
-
-    // Use this for initialization
-    void Start()
-    {
-        initElements();
-        initCells(gridSize);
-    }
-
-    // Update is called once per frame
-    void Update()
+    public class CPUFluidCA
     {
 
-    }
+        private int elementCount = 1;
+        private int maxVolume;
+        private int gridSize = 8;
 
-    private void initElements()
-    {
-        Elements = new Element[ELEMENT_COUNT];
+        private Cell[,,] grid;
 
-        for (int i = 0; i < ELEMENT_COUNT; ++i)
+        // Use this for initialization
+        public Cell[,,] initGrid(int gridSize, int maxVolume, int elementCount)
         {
-            Elements[i] = new Element(i, i, i);
+            this.gridSize = gridSize;
+            this.maxVolume = maxVolume;
+            this.elementCount = elementCount;
+            initCells(gridSize);
+            return grid;
         }
-    }
 
-    private void initCells(int size)
-    {
-        grid = new Cell[size, size, size];
-        for (int z = 0; z < size; ++z)
+        
+
+        private void initCells(int size)
         {
-            for (int y = 0; y < size; ++y)
+            grid = new Cell[size, size, size];
+            for (int z = 0; z < size; ++z)
             {
-                for (int x = 0; x < size; ++x)
+                for (int y = 0; y < size; ++y)
                 {
-                    grid[x, y, z] = new Cell(new Vector3(x,y,z));
+                    for (int x = 0; x < size; ++x)
+                    {
+                        grid[x, y, z] = new Cell(new Vector3(x, y, z), elementCount);
+                    }
                 }
             }
         }
     }
-    
-    struct Element
+
+    public struct Element
     {
         int id;
         float viscosity;
@@ -63,20 +54,18 @@ public class CPUFluidCA : MonoBehaviour
             this.density = density;
         }
     }
-
-
-    struct Cell
+    
+    public struct Cell
     {
         Vector3 position;
         int[] content;
         int volume;
 
-        public Cell(Vector3 position)
+        public Cell(Vector3 position, int elementCount)
         {
             this.position = position;
-            content = new int[ELEMENT_COUNT];
+            content = new int[elementCount];
             this.volume = 0;
         }
-
     }
 }
