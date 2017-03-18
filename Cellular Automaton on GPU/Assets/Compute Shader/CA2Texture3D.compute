@@ -1,0 +1,24 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct Cell
+{
+	int x;
+	int y;
+	int z;
+	int content;
+};
+
+RWTexture3D<float4> Result;
+
+StructuredBuffer<Cell> Cells;
+
+float size;
+
+[numthreads(4,4,4)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	int index = id.x + id.y * size + id.z * size * size;
+
+	Result[id.xyz] = Cells[index].content;
+}

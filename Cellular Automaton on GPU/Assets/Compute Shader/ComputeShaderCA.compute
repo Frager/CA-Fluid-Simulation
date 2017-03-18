@@ -1,0 +1,49 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Initialize
+#pragma kernel Fill
+#pragma kernel Update
+
+struct Cell
+{
+	int x;
+	int y;
+	int z;
+	int content;
+};
+
+RWStructuredBuffer<Cell> Cells;
+
+float4 fill;
+
+float size;
+
+[numthreads(4,4,4)]
+void Initialize(uint3 id : SV_DispatchThreadID)
+{
+	int index = id.x + id.y * size + id.z * size * size;
+	Cells[index].x = id.x;
+	Cells[index].y = id.y;
+	Cells[index].z = id.z;
+	Cells[index].content = 0;
+}
+
+[numthreads(4,4,4)]
+void Update(uint3 id : SV_DispatchThreadID)
+{
+	int index = id.x + id.y * size + id.z * size * size;
+
+	int down = id.x + (id.y - 1) * size + id.z * size * size;
+
+	if (Cells[index].content == 1 && id.y > 0 && Cells[down].content == 0)
+	{
+		Cells[index].content = 0;
+		Cells[down].content = 1;
+	}
+}
+
+[numthreads(1, 1, 1)]
+void Fill(uint3 id : SV_DispatchThreadID)
+{
+	int index = fill.x + fill.y * size + fill.z * size * size;
+	Cells[index].content = 1;
+}
