@@ -14,9 +14,11 @@ namespace GPUFluid
         private RenderTexture cellBuffer2;
         private int buffer = 1;
 
-        private const int size = 8;
+        public const int size = 8;
 
         private RenderTexture texture3D;
+
+        public SimpleVisuals visuals;
 
         void Start()
         {
@@ -42,6 +44,8 @@ namespace GPUFluid
             StartComputeShader();
             InvokeRepeating("Update2", 0, 0.5f);
             FillComputeShader(new Vector4(0, size - 1, 0, 1));
+
+            visuals.GenerateVisuals(transform.position, size, size, size);
         }
 
         void Update2()

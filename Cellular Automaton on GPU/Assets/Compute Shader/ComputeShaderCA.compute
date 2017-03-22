@@ -1,8 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Initialize
 #pragma kernel Fill
-#pragma kernel UpdateGive
-#pragma kernel UpdateGet
+#pragma kernel Update
 
 static int threshold = 5;
 
@@ -25,25 +24,8 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	NewCells[id] = int2(0,0);
 }
 
-[numthreads(4,4,4)]
-void UpdateGive(uint3 id : SV_DispatchThreadID)
-{
-	uint3 up = uint3(id.x, min(id.y + 1, 7), id.z); 
-	uint3 down = uint3(id.x, max(0, (int)id.y - 1), id.z);
-
-	//Nach unten abgeben
-	if (OldCells[id].x == 1 && OldCells[down].x == 0)
-	{
-		NewCells[id] = int2(0,0);
-		return;
-	}
-
-
-	NewCells[id] = OldCells[id];
-}
-
 [numthreads(4, 4, 4)]
-void UpdateGet(uint3 id : SV_DispatchThreadID)
+void Update(uint3 id : SV_DispatchThreadID)
 {
 	uint3 up = uint3(id.x, min(id.y + 1, 7), id.z);
 	uint3 down = uint3(id.x, max(0, (int)id.y - 1), id.z);
