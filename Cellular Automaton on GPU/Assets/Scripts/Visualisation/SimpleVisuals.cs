@@ -15,7 +15,6 @@ public class SimpleVisuals : MonoBehaviour {
         float halfPixelY = 1f / (yDim * 2f);
         float halfPixelZ = 1f / (zDim * 2f);
         GameObject parent = new GameObject("Visuals");
-        parent.transform.position = position;
         for (int z = 0; z < xDim; z++)
         {
             for (int y = 0; y < yDim; y++)
@@ -36,5 +35,6 @@ public class SimpleVisuals : MonoBehaviour {
                 }
             }
         }
+        parent.transform.position = position;
     }
 }
