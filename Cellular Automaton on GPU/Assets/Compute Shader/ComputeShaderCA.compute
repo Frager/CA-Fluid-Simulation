@@ -1,49 +1,74 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Initialize
 #pragma kernel Fill
-#pragma kernel Update
+#pragma kernel UpdateGive
+#pragma kernel UpdateGet
 
-struct Cell
-{
-	int x;
-	int y;
-	int z;
-	int content;
-};
+static int threshold = 5;
 
-RWStructuredBuffer<Cell> Cells;
+Texture3D<int2> OldCells;
+//x-Wert: Inhalt der Zelle
+//y-Wert: Wo zuletzt etwas hingesendet wurde:
+//0: unten
+//1: links
+//2: rechts
+//3: vorne
+//4: hinten
+//5: oben
+RWTexture3D<int2> NewCells;
 
 float4 fill;
-
-float size;
 
 [numthreads(4,4,4)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
-	int index = id.x + id.y * size + id.z * size * size;
-	Cells[index].x = id.x;
-	Cells[index].y = id.y;
-	Cells[index].z = id.z;
-	Cells[index].content = 0;
+	NewCells[id] = int2(0,0);
 }
 
 [numthreads(4,4,4)]
-void Update(uint3 id : SV_DispatchThreadID)
+void UpdateGive(uint3 id : SV_DispatchThreadID)
 {
-	int index = id.x + id.y * size + id.z * size * size;
+	uint3 up = uint3(id.x, min(id.y + 1, 7), id.z); 
+	uint3 down = uint3(id.x, max(0, (int)id.y - 1), id.z);
 
-	int down = id.x + (id.y - 1) * size + id.z * size * size;
-
-	if (Cells[index].content == 1 && id.y > 0 && Cells[down].content == 0)
+	//Nach unten abgeben
+	if (OldCells[id].x == 1 && OldCells[down].x == 0)
 	{
-		Cells[index].content = 0;
-		Cells[down].content = 1;
+		NewCells[id] = int2(0,0);
+		return;
 	}
+
+
+	NewCells[id] = OldCells[id];
 }
 
-[numthreads(1, 1, 1)]
+[numthreads(4, 4, 4)]
+void UpdateGet(uint3 id : SV_DispatchThreadID)
+{
+	uint3 up = uint3(id.x, min(id.y + 1, 7), id.z);
+	uint3 down = uint3(id.x, max(0, (int)id.y - 1), id.z);
+
+
+	//Nach unten abgeben
+	if (OldCells[id].x == 1 && OldCells[down].x == 0)
+	{
+		NewCells[id] = int2(0, 0);
+		return;
+	}
+
+	//Von oben aufnehmen
+	if (OldCells[id].x == 0 && OldCells[up].x == 1)
+	{
+		NewCells[id] = int2(1, 0);
+		return;
+	}
+
+	NewCells[id] = OldCells[id];
+}
+
+[numthreads(1,1,1)]
 void Fill(uint3 id : SV_DispatchThreadID)
 {
-	int index = fill.x + fill.y * size + fill.z * size * size;
-	Cells[index].content = 1;
+	uint3 index = uint3(fill.x, fill.y, fill.z);
+	NewCells[index] = int(1);
 }

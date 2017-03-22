@@ -1,24 +1,17 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-struct Cell
+static const float4 Colors[] =
 {
-	int x;
-	int y;
-	int z;
-	int content;
+	float4(1,1,1,1),
+	float4(0,0,1,1)
 };
 
 RWTexture3D<float4> Result;
-
-StructuredBuffer<Cell> Cells;
-
-float size;
+Texture3D<int2> Cells;
 
 [numthreads(4,4,4)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	int index = id.x + id.y * size + id.z * size * size;
-
-	Result[id.xyz] = Cells[index].content;
+	Result[id.xyz] = Colors[Cells[id].x];
 }
