@@ -4,7 +4,8 @@
 static const float4 Colors[] =
 {
 	float4(1,1,1,0.1f),
-	float4(0,0,1,1)
+	float4(0,0,1,1),
+	float4(1,0,0,1)
 };
 
 RWTexture3D<float4> Result;
@@ -13,5 +14,16 @@ Texture3D<int2> Cells;
 [numthreads(4,4,4)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	Result[id.xyz] = Colors[Cells[id].x];
+	if (Cells[id].x > 0)
+	{
+		Result[id.xyz] = float4(Colors[1].xyz / float(Cells[id].x), 1);
+	}
+	else if (Cells[id].x < 0)
+	{
+		Result[id.xyz] = Colors[2];
+	}
+	else if (Cells[id].x == 0)
+	{
+		Result[id.xyz] = Colors[0];
+	}
 }

@@ -1,9 +1,8 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Initialize
 #pragma kernel Fill
-#pragma kernel Update
-
-static int threshold = 5;
+#pragma kernel UpdateGive
+#pragma kernel UpdateGet
 
 Texture3D<int2> OldCells;
 //x-Wert: Inhalt der Zelle
@@ -25,32 +24,106 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(4, 4, 4)]
-void Update(uint3 id : SV_DispatchThreadID)
+void UpdateGet(uint3 id : SV_DispatchThreadID)
 {
-	uint3 up = uint3(id.x, min(id.y + 1, 7), id.z);
-	uint3 down = uint3(id.x, max(0, (int)id.y - 1), id.z);
+	uint3 up = uint3(id.x, id.y + 1, id.z);
+	uint3 down = uint3(id.x, id.y - 1, id.z);
+	uint3 left = uint3(id.x - 1, id.y, id.z);
+	uint3 right = uint3(id.x + 1, id.y, id.z);
+	uint3 front = uint3(id.x, id.y, id.z - 1);
+	uint3 back = uint3(id.x, id.y, id.z + 1);
 
+	int content = OldCells[id].x;
 
-	//Nach unten abgeben
-	if (OldCells[id].x == 1 && OldCells[down].x == 0)
+	if (id.y < 7 && (OldCells[up].y & 16) == 16)
 	{
-		NewCells[id] = int2(0, 0);
-		return;
+		++content;
 	}
 
-	//Von oben aufnehmen
-	if (OldCells[id].x == 0 && OldCells[up].x == 1)
+	if (id.y > 0 && (OldCells[down].y & 32) == 32)
 	{
-		NewCells[id] = int2(1, 0);
-		return;
+		++content;
 	}
 
-	NewCells[id] = OldCells[id];
+	if (id.x > 0 && (OldCells[left].y & 4) == 4)
+	{
+		++content;
+	}
+
+	if (id.x < 7 && (OldCells[right].y & 8) == 8)
+	{
+		++content;
+	}
+
+	if (id.z > 0 && (OldCells[front].y & 1) == 1)
+	{
+		++content;
+	}
+
+	if (id.z < 7 && (OldCells[back].y & 2) == 2)
+	{
+		++content;
+	}
+
+	NewCells[id] = int2(content, OldCells[id].y);
+}
+
+[numthreads(4, 4, 4)]
+void UpdateGive(uint3 id : SV_DispatchThreadID)
+{
+	uint3 up = uint3(id.x, id.y + 1, id.z);
+	uint3 down = uint3(id.x, id.y - 1, id.z);
+	uint3 left = uint3(id.x - 1, id.y, id.z);
+	uint3 right = uint3(id.x + 1, id.y, id.z);
+	uint3 front = uint3(id.x, id.y, id.z - 1);
+	uint3 back = uint3(id.x, id.y, id.z + 1);
+
+	int content = OldCells[id].x;
+
+	int pressure = 0;
+
+	if (id.y > 0 && content > 0)
+	{
+		pressure += 16;
+		--content;
+	}
+
+	if (id.x > 0 && content - OldCells[left].x > 1)
+	{
+		pressure += 8;
+		--content;
+	}
+
+	if (id.x < 7 && content - OldCells[right].x > 1)
+	{
+		pressure += 4;
+		--content;
+	}
+
+	if (id.z > 0 && content - OldCells[front].x > 1)
+	{
+		pressure += 2;
+		--content;
+	}
+
+	if (id.z < 7 && content - OldCells[back].x > 1)
+	{
+		pressure += 1;
+		--content;
+	}
+
+	if (id.y < 7 && content - OldCells[up].x > 5)
+	{
+		pressure += 32;
+		--content;
+	}
+
+	NewCells[id] = int2(content, pressure);
 }
 
 [numthreads(1,1,1)]
 void Fill(uint3 id : SV_DispatchThreadID)
 {
 	uint3 index = uint3(fill.x, fill.y, fill.z);
-	NewCells[index] = int(1);
+	NewCells[index] = int2(1, NewCells[index].y);
 }

@@ -14,7 +14,7 @@ namespace GPUFluid
         private RenderTexture cellBuffer2;
         private int buffer = 1;
 
-        public const int size = 8;
+        public static int size = 8;
 
         private RenderTexture texture3D;
 
@@ -42,16 +42,14 @@ namespace GPUFluid
             testMaterial.SetTexture("_MainTex", texture3D);
 
             StartComputeShader();
-            InvokeRepeating("Update2", 0, 0.5f);
-            FillComputeShader(new Vector4(0, size - 1, 0, 1));
-
             visuals.GenerateVisuals(transform.position, size, size, size);
+            InvokeRepeating("NextGeneration", 0, 0.5f);
         }
 
-        void Update2()
+        public void NextGeneration()
         {
-            //FillComputeShader(new Vector4(0, size - 1, 0, 1));
-            UpdateComputeShader();
+            FillComputeShader(new Vector4(1, size - 1, 1, 1));
+            UpdateMethod();
             Render();
             buffer = (buffer == 1) ? 2 : 1;
         }
@@ -69,7 +67,7 @@ namespace GPUFluid
             computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
         }
 
-        void FillComputeShader(Vector4 vector)
+        public void FillComputeShader(Vector4 vector)
         {
             int kernelHandle = computeShader.FindKernel("Fill");
 
@@ -97,9 +95,26 @@ namespace GPUFluid
             CA2Texture3D.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
         }
 
-        void UpdateComputeShader()
+        void UpdateMethod()
         {
-            int kernelHandle = computeShader.FindKernel("Update");
+            int kernelHandle = computeShader.FindKernel("UpdateGive");
+
+            if (buffer == 1)
+            {
+                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
+                computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer2);
+            }
+            else
+            {
+                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
+                computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer1);
+            }
+
+            computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+
+            buffer = (buffer == 1) ? 2 : 1;
+
+            kernelHandle = computeShader.FindKernel("UpdateGet");
 
             if (buffer == 1)
             {
