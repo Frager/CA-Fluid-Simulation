@@ -49,31 +49,12 @@ namespace GPUFluid
 
             StartComputeShader();
             visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
-            InvokeRepeating("NextGeneration1", 0, 0.4f);
-            InvokeRepeating("NextGeneration2", 0.1f, 0.4f);
-            InvokeRepeating("NextGeneration3", 0.2f, 0.4f);
+            InvokeRepeating("NextGeneration", 0, 0.5f);
         }
 
-        public void NextGeneration1()
+        public void NextGeneration()
         {
-            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
-            //UpdateMethod();
-            //Render();
-            //buffer = (buffer == 1) ? 2 : 1;
-        }
-
-        public void NextGeneration2()
-        {
-            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
             UpdateMethod();
-            //Render();
-            //buffer = (buffer == 1) ? 2 : 1;
-        }
-
-        public void NextGeneration3()
-        {
-            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
-            //UpdateMethod();
             Render();
             buffer = (buffer == 1) ? 2 : 1;
         }
@@ -90,20 +71,6 @@ namespace GPUFluid
 
             computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
         }
-
-        /*public void FillComputeShader(Vector4 vector)
-        {
-            int kernelHandle = computeShader.FindKernel("Fill");
-
-            if (buffer == 1)
-                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
-            else
-                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
-
-            computeShader.SetVector("fill", vector);
-
-            computeShader.Dispatch(kernelHandle, 1, 1, 1);
-        }*/
 
         void Render()
         {
