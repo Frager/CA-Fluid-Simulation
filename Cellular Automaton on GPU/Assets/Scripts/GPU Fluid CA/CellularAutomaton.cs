@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Diagnostics;
 
 namespace GPUFluid
 {
@@ -20,6 +21,9 @@ namespace GPUFluid
 
         public SimpleVisuals visuals;
 
+        private Stopwatch stopwatch;
+        private long start, end;
+
         void Start()
         {
             cellBuffer1 = new RenderTexture(size, size, 1, RenderTextureFormat.RGInt);
@@ -40,6 +44,8 @@ namespace GPUFluid
             texture3D.enableRandomWrite = true;
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
+            stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             StartComputeShader();
             visuals.GenerateVisuals(transform.position, size, size, size);
@@ -97,6 +103,7 @@ namespace GPUFluid
 
         void UpdateMethod()
         {
+            start = stopwatch.ElapsedTicks;
             int kernelHandle = computeShader.FindKernel("UpdateGive");
 
             if (buffer == 1)
@@ -116,6 +123,10 @@ namespace GPUFluid
 
             kernelHandle = computeShader.FindKernel("UpdateGet");
 
+            computeShader.SetInt("width", size);
+            computeShader.SetInt("height", size);
+            computeShader.SetInt("depth", size);
+
             if (buffer == 1)
             {
                 computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
@@ -128,6 +139,9 @@ namespace GPUFluid
             }
 
             computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+
+            end = stopwatch.ElapsedTicks;
+            print("Elapsed Ticks: " + (end - start));
         }
     }
 }
