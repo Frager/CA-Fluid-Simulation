@@ -42,7 +42,7 @@ namespace GPUFluid
             testMaterial.SetTexture("_MainTex", texture3D);
 
             StartComputeShader();
-            visuals.GenerateVisuals(transform.position, size, size, size);
+            visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
             InvokeRepeating("NextGeneration", 0, 0.5f);
         }
 

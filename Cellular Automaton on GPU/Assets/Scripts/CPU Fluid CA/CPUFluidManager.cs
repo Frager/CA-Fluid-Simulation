@@ -14,7 +14,7 @@ namespace CPUFluid
         public Material testMaterial;
         public SimpleVisuals visuals;
 
-        private RenderTexture texture3D;
+        private Texture3D texture3D;
         private Cell[,,] grid;
         private CPUFluidCA CA;
         private Element[] Elements;
@@ -26,15 +26,19 @@ namespace CPUFluid
             grid = CA.initGrid(gridSize, maxVolume, elementCount);
             initElements();
 
-            texture3D = new RenderTexture(gridSize, gridSize, 1);
-            texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            texture3D.volumeDepth = gridSize;
-            texture3D.enableRandomWrite = true;
-            texture3D.Create();
+            //texture3D = new RenderTexture(gridSize, gridSize, 1);
+            //texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+            //texture3D.volumeDepth = gridSize;
+            //texture3D.enableRandomWrite = true;
+            //texture3D.Create();
+            texture3D = new Texture3D(gridSize, gridSize, gridSize, TextureFormat.RGBA32, false);
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize);
+            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+
+            //for testing
+            grid[0, 0, 0].addContent(1);
         }
 
         // Update is called once per frame
@@ -51,6 +55,7 @@ namespace CPUFluid
                     }
                 }
             }
+            updateTexture();
         }
 
         void updateTexture()
@@ -67,6 +72,8 @@ namespace CPUFluid
                     }
                 }
             }
+            texture3D.SetPixels(colors);
+            texture3D.Apply();
         }
         
 

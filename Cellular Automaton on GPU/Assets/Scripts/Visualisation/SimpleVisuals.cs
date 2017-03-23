@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class SimpleVisuals : MonoBehaviour {
     
-    //public Texture3D visuals;
-    public Material material;
     [Range(0.1f,1f)]
     public float sphereSize;
 
-    public void GenerateVisuals(Vector3 position, float xDim, float yDim, float zDim)
+    public void GenerateVisuals(Vector3 position, float xDim, float yDim, float zDim, Material material)
     {
         float halfPixelX = 1f / (xDim * 2f);
         float halfPixelY = 1f / (yDim * 2f);

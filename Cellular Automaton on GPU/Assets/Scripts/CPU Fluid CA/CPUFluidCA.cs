@@ -68,12 +68,17 @@ namespace CPUFluid
             this.volume = 0;
         }
 
+        public void addContent(int amount)
+        {
+            volume += amount;
+        }
+
         static public implicit operator Color(Cell cell)
         {
             float blue = cell.volume;
             if (blue >= 1)
             {
-                return new Color(0, 0, 1f, 0.1f);
+                return new Color(0, 0, 1f, 1f);
             }
             return new Color(1f ,1f , 1f, 0.1f);
         }
