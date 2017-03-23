@@ -1,6 +1,6 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Initialize
-#pragma kernel Fill
+//#pragma kernel Fill
 #pragma kernel UpdateGive
 #pragma kernel UpdateGet
 
@@ -24,7 +24,7 @@ float4 fill;
 [numthreads(4,4,4)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
-	NewCells[id] = int2(0,0);
+	NewCells[id] = int2(1,0);
 }
 
 [numthreads(4, 4, 4)]
@@ -38,6 +38,11 @@ void UpdateGet(uint3 id : SV_DispatchThreadID)
 	uint3 back = uint3(id.x, id.y, id.z + 1);
 
 	int content = OldCells[id].x;
+
+	if (id.x == (int)fill.x && id.y == (int)fill.y && id.z == (int)fill.z)
+	{
+		++content;
+	}
 
 	if (id.y < height && (OldCells[up].y & 16) == 16)
 	{
@@ -124,10 +129,11 @@ void UpdateGive(uint3 id : SV_DispatchThreadID)
 
 	NewCells[id] = int2(content, pressure);
 }
-
+/*
 [numthreads(1,1,1)]
 void Fill(uint3 id : SV_DispatchThreadID)
 {
 	uint3 index = uint3(fill.x, fill.y, fill.z);
 	NewCells[index] = int2(1, NewCells[index].y);
 }
+*/

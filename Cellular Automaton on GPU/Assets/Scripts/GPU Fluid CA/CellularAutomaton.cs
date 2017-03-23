@@ -49,13 +49,31 @@ namespace GPUFluid
 
             StartComputeShader();
             visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
-            InvokeRepeating("NextGeneration", 0, 0.5f);
+            InvokeRepeating("NextGeneration1", 0, 0.4f);
+            InvokeRepeating("NextGeneration2", 0.1f, 0.4f);
+            InvokeRepeating("NextGeneration3", 0.2f, 0.4f);
         }
 
-        public void NextGeneration()
+        public void NextGeneration1()
         {
-            FillComputeShader(new Vector4(1, size - 1, 1, 1));
+            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
+            //UpdateMethod();
+            //Render();
+            //buffer = (buffer == 1) ? 2 : 1;
+        }
+
+        public void NextGeneration2()
+        {
+            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
             UpdateMethod();
+            //Render();
+            //buffer = (buffer == 1) ? 2 : 1;
+        }
+
+        public void NextGeneration3()
+        {
+            //FillComputeShader(new Vector4(1, size - 1, 1, 1));
+            //UpdateMethod();
             Render();
             buffer = (buffer == 1) ? 2 : 1;
         }
@@ -73,7 +91,7 @@ namespace GPUFluid
             computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
         }
 
-        public void FillComputeShader(Vector4 vector)
+        /*public void FillComputeShader(Vector4 vector)
         {
             int kernelHandle = computeShader.FindKernel("Fill");
 
@@ -85,7 +103,7 @@ namespace GPUFluid
             computeShader.SetVector("fill", vector);
 
             computeShader.Dispatch(kernelHandle, 1, 1, 1);
-        }
+        }*/
 
         void Render()
         {
@@ -137,6 +155,8 @@ namespace GPUFluid
                 computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
                 computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer1);
             }
+
+            computeShader.SetVector("fill", new Vector4(1, size - 1, 1, 1));
 
             computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
 
