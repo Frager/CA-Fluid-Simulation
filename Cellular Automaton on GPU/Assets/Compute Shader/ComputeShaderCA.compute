@@ -20,13 +20,13 @@ uint depth;
 
 float4 fill;
 
-[numthreads(4,4,4)]
+[numthreads(8,8,8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
 	NewCells[id] = int2(0,0);
 }
 
-[numthreads(4, 4, 4)]
+[numthreads(8, 8, 8)]
 void UpdateGet(uint3 id : SV_DispatchThreadID)
 {
 	uint3 up = uint3(id.x, id.y + 1, id.z);
@@ -76,7 +76,7 @@ void UpdateGet(uint3 id : SV_DispatchThreadID)
 	NewCells[id] = int2(content, OldCells[id].y);
 }
 
-[numthreads(4, 4, 4)]
+[numthreads(8, 8, 8)]
 void UpdateGive(uint3 id : SV_DispatchThreadID)
 {
 	uint3 up = uint3(id.x, id.y + 1, id.z);
@@ -90,7 +90,7 @@ void UpdateGive(uint3 id : SV_DispatchThreadID)
 
 	int pressure = 0;
 
-	if (id.y > 0 && content > 0)
+	if (id.y > 0 && content > 0 && OldCells[down].x < 3)
 	{
 		pressure += 16;
 		--content;
