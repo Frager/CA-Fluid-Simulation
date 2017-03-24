@@ -40,6 +40,12 @@ namespace CPUFluid
             return volume;
         }
 
+        public int takeContent(int amount)
+        {
+            volume -= amount;
+            return volume;
+        }
+
         public void deleteContent()
         {
             volume = 0;
@@ -57,10 +63,13 @@ namespace CPUFluid
 
         static public implicit operator Color(Cell cell)
         {
-            float blue = cell.volume;
-            if (blue >= 1)
+            if (cell.volume < 0 )
             {
-                return new Color(0, 0, 1f, 1f);
+                return new Color(0f, 0f, 0f, 1f);
+            }
+            if (cell.volume >= 1)
+            {
+                return new Color(0, 0, (8f - ((float)cell.volume)) /8f, 1f);
             }
             return new Color(1f, 1f, 1f, 0.1f);
         }

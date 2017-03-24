@@ -37,19 +37,20 @@ namespace CPUFluid
 
             visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
-            //for testing
-            currentGen[0, 7, 0].addContent(1);
             updateTexture();
         }
         
         float timer = 0;
-        float timeframe = 0.5f;
+        float timeframe = 0.1f;
 
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
+                //for testing
+                currentGen[0, 7, 0].addContent(1);
+
                 timer -= timeframe;
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
