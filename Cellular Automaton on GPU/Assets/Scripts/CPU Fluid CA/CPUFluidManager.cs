@@ -41,7 +41,7 @@ namespace CPUFluid
         }
         
         float timer = 0;
-        float timeframe = 0.1f;
+        float timeframe = 0.05f;
 
         void Update()
         {
@@ -49,7 +49,7 @@ namespace CPUFluid
             if (timer >= timeframe)
             {
                 //for testing
-                currentGen[0, 7, 0].addContent(1);
+                currentGen[1, 7, 1].addContent(1);
 
                 timer -= timeframe;
                 updateRule.updateCells(currentGen, newGen);

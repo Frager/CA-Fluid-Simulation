@@ -7,8 +7,8 @@ namespace CPUFluid
 {
     public class MultiContentRule : UpdateRule
     {
-        private int maxContent = 8;
-        private int minContentToPass = 5;
+        private int maxContent = 5;
+        private int minContentToPass = 4;
         bool didVerticalUpdate;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
