@@ -34,7 +34,7 @@ namespace CPUFluid
                 {
                     for (int x = 0; x < size; ++x)
                     {
-                        grid[x, y, z] = new Cell(new Vector3(x, y, z), elementCount);
+                        grid[x, y, z] = new Cell(new Vector3(x, y, z));
                     }
                 }
             }
@@ -53,47 +53,5 @@ namespace CPUFluid
             this.viscosity = viscosity;
             this.density = density;
         }
-    }
-    
-    public enum Direction
-    {
-        xPos, xNeg, yPos, yNeg, zPos, zNeg, none
-    }
-
-    public struct Cell
-    {
-        Vector3 position;
-        int[] content;
-        int volume;
-        Direction direction;
-
-        public Cell(Vector3 position, int elementCount)
-        {
-            this.position = position;
-            content = new int[elementCount];
-            this.volume = 0;
-            this.direction = Direction.none;
-        }
-
-        public void addContent(int amount)
-        {
-            volume += amount;
-        }
-
-        public void setDirection(Direction dir)
-        {
-            direction = dir;
-        }
-
-        static public implicit operator Color(Cell cell)
-        {
-            float blue = cell.volume;
-            if (blue >= 1)
-            {
-                return new Color(0, 0, 1f, 1f);
-            }
-            return new Color(1f ,1f , 1f, 0.1f);
-        }
-
     }
 }

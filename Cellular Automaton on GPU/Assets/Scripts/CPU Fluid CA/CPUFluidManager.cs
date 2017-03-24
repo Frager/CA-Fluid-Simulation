@@ -23,9 +23,9 @@ namespace CPUFluid
         //private CPUFluidCA CA;
         private Element[] Elements;
         
-        //init Cells (grid) and Element List
         void Start()
         {
+            //init Cells (grid) and Element List
             CPUFluidCA CA = new CPUFluidCA();
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
@@ -36,15 +36,39 @@ namespace CPUFluid
             testMaterial.SetTexture("_MainTex", texture3D);
 
             visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
-            
-        }
 
-        // Update is called once per frame
+            //for testing
+            currentGen[0, 7, 0].addContent(1);
+            updateTexture();
+        }
+        
+        float timer = 0;
+        float timeframe = 0.5f;
+
         void Update()
         {
-            updateRule.updateCells(currentGen, newGen);
-            currentGen = newGen;
-            updateTexture();
+            timer += Time.deltaTime;
+            if (timer >= timeframe)
+            {
+                timer -= timeframe;
+                updateRule.updateCells(currentGen, newGen);
+                CopyNewToCurrentCells();
+                updateTexture();
+            }
+        }
+
+        void CopyNewToCurrentCells()
+        {
+            for (int z = 0; z < gridSize; ++z)
+            {
+                for (int y = 0; y < gridSize; ++y)
+                {
+                    for (int x = 0; x < gridSize; ++x)
+                    {
+                        currentGen[x, y, z] = newGen[x, y, z].copyCell();
+                    }
+                }
+            }
         }
 
         void updateTexture()
