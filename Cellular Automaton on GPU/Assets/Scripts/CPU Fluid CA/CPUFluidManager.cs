@@ -13,48 +13,37 @@ namespace CPUFluid
 
         public Material testMaterial;
         public SimpleVisuals visuals;
+        public UpdateRule updateRule;
 
         private Texture3D texture3D;
-        private Cell[,,] grid;
-        private CPUFluidCA CA;
+        //stores update results for next generation
+        private Cell[,,] newGen;
+        //perform update with data of current generation
+        private Cell[,,] currentGen;
+        //private CPUFluidCA CA;
         private Element[] Elements;
         
         //init Cells (grid) and Element List
         void Start()
         {
-            CA = new CPUFluidCA();
-            grid = CA.initGrid(gridSize, maxVolume, elementCount);
+            CPUFluidCA CA = new CPUFluidCA();
+            newGen = CA.initGrid(gridSize, maxVolume, elementCount);
+            currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
             initElements();
-
-            //texture3D = new RenderTexture(gridSize, gridSize, 1);
-            //texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            //texture3D.volumeDepth = gridSize;
-            //texture3D.enableRandomWrite = true;
-            //texture3D.Create();
+            
             texture3D = new Texture3D(gridSize, gridSize, gridSize, TextureFormat.RGBA32, false);
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
             visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
-
-            //for testing
-            grid[0, 0, 0].addContent(1);
+            
         }
 
         // Update is called once per frame
         void Update()
         {
-            for (int z = 0; z < gridSize; ++z)
-            {
-                for (int y = 0; y < gridSize; ++y)
-                {
-                    for (int x = 0; x < gridSize; ++x)
-                    {
-                        //TODO:
-                        //Update Cells
-                    }
-                }
-            }
+            updateRule.updateCells(currentGen, newGen);
+            currentGen = newGen;
             updateTexture();
         }
 
@@ -68,7 +57,7 @@ namespace CPUFluid
                 {
                     for (int x = 0; x < gridSize; ++x)
                     {
-                        colors[x + y * gridSize + z * gridsize2] = (Color)grid[x,y,z];
+                        colors[x + y * gridSize + z * gridsize2] = (Color)currentGen[x,y,z];
                     }
                 }
             }

@@ -55,22 +55,34 @@ namespace CPUFluid
         }
     }
     
+    public enum Direction
+    {
+        xPos, xNeg, yPos, yNeg, zPos, zNeg, none
+    }
+
     public struct Cell
     {
         Vector3 position;
         int[] content;
         int volume;
+        Direction direction;
 
         public Cell(Vector3 position, int elementCount)
         {
             this.position = position;
             content = new int[elementCount];
             this.volume = 0;
+            this.direction = Direction.none;
         }
 
         public void addContent(int amount)
         {
             volume += amount;
+        }
+
+        public void setDirection(Direction dir)
+        {
+            direction = dir;
         }
 
         static public implicit operator Color(Cell cell)
