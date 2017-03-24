@@ -11,7 +11,7 @@ static const float4 Colors[] =
 RWTexture3D<float4> Result;
 Texture3D<int2> Cells;
 
-[numthreads(4,4,4)]
+[numthreads(8,8,8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	if (Cells[id].x > 0)

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Diagnostics;
 
 namespace GPUFluid
 {
@@ -21,9 +20,6 @@ namespace GPUFluid
 
         public SimpleVisuals visuals;
 
-        private Stopwatch stopwatch;
-        private long start, end;
-
         void Start()
         {
             cellBuffer1 = new RenderTexture(size, size, 1, RenderTextureFormat.RGInt);
@@ -44,12 +40,10 @@ namespace GPUFluid
             texture3D.enableRandomWrite = true;
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
-
+ 
             StartComputeShader();
             visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
-            InvokeRepeating("NextGeneration", 0, 0.5f);
+            InvokeRepeating("NextGeneration", 0, 0.1f);
         }
 
         public void NextGeneration()
@@ -65,11 +59,11 @@ namespace GPUFluid
 
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
 
-            computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+            computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
 
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
 
-            computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+            computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
         }
 
         void Render()
@@ -83,12 +77,11 @@ namespace GPUFluid
 
             CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
 
-            CA2Texture3D.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+            CA2Texture3D.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
         }
 
         void UpdateMethod()
         {
-            start = stopwatch.ElapsedTicks;
             int kernelHandle = computeShader.FindKernel("UpdateGive");
 
             if (buffer == 1)
@@ -102,7 +95,7 @@ namespace GPUFluid
                 computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer1);
             }
 
-            computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
+            computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
 
             buffer = (buffer == 1) ? 2 : 1;
 
@@ -125,10 +118,7 @@ namespace GPUFluid
 
             computeShader.SetVector("fill", new Vector4(1, size - 1, 1, 1));
 
-            computeShader.Dispatch(kernelHandle, size / 4, size / 4, size / 4);
-
-            end = stopwatch.ElapsedTicks;
-            print("Elapsed Ticks: " + (end - start));
+            computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
         }
     }
 }
