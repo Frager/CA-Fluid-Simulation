@@ -38,7 +38,7 @@ void UpdateGet(uint3 id : SV_DispatchThreadID)
 
 	int content = OldCells[id].x;
 
-	if (id.x == (int)fill.x && id.y == (int)fill.y && id.z == (int)fill.z)
+	if (id.x == (uint)fill.x && id.y == (uint)fill.y && id.z == (uint)fill.z)
 	{
 		++content;
 	}
@@ -102,7 +102,7 @@ void UpdateGive(uint3 id : SV_DispatchThreadID)
 		--content;
 	}
 
-	if (id.x < width && content - OldCells[right].x > 1)
+	if (id.x < width - 1 && content - OldCells[right].x > 1)
 	{
 		pressure += 4;
 		--content;
@@ -114,13 +114,13 @@ void UpdateGive(uint3 id : SV_DispatchThreadID)
 		--content;
 	}
 
-	if (id.z < depth && content - OldCells[back].x > 1)
+	if (id.z < depth - 1 && content - OldCells[back].x > 1)
 	{
 		pressure += 1;
 		--content;
 	}
 
-	if (id.y < height && content - OldCells[up].x > 3)
+	if (id.y < height - 1 && content - OldCells[up].x > 3)
 	{
 		pressure += 32;
 		--content;
