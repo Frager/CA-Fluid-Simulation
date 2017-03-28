@@ -8,7 +8,6 @@ namespace CPUFluid
     {
 
         private int elementCount = 1;
-        private int maxVolume;
         private int gridSize = 8;
 
         private Cell[,,] grid;
@@ -17,15 +16,12 @@ namespace CPUFluid
         public Cell[,,] initGrid(int gridSize, int maxVolume, int elementCount)
         {
             this.gridSize = gridSize;
-            this.maxVolume = maxVolume;
             this.elementCount = elementCount;
-            initCells(gridSize);
+            initCells(gridSize, maxVolume, elementCount);
             return grid;
         }
 
-        
-
-        private void initCells(int size)
+        private void initCells(int size, int maxVolume ,int elementCount)
         {
             grid = new Cell[size, size, size];
             for (int z = 0; z < size; ++z)
@@ -34,24 +30,11 @@ namespace CPUFluid
                 {
                     for (int x = 0; x < size; ++x)
                     {
-                        grid[x, y, z] = new Cell(new Vector3(x, y, z));
+                        grid[x, y, z] = new Cell(elementCount, maxVolume);
                     }
                 }
             }
         }
     }
 
-    public struct Element
-    {
-        int id;
-        float viscosity;
-        float density;
-
-        public Element(int id, float viscosity, float density)
-        {
-            this.id = id;
-            this.viscosity = viscosity;
-            this.density = density;
-        }
-    }
 }

@@ -19,13 +19,13 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         didVerticalUpdate = false;
                         //if bottom cell empty delete content
-                        if (y > 0 && currentGen[x, y - 1, z].getContent() == 0)
+                        if (y > 0 && currentGen[x, y - 1, z].getVolume() == 0)
                         {
                             newGen[x, y, z].deleteContent();
                             didVerticalUpdate = true;
                         }
                         //if cell free and top cell has content copy content;
-                        if (y < currentGen.GetLength(1) - 1 && currentGen[x, y, z].getContent() == 0 && currentGen[x, y + 1, z].getContent() != 0)
+                        if (y < currentGen.GetLength(1) - 1 && currentGen[x, y, z].getVolume() == 0 && currentGen[x, y + 1, z].getVolume() != 0)
                         {
                             newGen[x, y, z].addContent(1);
                             didVerticalUpdate = true;
@@ -34,20 +34,20 @@ namespace CPUFluid
                         if (!didVerticalUpdate)
                         {
                             //if has content + direction towards empty cell, delete content and direction
-                            if (currentGen[x, y, z].getContent() != 0 && CheckIfCopyContentToNeighbors(currentGen, x, y, z, currentGen[x, y, z].getDirection()))
+                            if (currentGen[x, y, z].getVolume() != 0 && CheckIfCopyContentToNeighbors(currentGen, x, y, z, currentGen[x, y, z].getDirection()))
                             {
                                 newGen[x, y, z].deleteContent();
                                 newGen[x, y, z].setDirection(Direction.none);
                                 continue;
                             }
                             //if has no content + neighbor with content and direction towards current cell, copy content
-                            if (currentGen[x, y, z].getContent() == 0 && CheckIfCopyContentfromNeighbors(currentGen, x, y, z))
+                            if (currentGen[x, y, z].getVolume() == 0 && CheckIfCopyContentfromNeighbors(currentGen, x, y, z))
                             {
                                 newGen[x, y, z].addContent(1);
                             }
                             //setDirection flag
                             //if has Content
-                            if (currentGen[x, y, z].getContent() != 0)
+                            if (currentGen[x, y, z].getVolume() != 0)
                             {
                                 //if bottom has direction and content set same Direction
                                 Direction bottomDirection = getBottomDirection(currentGen, x, y, z);
@@ -80,19 +80,19 @@ namespace CPUFluid
         //returns Direction to empty neighbors
         Direction ToEmptyNeighbor(Cell[,,] grid, int x, int y, int z)
         {
-            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getContent() == 0)
+            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getVolume() == 0)
             {
                 return Direction.xPos;
             }
-            if (x > 0 && grid[x - 1, y, z].getContent() == 0)
+            if (x > 0 && grid[x - 1, y, z].getVolume() == 0)
             {
                 return Direction.xNeg;
             }
-            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getContent() == 0)
+            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getVolume() == 0)
             {
                 return Direction.zPos;
             }
-            if (z > 0 && grid[x, y, z - 1].getContent() == 0)
+            if (z > 0 && grid[x, y, z - 1].getVolume() == 0)
             {
                 return Direction.zNeg;
             }
@@ -123,7 +123,7 @@ namespace CPUFluid
 
         Direction getBottomDirection(Cell[,,] grid, int x, int y, int z)
         {
-            if (y > 0 && grid[x, y - 1, z].getContent() != 0)
+            if (y > 0 && grid[x, y - 1, z].getVolume() != 0)
             {
                 return grid[x, y - 1, z].getDirection();
             }
@@ -141,19 +141,19 @@ namespace CPUFluid
 
         bool CheckIfCopyContentToNeighbors(Cell[,,] grid, int x, int y, int z, Direction dir)
         {
-            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getContent() == 0 && dir == Direction.xPos)
+            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getVolume() == 0 && dir == Direction.xPos)
             {
                 return true;
             }
-            if (x > 0 && grid[x - 1, y, z].getContent() == 0 && dir == Direction.xNeg)
+            if (x > 0 && grid[x - 1, y, z].getVolume() == 0 && dir == Direction.xNeg)
             {
                 return true;
             }
-            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getContent() == 0 && dir == Direction.zPos)
+            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getVolume() == 0 && dir == Direction.zPos)
             {
                 return true;
             }
-            if (z > 0 && grid[x, y, z - 1].getContent() == 0 && dir == Direction.zNeg)
+            if (z > 0 && grid[x, y, z - 1].getVolume() == 0 && dir == Direction.zNeg)
             {
                 return true;
             }
@@ -162,19 +162,19 @@ namespace CPUFluid
 
         bool CheckIfCopyContentfromNeighbors(Cell[,,] grid, int x, int y, int z)
         {
-            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getDirection() == Direction.xNeg && grid[x + 1, y, z].getContent() != 0)
+            if (x < grid.GetLength(0) - 1 && grid[x + 1, y, z].getDirection() == Direction.xNeg && grid[x + 1, y, z].getVolume() != 0)
             {
                 return true;
             }
-            if (x > 0 && grid[x - 1, y, z].getDirection() == Direction.xPos && grid[x - 1, y, z].getContent() != 0)
+            if (x > 0 && grid[x - 1, y, z].getDirection() == Direction.xPos && grid[x - 1, y, z].getVolume() != 0)
             {
                 return true;
             }
-            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getDirection() == Direction.zNeg && grid[x, y, z + 1].getContent() != 0)
+            if (z < grid.GetLength(2) - 1 && grid[x, y, z + 1].getDirection() == Direction.zNeg && grid[x, y, z + 1].getVolume() != 0)
             {
                 return true;
             }
-            if (z > 0 && grid[x, y, z - 1].getDirection() == Direction.zPos && grid[x, y, z - 1].getContent() != 0)
+            if (z > 0 && grid[x, y, z - 1].getDirection() == Direction.zPos && grid[x, y, z - 1].getVolume() != 0)
             {
                 return true;
             }

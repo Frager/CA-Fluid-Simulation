@@ -7,8 +7,8 @@ namespace CPUFluid
     public class CPUFluidManager : MonoBehaviour
     {
 
-        int gridSize = 8;
-        int maxVolume = 8;
+        public int gridSize = 16;
+        public int maxVolume = 8;
         int elementCount = 1;
 
         public Material testMaterial;
@@ -21,7 +21,7 @@ namespace CPUFluid
         //perform update with data of current generation
         private Cell[,,] currentGen;
         //private CPUFluidCA CA;
-        private Element[] Elements;
+        private Element[] elements;
         
         void Start()
         {
@@ -30,7 +30,8 @@ namespace CPUFluid
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
             initElements();
-            
+            updateRule.elements = elements;
+            updateRule.maxVolume = maxVolume;
             texture3D = new Texture3D(gridSize, gridSize, gridSize, TextureFormat.RGBA32, false);
 
             testMaterial.SetTexture("_MainTex", texture3D);
@@ -41,16 +42,19 @@ namespace CPUFluid
         }
         
         float timer = 0;
-        float timeframe = 0.05f;
-
+        float timeframe = 0.1f;
+        float fillAmount = 500;
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
                 //for testing
-                currentGen[1, 7, 1].addContent(1);
-
+                if (fillAmount > 0)
+                {
+                    fillAmount--;
+                    currentGen[8, 15, 8].addContent(1, 0);
+                }
                 timer -= timeframe;
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
@@ -95,12 +99,26 @@ namespace CPUFluid
         //replace placeholder elements with real elements
         private void initElements()
         {
-            Elements = new Element[elementCount];
+            elements = new Element[elementCount];
 
             for (int i = 0; i < elementCount; ++i)
             {
-                Elements[i] = new Element(i, i, i);
+                elements[i] = new Element(i, i, i);
             }
+        }
+    }
+    
+    public struct Element
+    {
+        int id;
+        float viscosity;
+        float density;
+
+        public Element(int id, float viscosity, float density)
+        {
+            this.id = id;
+            this.viscosity = viscosity;
+            this.density = density;
         }
     }
 }

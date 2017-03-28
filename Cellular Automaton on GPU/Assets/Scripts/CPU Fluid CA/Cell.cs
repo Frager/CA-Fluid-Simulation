@@ -11,22 +11,34 @@ namespace CPUFluid
 
     public struct Cell
     {
-        Vector3 position;
-        int volume;
+        public int maxVolume;
+        public int volume;
         Direction direction;
+        public int moveElementId;
+        public int[] content;
 
-        public Cell(Vector3 position)
+        public Cell(int elementAmount, int maxVolume)
         {
-            this.position = position;
+            this.maxVolume = maxVolume;
             this.volume = 0;
             this.direction = Direction.none;
+            moveElementId = -1;
+            content = new int[elementAmount];
         }
 
         public Cell copyCell()
         {
-            Cell copy = new Cell(position);
+            Cell copy = new Cell();
+            copy.maxVolume = maxVolume;
             copy.addContent(volume);
             copy.setDirection(direction);
+            copy.moveElementId = moveElementId;
+            int[] copyContent = new int[content.Length];
+            for (int i = 0; i < content.Length; ++i)
+            {
+                copyContent[i] = content[i];
+            }
+            copy.content = copyContent;
             return copy;
         }
 
@@ -35,7 +47,18 @@ namespace CPUFluid
             volume += amount;
         }
 
-        public int getContent()
+        public void setContent(int amount)
+        {
+            volume = amount;
+        }
+
+        public void addContent(int amount, int elementIndex)
+        {
+            content[elementIndex] += amount;
+            volume += amount;
+        }
+
+        public int getVolume()
         {
             return volume;
         }
@@ -44,6 +67,12 @@ namespace CPUFluid
         {
             volume -= amount;
             return volume;
+        }
+        
+        public void takeContent(int amount, int elementIndex)
+        {
+            content[elementIndex] -= amount;
+            volume -= amount;
         }
 
         public void deleteContent()
@@ -63,15 +92,28 @@ namespace CPUFluid
 
         static public implicit operator Color(Cell cell)
         {
+            //if (cell.volume == 0) return new Color(1, 1, 1, .1f);
+            //else return new Color(0, 0, 1, 1f);
+
+            Color color = new Color(1,1,1, 0.1f);
             if (cell.volume < 0 )
             {
-                return new Color(0f, 0f, 0f, 1f);
+                color = new Color(1f, 1f, 1f, 1f);
             }
-            if (cell.volume >= 1)
+            else if (cell.volume > cell.maxVolume)
             {
-                return new Color(0, 0, (8f - ((float)cell.volume)) /8f, 1f);
+                color = new Color(0f, 0f, 0f, 1f);
             }
-            return new Color(1f, 1f, 1f, 0.1f);
+            else if (cell.volume == cell.maxVolume)
+            {
+                color = new Color(0f, .3f, .8f, 1f);
+            }
+            else if (cell.volume >= 1)
+            {
+                color = new Color(0, 0, ((float)(cell.maxVolume - cell.volume)) / ((float)(cell.maxVolume)), 1f);
+            }
+            if (cell.direction != Direction.none) color.r += 0.3f;
+            return color;
         }
 
     }
@@ -80,6 +122,8 @@ namespace CPUFluid
     {
         public int volume;
         public int direction;
+
+        
 
         public GPUCell Copy()
         {
