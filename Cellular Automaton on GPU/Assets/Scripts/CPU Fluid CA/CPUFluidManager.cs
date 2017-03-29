@@ -9,7 +9,7 @@ namespace CPUFluid
 
         public int gridSize = 16;
         public int maxVolume = 8;
-        int elementCount = 1;
+        int elementCount = 2;
 
         public Material testMaterial;
         public SimpleVisuals visuals;
@@ -53,7 +53,8 @@ namespace CPUFluid
                 if (fillAmount > 0)
                 {
                     fillAmount--;
-                    currentGen[8, 15, 8].addContent(1, 0);
+                    currentGen[1, 15, 1].addContent(1, 0);
+                    currentGen[8, 15, 8].addContent(1, 1);
                 }
                 timer -= timeframe;
                 updateRule.updateCells(currentGen, newGen);
