@@ -20,6 +20,12 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         hasPassedDown = false;
                         int contentChange = 0;
+
+
+                        //******************************************************************************
+                        //swap 1 high with 1 low density content vertically
+                        //******************************************************************************
+
                         //if content > 1 and bottom cell is full, add 1 lowest dense content from bottom and delete 1 of highest density
                         if (y > 0 && currentGen[x, y - 1, z].getVolume() == maxVolume && currentGen[x, y, z].getVolume() > 1)
                         {
@@ -42,6 +48,11 @@ namespace CPUFluid
                                 newGen[x, y, z].takeContent(1, lightestIdCurrent);
                             }
                         }
+
+                        //******************************************************************************
+                        //push content up if volume > maxVolume
+                        //******************************************************************************
+
                         //if volume > maxVolume delete 1 content with lowest density
                         if (currentGen[x, y, z].getVolume() > maxVolume)
                         {
@@ -66,6 +77,11 @@ namespace CPUFluid
                                 }
                             }
                         }
+
+                        //******************************************************************************
+                        //fill bottom cell up as much as possible
+                        //******************************************************************************
+
                         //delete as much as bottom cell can take
                         if (y > 0 && currentGen[x, y - 1, z].getVolume() < maxVolume)
                         {
@@ -103,9 +119,9 @@ namespace CPUFluid
                                 }
                             }
                         }
+
                         //******************************************************************************
-                        //TODO:
-                        //if bottom cell has content with less density, swap with higher density content
+                        // if has not passed down horizontal update
                         //******************************************************************************
 
                         //if has not passed down anything & volume > 1
