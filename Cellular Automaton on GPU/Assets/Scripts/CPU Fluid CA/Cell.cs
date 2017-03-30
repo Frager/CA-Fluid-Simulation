@@ -42,6 +42,24 @@ namespace CPUFluid
             return copy;
         }
 
+        public int getLightestContent()
+        {
+            for (int id = 0; id < content.Length; ++id)
+            {
+                if (content[id] > 0) return id;
+            }
+            return -1;
+        }
+
+        public int getHeaviestContent()
+        {
+            for (int id = content.Length - 1; id >= 0; --id)
+            {
+                if (content[id] > 0) return id;
+            }
+            return -1;
+        }
+
         public void addContent(int amount)
         {
             volume += amount;

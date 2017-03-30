@@ -20,6 +20,28 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         hasPassedDown = false;
                         int contentChange = 0;
+                        //if content > 1 and bottom cell is full, add 1 lowest dense content from bottom and delete 1 of highest density
+                        if (y > 0 && currentGen[x, y - 1, z].getVolume() == maxVolume && currentGen[x, y, z].getVolume() > 1)
+                        {
+                            int lightestIdBottom = currentGen[x, y - 1, z].getLightestContent();
+                            int heaviestIdCurrent = currentGen[x, y, z].getHeaviestContent();
+                            if(lightestIdBottom != heaviestIdCurrent)
+                            {
+                                newGen[x, y, z].addContent(1, lightestIdBottom);
+                                newGen[x, y, z].takeContent(1, heaviestIdCurrent);
+                            }
+                        }
+                        //if content full and top cell has content > 1 ,add 1 heighes dense content from top and delete 1 of lowest density
+                        if (y < currentGen.GetLength(1) - 1 && currentGen[x, y, z].getVolume() == maxVolume && currentGen[x, y + 1, z].getVolume() > 1)
+                        {
+                            int lightestIdCurrent = currentGen[x, y, z].getLightestContent();
+                            int heaviestIdTop = currentGen[x, y + 1, z].getHeaviestContent();
+                            if (lightestIdCurrent != heaviestIdTop)
+                            {
+                                newGen[x, y, z].addContent(1, heaviestIdTop);
+                                newGen[x, y, z].takeContent(1, lightestIdCurrent);
+                            }
+                        }
                         //if volume > maxVolume delete 1 content with lowest density
                         if (currentGen[x, y, z].getVolume() > maxVolume)
                         {
@@ -167,6 +189,7 @@ namespace CPUFluid
             if (currentCell.content[elementId]-1 > neighbor.content[elementId] && neighbor.volume < maxVolume) return true;
             else return false;
         }
+
     }
     
     //end namespace

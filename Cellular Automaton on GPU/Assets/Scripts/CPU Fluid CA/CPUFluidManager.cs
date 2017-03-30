@@ -43,17 +43,21 @@ namespace CPUFluid
         
         float timer = 0;
         float timeframe = 0.1f;
-        float fillAmount = 500;
+        float fillAmount = 0;
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
                 //for testing
-                if (fillAmount > 0)
+                if (fillAmount < 90)
                 {
-                    fillAmount--;
-                    currentGen[1, 15, 1].addContent(1, 0);
+                    fillAmount++;
+                    currentGen[8, 15, 8].addContent(1, 0);
+                }
+                else if (fillAmount < 120)
+                {
+                    fillAmount++;
                     currentGen[8, 15, 8].addContent(1, 1);
                 }
                 timer -= timeframe;
