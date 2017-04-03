@@ -42,6 +42,24 @@ namespace CPUFluid
             return copy;
         }
 
+        public int getLightestContent()
+        {
+            for (int id = 0; id < content.Length; ++id)
+            {
+                if (content[id] > 0) return id;
+            }
+            return -1;
+        }
+
+        public int getHeaviestContent()
+        {
+            for (int id = content.Length - 1; id >= 0; --id)
+            {
+                if (content[id] > 0) return id;
+            }
+            return -1;
+        }
+
         public void addContent(int amount)
         {
             volume += amount;
@@ -106,11 +124,11 @@ namespace CPUFluid
             }
             else if (cell.volume == cell.maxVolume)
             {
-                color = new Color(0f, .3f, .8f, 1f);
+                color = new Color(0.8f * (float)cell.content[1]/ (float)cell.maxVolume, .3f, 0.8f * (float)cell.content[0] / (float)cell.maxVolume, 1f);
             }
             else if (cell.volume >= 1)
             {
-                color = new Color(0, 0, ((float)(cell.maxVolume - cell.volume)) / ((float)(cell.maxVolume)), 1f);
+                color = new Color((float)cell.content[1] / (float)cell.maxVolume, 0, (float)cell.content[0] / (float)cell.maxVolume, 1f);
             }
             if (cell.direction != Direction.none) color.r += 0.3f;
             return color;
