@@ -18,7 +18,6 @@ namespace CPUFluid
                     for (int x = 0; x < currentGen.GetLength(0); ++x)
                     {
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
-                        hasPassedDown = false;
                         int contentChange = 0;
 
 
@@ -83,7 +82,7 @@ namespace CPUFluid
                         //******************************************************************************
 
                         //delete as much as bottom cell can take
-                        if (y > 0 && currentGen[x, y - 1, z].getVolume() < maxVolume)
+                        if (y > 0 && currentGen[x, y - 1, z].getVolume() < maxVolume && currentGen[x, y, z].getVolume() != 0 )
                         {
                             // contentChange is max amount that can be passed down to botom cell
                             contentChange = Mathf.Min(maxVolume - currentGen[x, y - 1, z].getVolume(), currentGen[x, y, z].getVolume());
@@ -99,7 +98,6 @@ namespace CPUFluid
                                     newGen[x, y, z].takeContent(1, id);
                                 }
                             }
-                            hasPassedDown = true;
                         }
                         //take as much as possible from top cell
                         if (y < currentGen.GetLength(1) - 1 && currentGen[x, y, z].getVolume() < maxVolume && currentGen[x, y + 1, z].getVolume() != 0)
@@ -125,73 +123,65 @@ namespace CPUFluid
                         //******************************************************************************
 
                         //if has not passed down anything & volume > 1
-                        if (!hasPassedDown && currentGen[x,y,z].getVolume() > 1)
-                        {
+                        
                             //cycle through each content, lightest first
                             for (int id = 0; id < currentGen[x, y, z].content.Length; id++)
                             {
                                 //if neighbor isLessContent(has less content && not full), set direction flag and moveElementId, then break
-                                if (updateCycle == 0)
-                                    if (x < currentGen.GetLength(0) - 1 && isLessContent(id, currentGen[x, y, z], currentGen[x + 1, y, z]))
+                                if (updateCycle == 0) {
+                                    //if neighbor has less of Element ID, delete one of element id and neighbor adds one of id. if neighbor has volume == 7, he deletes another element and current cel adds it
+                                    if (x < currentGen.GetLength(0) - 1)
                                     {
-                                        newGen[x, y, z].setDirection(Direction.xPos);
-                                        newGen[x, y, z].moveElementId = id;
-                                        break;
+                                        //swap = 1 if element in current cell is bigger than in neighbor cell. else swap = 0;
+                                        int swap = ((currentGen[x, y, z].content[id] - currentGen[x + 1, y, z].content[id]) > 1) ? 1 : 0;
+                                        //delete swap amount from current cell
+                                        newGen[x, y, z].takeContent(swap, id);
                                     }
+                                    if (x > 0){
+                                        int swap = ((currentGen[x - 1, y, z].content[id] - currentGen[x, y, z].content[id]) > 1) ? 1 : 0;
+                                        newGen[x, y, z].addContent(swap, id);
+                                    }
+                                }
                                 if (updateCycle == 1)
-                                    if (x > 0 && isLessContent(id, currentGen[x, y, z], currentGen[x - 1, y, z]))
+                                {
+
+                                    if (x > 0)
                                     {
-                                        newGen[x, y, z].setDirection(Direction.xNeg);
-                                        newGen[x, y, z].moveElementId = id;
-                                        break;
+                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x - 1, y, z].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].takeContent(swap, id);
                                     }
+                                    if (x < currentGen.GetLength(0) - 1)
+                                    {
+                                        int swap = (currentGen[x + 1, y, z].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].addContent(swap, id);
+                                    }
+                                }
                                 if (updateCycle == 2)
-                                    if (z < currentGen.GetLength(2) - 1 && isLessContent(id, currentGen[x, y, z], currentGen[x, y, z + 1]))
+                                {
+                                    if (z < currentGen.GetLength(2) - 1)
                                     {
-                                        newGen[x, y, z].setDirection(Direction.zPos);
-                                        newGen[x, y, z].moveElementId = id;
-                                        break;
+                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x, y, z + 1].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].takeContent(swap, id);
                                     }
+                                    if (z > 0)
+                                    {
+                                        int swap = (currentGen[x, y, z - 1].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].addContent(swap, id);
+                                    }
+                                }
                                 if (updateCycle == 3)
-                                    if (z > 0 && isLessContent(id, currentGen[x, y, z], currentGen[x, y, z - 1]))
+                                {
+                                    if (z > 0)
                                     {
-                                        newGen[x, y, z].setDirection(Direction.zNeg);
-                                        newGen[x, y, z].moveElementId = id;
-                                        break;
+                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x, y, z - 1].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].takeContent(swap, id);
                                     }
-                            }
-                        }
-                        //if direction flag is set, set Direction Flag to none
-                        if(currentGen[x, y, z].getDirection() != Direction.none)
-                        {
-                            newGen[x, y, z].setDirection(Direction.none);
-                            newGen[x, y, z].moveElementId = -1;
-                            //and delete content if not passed any content down
-                            if (!hasPassedDown)
-                            {
-                                newGen[x, y, z].takeContent(1, currentGen[x, y, z].moveElementId);
-                            }
-                        }
-                        //if neighbor has set direction flag towards current cell, take content
-                        if (x > 0 && currentGen[x - 1, y, z].getDirection() == Direction.xPos)
-                        {
-                            newGen[x, y, z].addContent(1, currentGen[x - 1, y, z].moveElementId);
-                        }
-                        if (x < currentGen.GetLength(0) - 1 && currentGen[x + 1, y, z].getDirection() == Direction.xNeg)
-                        {
-                            newGen[x, y, z].addContent(1, currentGen[x + 1, y, z].moveElementId);
-                        }
-                        if (z > 0 && currentGen[x, y, z - 1].getDirection() == Direction.zPos)
-                        {
-                            newGen[x, y, z].addContent(1, currentGen[x, y, z - 1].moveElementId);
-                        }
-                        if (z < currentGen.GetLength(2) - 1 && currentGen[x, y, z + 1].getDirection() == Direction.zNeg)
-                        {
-                            newGen[x, y, z].addContent(1, currentGen[x, y, z + 1].moveElementId);
-                        }
-                        if (y > 0 && currentGen[x, y - 1, z].getDirection() == Direction.yPos)
-                        {
-                            newGen[x, y, z].addContent(1, currentGen[x, y - 1, z].moveElementId);
+                                    if (z < currentGen.GetLength(2) - 1)
+                                    {
+                                        int swap = (currentGen[x, y, z + 1].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
+                                        newGen[x, y, z].addContent(swap, id);
+                                    }
+                                }
                         }
                     }
                 }
@@ -204,6 +194,16 @@ namespace CPUFluid
         {
             if (currentCell.content[elementId]-1 > neighbor.content[elementId] && neighbor.volume < maxVolume) return true;
             else return false;
+        }
+
+        public int[] getAverageContent(int[] content, int[] neighborContent)
+        {
+            int[] avrg = new int[content.Length];
+            for(int id = 0; id< content.Length; ++id)
+            {
+                avrg[id] = (content[id] + neighborContent[id]) / 2;
+            }
+            return avrg;
         }
 
     }
