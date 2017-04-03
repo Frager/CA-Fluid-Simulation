@@ -1,0 +1,132 @@
+﻿#pragma kernel Initialize
+#pragma kernel NextGeneration
+
+Texture3D<int4> OldCells;
+RWTexture3D<int4> NewCells;
+
+int offsetX, offsetY, offsetZ;
+uint4 fill;
+
+
+[numthreads(8, 8, 8)]
+void Initialize(uint3 id : SV_DispatchThreadID)
+{
+	NewCells[id] = int4(0, 0, 0, 0);
+}
+
+[numthreads(4, 4, 4)]
+void NextGeneration (uint3 id : SV_DispatchThreadID)
+{
+	//Die Adressen aller 8 Zellen eines 2x2x2 CA
+	uint3 cells[8];
+	cells[0] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	cells[1] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	cells[2] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	cells[3] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	cells[4] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	cells[5] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	cells[6] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
+	cells[7] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
+
+	//Momentan wird beim Offset in y-Richtung, die unterste Reihe nicht mit kopiert.
+	//TODO: Elegantere Lösung finden.
+	if (id.y == 0 && offsetY == 1)
+	{
+		for (int i = 0; i < 8; ++i)
+		{
+			NewCells[cells[i] - uint3(0, 1, 1)] = OldCells[cells[i] - uint3(0, 1, 1)];
+		}
+	}
+
+	//Annhame: Es gibt nur 8 Elemente mit den IDs von 0 bis 7, wobei eine höhere ID für ein dichteres/schwereres Element steht.
+	//Folgende Liste enthält zu jedem Element den Druck, in welchem es innerhalb der 8 Zellen insgesammt vorliegt.
+	//Die Liste ist absteigend nach ID sortiert.
+	int combinedElements[] = { 0,0,0,0,0,0,0,0 };
+
+
+	//Abbruchbedingungen:
+
+	//Brich sofort ab, wenn die Zellen gefüllt werden sollen.
+	if (id.x == fill.x && id.y == fill.y && id.z == fill.z)
+	{
+		//Fülle die unteren 4 Zellen vollständig
+		for (uint i = 0; i < 4; ++i)
+		{
+			NewCells[cells[i]] = int4(fill.w, 1, 0, 0);
+		}
+		//Mach die oberen 4 Zellen leer
+		for (i = 4; i < 8; ++i)
+		{
+			NewCells[cells[i]] = int4(0, 0, 0, 0);
+		}
+		return;
+	}
+
+	//Wird benutzt um das schwerste Element (= Element mit niedrigster ID im combinedElements Array) zu finden.
+	int minID = 8;
+	int ID;
+
+	[unroll(8)] 
+	for (uint i = 0; i < 8; ++i)
+	{
+		ID = 8 - OldCells[cells[i]].x;
+		if (ID < minID)
+		{
+			minID = ID;
+		}
+		combinedElements[ID] += OldCells[cells[i]].y;
+	}
+
+	//Brich sofort ab, wenn das schwerste Element ID = 7 ist.
+	if (minID == 8)
+	{
+		for (uint i = 0; i < 8; ++i)
+		{
+			NewCells[cells[i]] = OldCells[cells[i]];
+		}
+		return;
+	}
+
+
+	//Zuerst werden die unteren 4 Zellen mit gleichmäßigem Druck gefüllt.
+
+	//Fülle den Boden mit dem schwersten Element.
+	//TODO: Grenze für maximalen Druck mit einbinden.
+	uint groundValue = (uint(combinedElements[minID]) / 4);
+
+	//Falls es sich nicht gleichmäßig verteilen lässt.
+	//Beispielsweise hat ein Element den Gesamt-Druck 7:
+	// 7/4 -> Alle 4 Zellen mit 1 füllen.
+	// 7%4 = 3 -> Erste 3 Zellen zusätzlich mit 1 mehr füllen.
+	uint remainder = (uint(combinedElements[minID]) % 4);
+
+	//Mache die ersten Zellen voller.
+	for (i = 0; i < remainder; ++i)
+	{
+		NewCells[cells[i]] = int4(8 - minID, groundValue + 1, 0, 0);
+	}
+
+	//Fülle den Rest des Bodens normal, gleichmäßig verteilt, auf.
+	//Obacht: Ist der Gesamt-Druck des schwersten Elements < 4, wurden bereits im vorherigen Schritt alle Zellen richtig initialisiert.
+	//Falls der Gesamt-Druck des schwersten Elements >= 4 müssen noch Zellen befüllt werden.
+	for (i = remainder; i < 4 && combinedElements[minID] >= 4; ++i)
+	{
+		NewCells[cells[i]] = int4(8 - minID, groundValue, 0, 0);
+	}
+	
+
+	//Nun werden die restlichen Zellen mit den verbliebenen Elementen gefüllt
+	for (uint k = minID + 1; k < 8; ++k)
+	{
+		if (combinedElements[k] > 0)
+		{
+			NewCells[cells[i++]] = int4(8 - k, combinedElements[k], 0, 0);
+		}
+	}
+
+	//Falls es nicht genug Elemente gab, wird der Rest auf leer gesetzt.
+	for (; i < 8; ++i)
+	{
+		NewCells[cells[i]] = int4(0, 0, 0, 0);
+	}
+}

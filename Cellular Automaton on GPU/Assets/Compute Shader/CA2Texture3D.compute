@@ -3,27 +3,29 @@
 
 static const float4 Colors[] =
 {
-	float4(1,1,1,0.1f),
+	float4(0,0.8,1,1),
 	float4(0,0,1,1),
-	float4(1,0,0,1)
+	float4(1,0.5,0.1,1),
+	float4(1,1,1,0.1f),
+	float4(0,0,0,1)
 };
 
 RWTexture3D<float4> Result;
-Texture3D<int2> Cells;
+Texture3D<int4> Cells;
 
 [numthreads(8,8,8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	if (Cells[id].x > 0)
+	if (Cells[id].y > 0)
 	{
-		Result[id.xyz] = float4(Colors[1].xyz / float(Cells[id].x), 1);
+		Result[id.xyz] = float4(Colors[Cells[id].x].xyz / float(Cells[id].y), 1);
 	}
-	else if (Cells[id].x < 0)
+	else if (Cells[id].y < 0)
 	{
-		Result[id.xyz] = Colors[2];
+		Result[id.xyz] = Colors[4];
 	}
-	else if (Cells[id].x == 0)
+	else if (Cells[id].y == 0)
 	{
-		Result[id.xyz] = Colors[0];
+		Result[id.xyz] = Colors[3];
 	}
 }

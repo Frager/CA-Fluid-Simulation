@@ -13,8 +13,11 @@ namespace GPUFluid
         private RenderTexture cellBuffer1;
         private RenderTexture cellBuffer2;
         private int buffer = 1;
+        private int buffer4Swap = 1;
 
         public static int size = 8;
+
+        public int elementID = 0;
 
         private RenderTexture texture3D;
 
@@ -22,13 +25,13 @@ namespace GPUFluid
 
         void Start()
         {
-            cellBuffer1 = new RenderTexture(size, size, 1, RenderTextureFormat.RGInt);
+            cellBuffer1 = new RenderTexture(size, size, 1, RenderTextureFormat.ARGBInt);
             cellBuffer1.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             cellBuffer1.volumeDepth = size;
             cellBuffer1.enableRandomWrite = true;
             cellBuffer1.Create();
 
-            cellBuffer2 = new RenderTexture(size, size, 1, RenderTextureFormat.RGInt);
+            cellBuffer2 = new RenderTexture(size, size, 1, RenderTextureFormat.ARGBInt);
             cellBuffer2.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             cellBuffer2.volumeDepth = size;
             cellBuffer2.enableRandomWrite = true;
@@ -43,7 +46,7 @@ namespace GPUFluid
  
             StartComputeShader();
             visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
-            InvokeRepeating("NextGeneration", 0, 0.1f);
+            InvokeRepeating("NextGeneration", 0, 0.5f);
         }
 
         public void NextGeneration()
@@ -62,6 +65,10 @@ namespace GPUFluid
             computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
 
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
+
+            computeShader.SetInt("width", size - 1);
+            computeShader.SetInt("height", size - 1);
+            computeShader.SetInt("depth", size - 1);
 
             computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
         }
@@ -82,6 +89,15 @@ namespace GPUFluid
 
         void UpdateMethod()
         {
+            Give();
+
+            buffer = (buffer == 1) ? 2 : 1;
+
+            Get();
+        }
+
+        void Give()
+        {
             int kernelHandle = computeShader.FindKernel("UpdateGive");
 
             if (buffer == 1)
@@ -96,14 +112,11 @@ namespace GPUFluid
             }
 
             computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
+        }
 
-            buffer = (buffer == 1) ? 2 : 1;
-
-            kernelHandle = computeShader.FindKernel("UpdateGet");
-
-            computeShader.SetInt("width", size);
-            computeShader.SetInt("height", size);
-            computeShader.SetInt("depth", size);
+        void Get()
+        {
+            int kernelHandle = computeShader.FindKernel("UpdateGet");
 
             if (buffer == 1)
             {
@@ -116,9 +129,31 @@ namespace GPUFluid
                 computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer1);
             }
 
-            computeShader.SetVector("fill", new Vector4(1, size - 1, 1, 1));
+            computeShader.SetInts("fill", new int[] { size / 2, size - 1, size / 2, elementID });
 
             computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
+        }
+
+        void Swap()
+        {
+            int kernelHandle = computeShader.FindKernel("UpdateSwap");
+
+            if (buffer == 1)
+            {
+                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
+                computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer2);
+            }
+            else
+            {
+                computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
+                computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer1);
+            }
+
+            computeShader.SetInt("offset", buffer4Swap);
+
+            computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
+
+            buffer4Swap = (buffer4Swap == 1) ? 0 : 1;
         }
     }
 }
