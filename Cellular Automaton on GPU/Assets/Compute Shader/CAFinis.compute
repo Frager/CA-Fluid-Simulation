@@ -7,146 +7,201 @@ RWTexture3D<int4> NewCells;
 int offsetX, offsetY, offsetZ;
 uint4 fill;
 
+static int MaximalPressure[] = { 3,3,3,3,3,3,3,3 };
 
 [numthreads(8, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
-	NewCells[id] = int4(0, 0, 0, 0);
+	int blocked = 0;
+	if (id.x * id.y * id.z == 0
+		|| id.x == fill.x || id.y == fill.y || id.z == fill.z)
+	{
+		blocked = 1;
+	}
+	NewCells[id] = int4(0, 0, blocked, 0);
 }
 
 [numthreads(4, 4, 4)]
 void NextGeneration (uint3 id : SV_DispatchThreadID)
 {
 	//Die Adressen aller 8 Zellen eines 2x2x2 CA
-	uint3 cells[8];
-	cells[0] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
-	cells[1] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
-	cells[2] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
-	cells[3] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
-	cells[4] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
-	cells[5] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
-	cells[6] = uint3(id.x * 2 + 1 + offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
-	cells[7] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
-
-	//Momentan wird beim Offset in y-Richtung, die unterste Reihe nicht mit kopiert.
-	//TODO: Elegantere Lösung finden.
-	if (id.y == 0 && offsetY == 1)
-	{
-		for (int i = 0; i < 8; ++i)
-		{
-			NewCells[cells[i] - uint3(0, 1, 1)] = OldCells[cells[i] - uint3(0, 1, 1)];
-		}
-	}
+	uint3 neighbours[8];
+	neighbours[0] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	neighbours[1] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	neighbours[2] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[3] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[4] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	neighbours[5] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	neighbours[6] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[7] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
 
 	//Annhame: Es gibt nur 8 Elemente mit den IDs von 0 bis 7, wobei eine höhere ID für ein dichteres/schwereres Element steht.
 	//Folgende Liste enthält zu jedem Element den Druck, in welchem es innerhalb der 8 Zellen insgesammt vorliegt.
 	//Die Liste ist absteigend nach ID sortiert.
-	int combinedElements[] = { 0,0,0,0,0,0,0,0 };
+	uint combinedElements[] = { 0,0,0,0,0,0,0,0 };
 
+	//Das schwerste Element soll am Boden gleichmäßig verteilt sein, deshalb muss man wissen wie viele Boden-Zellen es gibt.
+	uint numberOfGroundCells = 0;
 
-	//Abbruchbedingungen:
+	//Wie viele freie Zellen am Boden gibt es?
+	uint numberOfFreeGroundCells = 0;
 
-	//Brich sofort ab, wenn die Zellen gefüllt werden sollen.
+	//Wie viele freie Zellen gibt es oben?
+	uint numberOfFreeUpCells = 0;
+
+	//Wie viele unblockierte Zellen gibt es?
+	uint numberOfUnblockedCells = 0;
+
+	//Zähle wie viele verschiedene Elemente vorhanden sind.
+	uint numberOfElements = 0;
+
+	//Wie viele freie Zellen gibt es? Wird benötigt um das schwerste Element gleichmäßig zu verteilen.
+	uint numberOfFreeCells = 0;
+
+	uint3 cells[8];
+	[unroll(4)]
+	for (uint i = 0, k = 0; i < 4; ++i)
+	{
+		if (OldCells[neighbours[i]].z == 0)
+		{
+			cells[k++] = neighbours[i];
+			++numberOfGroundCells;
+		}
+	}
+
+	[unroll(4)]
+	for (; i < 8; ++i)
+	{
+		if (OldCells[neighbours[i]].z == 0)
+		{
+			cells[k++] = neighbours[i];
+		}
+	}
+
+	numberOfUnblockedCells = k;
+
 	if (id.x == fill.x && id.y == fill.y && id.z == fill.z)
 	{
-		//Fülle die unteren 4 Zellen vollständig
-		for (uint i = 0; i < 1; ++i)
+		NewCells[cells[0]] = int4(fill.w, 1, 0, 0);
+
+		for (uint i = 1; i < 8; ++i)
 		{
-			NewCells[cells[i]] = int4(fill.w, 1, 0, 0);
-		}
-		//Mach die oberen 4 Zellen leer
-		for (i = 1; i < 8; ++i)
-		{
-			NewCells[cells[i]] = int4(0, 0, 0, 0);
+			NewCells[cells[i]] = int4(OldCells[cells[i]].x, OldCells[cells[i]].y, OldCells[cells[i]].z, 0);
 		}
 		return;
 	}
 
-	//Wird benutzt um das schwerste Element (= Element mit niedrigster ID im combinedElements Array) zu finden.
-	int minID = 8;
-	int ID;
-
-	[unroll(8)] 
-	for (uint i = 0; i < 8; ++i)
+	for (i = 0; i < numberOfUnblockedCells; ++i)
 	{
-		ID = 8 - OldCells[cells[i]].x;
-		if (ID < minID)
-		{
-			minID = ID;
-		}
-		combinedElements[ID] += OldCells[cells[i]].y;
+		combinedElements[8 - OldCells[cells[i]].x] += OldCells[cells[i]].y;
 	}
 
-	//Brich sofort ab, wenn das schwerste Element ID = 7 ist.
-	if (minID == 8)
+	[unroll(8)]
+	for (i = 0; i < 8; ++i)
 	{
-		for (uint i = 0; i < 8; ++i)
+		if (combinedElements[i] > 0)
+		{
+			++numberOfElements;
+		}
+	}
+
+	//Brich sofort ab, wenn keine Elemente vorhanden sind.
+	if (numberOfElements == 0)
+	{
+		for (i = 0; i < numberOfUnblockedCells; ++i)
 		{
 			NewCells[cells[i]] = OldCells[cells[i]];
 		}
 		return;
 	}
 
+	numberOfFreeCells = numberOfUnblockedCells - numberOfElements;
 
-	//Zuerst werden die unteren 4 Zellen mit gleichmäßigem Druck gefüllt.
+	numberOfFreeGroundCells = min(numberOfFreeCells, numberOfGroundCells);
 
+	numberOfFreeUpCells = numberOfFreeCells - numberOfFreeGroundCells;
 
+	uint end = 0;
+	uint minimum = 0;
+	uint maximum = 0;
+	uint value = 0;
+	uint remainder = 0;
 
-	//Fülle den Boden mit dem schwersten Element.
-	uint groundValue = (min(uint(combinedElements[minID]), 4 * 3)) / 4;
-
-	//Falls es sich nicht gleichmäßig verteilen lässt.
-	//Beispielsweise hat ein Element den Gesamt-Druck 7:
-	// 7/4 -> Alle 4 Zellen mit 1 füllen.
-	// 7%4 = 3 -> Erste 3 Zellen zusätzlich mit 1 mehr füllen.
-	uint remainder = (min(uint(combinedElements[minID]), 4 * 3)) % 4;
-
-	//Mache die ersten Zellen voller.
-	for (i = 0; i < remainder; ++i)
+	[unroll(8)]
+	for (k = 0, i = 0; k < 8; ++k)
 	{
-		NewCells[cells[i]] = int4(8 - minID, groundValue + 1, 0, 0);
-	}
+		if (numberOfFreeGroundCells > 0 && combinedElements[k] > 0)
+		{
+			//Fülle nur bis zum maximalen Druck des Elements voll;
+			minimum = min(combinedElements[k], (numberOfFreeGroundCells + 1) * MaximalPressure[8 - k]);
+			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
+			value = minimum / (numberOfFreeGroundCells + 1);
+			//Der Rest
+			remainder = minimum % (numberOfFreeGroundCells + 1);
+			//Wie viele Zellen werden verbraucht?
+			maximum = max(value * (numberOfFreeGroundCells + 1), remainder);
 
-	//Fülle den Rest des Bodens normal, gleichmäßig verteilt, auf.
-	//Obacht: Ist der Gesamt-Druck des schwersten Elements < 4, wurden bereits im vorherigen Schritt alle Zellen richtig initialisiert.
-	//Falls der Gesamt-Druck des schwersten Elements >= 4 müssen noch Zellen befüllt werden.
-	for (i = remainder; i < 4 && groundValue > 0; ++i)
-	{
-		NewCells[cells[i]] = int4(8 - minID, groundValue, 0, 0);
-	}
-	
+			end = remainder + i;
 
+			//Zuerst den Rest abarbeiten
+			for (; i < end; ++i)
+			{
+				NewCells[cells[i]] = int4(8 - k, value + 1, 0, 0);
+			}
 
-	//Wurde die maximale Druckgrenze am Boden erreicht, fülle auch die oberen Zellen auf.
+			end = (numberOfFreeGroundCells + 1) - remainder + i;
 
-	//Die Zahl 3 repräsentiert die Viskosität. Nur ein Testwert.
-	uint overflow = max(0, combinedElements[minID] - 4 * 3);
+			for (; i < end; ++i)
+			{
+				NewCells[cells[i]] = int4(8 - k, value, 0, 0);
+			}
 
-	uint additionalCells = overflow / 3;
-	for (uint k = 0; k < additionalCells; ++k)
-	{
-		NewCells[cells[i++]] = int4(8 - minID, 3, 0, 0);
-	}
+			//Verbrauchten Inhalt abziehen
+			combinedElements[k] -= ((numberOfFreeGroundCells + 1) * value + remainder);
 
-	remainder = overflow % 3;
-	if (remainder > 0)
-	{
-		NewCells[cells[i++]] = int4(8 - minID, remainder, 0, 0);
-	}
+			//Minus 1, da jedes Element 1 Platz für sich bereits hat
+			numberOfFreeGroundCells -= (maximum - 1);
+		}
 
+		if (numberOfFreeUpCells > 0 && combinedElements[k] > 0)
+		{
+			//Fülle nur bis zum maximalen Druck des Elements voll;
+			minimum = min(combinedElements[k], (numberOfFreeUpCells + 1) * MaximalPressure[8 - k]);
+			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
+			value = minimum / (numberOfFreeUpCells + 1);
+			//Der Rest
+			remainder = minimum % (numberOfFreeUpCells + 1);
+			//Wie viele Zellen werden verbraucht?
+			maximum = max(value * (numberOfFreeUpCells + 1), remainder);
 
+			end = remainder + i;
 
-	//Nun werden die restlichen Zellen mit den verbliebenen Elementen gefüllt
-	for (k = minID + 1; k < 8 && i < 8; ++k)
-	{
+			for (; i < end; ++i)
+			{
+				NewCells[cells[i]] = int4(8 - k, value + 1, 0, 0);
+			}
+
+			end = (numberOfFreeUpCells + 1) - remainder + i;
+
+			for (; i < end; ++i)
+			{
+				NewCells[cells[i]] = int4(8 - k, value, 0, 0);
+			}
+
+			//Verbrauchten Inhalt abziehen
+			combinedElements[k] -= ((numberOfFreeUpCells + 1) * value + remainder);
+
+			//Minus 1, da jedes Element 1 Platz für sich bereits hat
+			numberOfFreeUpCells -= (maximum - 1);
+		}
+
 		if (combinedElements[k] > 0)
 		{
 			NewCells[cells[i++]] = int4(8 - k, combinedElements[k], 0, 0);
 		}
 	}
 
-	//Falls es nicht genug Elemente gab, wird der Rest auf leer gesetzt.
-	for (; i < 8; ++i)
+	for (; i < numberOfUnblockedCells; ++i)
 	{
 		NewCells[cells[i]] = int4(0, 0, 0, 0);
 	}

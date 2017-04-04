@@ -46,6 +46,7 @@ public class CellularAutomatonFinis : MonoBehaviour {
 
         InitializeBuffers();
         visuals.GenerateVisuals(transform.position, size, size, size, testMaterial);
+        Render();
         InvokeRepeating("NextGeneration", 0, 0.1f);
     }
 
@@ -53,15 +54,13 @@ public class CellularAutomatonFinis : MonoBehaviour {
     {
         int kernelHandle = computeShader.FindKernel("Initialize");
 
+        computeShader.SetInts("fill", new int[] { size - 1, size - 1, size - 1, 0 });
+
         computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer2);
 
         computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
 
         computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
-
-        computeShader.SetInt("width", size - 1);
-        computeShader.SetInt("height", size - 1);
-        computeShader.SetInt("depth", size - 1);
 
         computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
     }
