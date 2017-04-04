@@ -123,65 +123,88 @@ namespace CPUFluid
                         //******************************************************************************
 
                         //if has not passed down anything & volume > 1
-                        
-                            //cycle through each content, lightest first
-                            for (int id = 0; id < currentGen[x, y, z].content.Length; id++)
-                            {
-                                //if neighbor isLessContent(has less content && not full), set direction flag and moveElementId, then break
-                                if (updateCycle == 0) {
-                                    //if neighbor has less of Element ID, delete one of element id and neighbor adds one of id. if neighbor has volume == 7, he deletes another element and current cel adds it
-                                    if (x < currentGen.GetLength(0) - 1)
-                                    {
-                                        //swap = 1 if element in current cell is bigger than in neighbor cell. else swap = 0;
-                                        int swap = ((currentGen[x, y, z].content[id] - currentGen[x + 1, y, z].content[id]) > 1) ? 1 : 0;
-                                        //delete swap amount from current cell
-                                        newGen[x, y, z].takeContent(swap, id);
-                                    }
-                                    if (x > 0){
-                                        int swap = ((currentGen[x - 1, y, z].content[id] - currentGen[x, y, z].content[id]) > 1) ? 1 : 0;
-                                        newGen[x, y, z].addContent(swap, id);
-                                    }
-                                }
-                                if (updateCycle == 1)
-                                {
 
-                                    if (x > 0)
-                                    {
-                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x - 1, y, z].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].takeContent(swap, id);
-                                    }
-                                    if (x < currentGen.GetLength(0) - 1)
-                                    {
-                                        int swap = (currentGen[x + 1, y, z].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].addContent(swap, id);
-                                    }
-                                }
-                                if (updateCycle == 2)
+                        //cycle through each content, lightest first
+                        for (int id = 0; id < currentGen[x, y, z].content.Length; id++)
+                        {
+                            //4 update chycles for each horizontal direction
+                            if (updateCycle == 0)
+                            {
+                                if (x < currentGen.GetLength(0) - 1)
                                 {
-                                    if (z < currentGen.GetLength(2) - 1)
+                                    //int give = ([x] - [x + 1]) / (2 * viscosity)
+                                    int give = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x + 1, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (give > 0)
                                     {
-                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x, y, z + 1].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].takeContent(swap, id);
-                                    }
-                                    if (z > 0)
-                                    {
-                                        int swap = (currentGen[x, y, z - 1].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].addContent(swap, id);
+                                        newGen[x, y, z].takeContent(give, id);
                                     }
                                 }
-                                if (updateCycle == 3)
+                                if (x > 0)
                                 {
-                                    if (z > 0)
+                                    int take = (int)(((float)(currentGen[x - 1, y, z].content[id] - currentGen[x, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (take > 0)
                                     {
-                                        int swap = (currentGen[x, y, z].content[id] - currentGen[x, y, z - 1].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].takeContent(swap, id);
-                                    }
-                                    if (z < currentGen.GetLength(2) - 1)
-                                    {
-                                        int swap = (currentGen[x, y, z + 1].content[id] - currentGen[x, y, z].content[id] > 1) ? 1 : 0;
-                                        newGen[x, y, z].addContent(swap, id);
+                                        newGen[x, y, z].addContent(take, id);
                                     }
                                 }
+                            }
+                            if (updateCycle == 1)
+                            {
+                                if (x < currentGen.GetLength(0) - 1)
+                                {
+                                    int give = (int)(((float)(currentGen[x + 1, y, z].content[id] - currentGen[x, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (give > 0)
+                                    {
+                                        newGen[x, y, z].addContent(give, id);
+                                    }
+                                }
+                                if (x > 0)
+                                {
+                                    int take = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x - 1, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (take > 0)
+                                    {
+                                        newGen[x, y, z].takeContent(take, id);
+                                    }
+                                }
+                            }
+                            if (updateCycle == 2)
+                            {
+                                if (z < currentGen.GetLength(2) - 1)
+                                {
+                                    int give = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x, y, z + 1].content[id])) / (2f * elements[id].viscosity));
+                                    if (give > 0)
+                                    {
+                                        newGen[x, y, z].takeContent(give, id);
+                                    }
+                                }
+                                if (z > 0)
+                                {
+                                    int take = (int)(((float)(currentGen[x, y, z - 1].content[id] - currentGen[x, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (take > 0)
+                                    {
+                                        newGen[x, y, z].addContent(take, id);
+                                    }
+                                }
+                            }
+                            if (updateCycle == 3)
+                            {
+                                if (z < currentGen.GetLength(2) - 1)
+                                {
+                                    int give = (int)(((float)(currentGen[x, y, z + 1].content[id] - currentGen[x, y, z].content[id])) / (2f * elements[id].viscosity));
+                                    if (give > 0)
+                                    {
+                                        newGen[x, y, z].addContent(give, id);
+                                    }
+                                }
+                                if (z > 0)
+                                {
+                                    int take = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x, y, z - 1].content[id])) / (2f * elements[id].viscosity));
+                                    if (take > 0)
+                                    {
+                                        newGen[x, y, z].takeContent(take, id);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -205,6 +228,7 @@ namespace CPUFluid
             }
             return avrg;
         }
+
 
     }
     
