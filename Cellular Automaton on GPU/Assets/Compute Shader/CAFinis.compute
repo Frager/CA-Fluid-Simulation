@@ -5,6 +5,7 @@ Texture3D<int4> OldCells;
 RWTexture3D<int4> NewCells;
 
 int offsetX, offsetY, offsetZ;
+uint4 order;
 uint4 fill;
 
 static int MaximalPressure[] = { 3,3,3,3,3,3,3,3 };
@@ -37,7 +38,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 
 	//Annhame: Es gibt nur 8 Elemente mit den IDs von 0 bis 7, wobei eine höhere ID für ein dichteres/schwereres Element steht.
 	//Folgende Liste enthält zu jedem Element den Druck, in welchem es innerhalb der 8 Zellen insgesammt vorliegt.
-	//Die Liste ist absteigend nach ID sortiert.
+	//Die Liste ist aufsteigend nach ID sortiert.
 	uint combinedElements[] = { 0,0,0,0,0,0,0,0 };
 
 	//Das schwerste Element soll am Boden gleichmäßig verteilt sein, deshalb muss man wissen wie viele Boden-Zellen es gibt.
@@ -59,6 +60,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 	uint numberOfFreeCells = 0;
 
 	uint3 cells[8];
+
 	[unroll(4)]
 	for (uint i = 0, k = 0; i < 4; ++i)
 	{
@@ -93,7 +95,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 
 	for (i = 0; i < numberOfUnblockedCells; ++i)
 	{
-		combinedElements[8 - OldCells[cells[i]].x] += OldCells[cells[i]].y;
+		combinedElements[OldCells[cells[i]].x] += OldCells[cells[i]].y;
 	}
 
 	[unroll(8)]
@@ -121,43 +123,53 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 
 	numberOfFreeUpCells = numberOfFreeCells - numberOfFreeGroundCells;
 
+
+
+
+
+
+
+
 	uint end = 0;
 	uint minimum = 0;
+	uint minimum2 = 0;
 	uint maximum = 0;
 	uint value = 0;
 	uint remainder = 0;
 
 	[unroll(8)]
-	for (k = 0, i = 0; k < 8; ++k)
+	for (k = 7, i = 0; k >= 0; --k)
 	{
 		if (numberOfFreeGroundCells > 0 && combinedElements[k] > 0)
 		{
+			minimum2 = min(numberOfFreeGroundCells + 1, numberOfGroundCells);
+
 			//Fülle nur bis zum maximalen Druck des Elements voll;
-			minimum = min(combinedElements[k], (numberOfFreeGroundCells + 1) * MaximalPressure[8 - k]);
+			minimum = min(combinedElements[k], numberOfFreeGroundCells * 4);
 			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
-			value = minimum / (numberOfFreeGroundCells + 1);
+			value = minimum / minimum2;
 			//Der Rest
-			remainder = minimum % (numberOfFreeGroundCells + 1);
+			remainder = minimum % minimum2;
 			//Wie viele Zellen werden verbraucht?
-			maximum = max(value * (numberOfFreeGroundCells + 1), remainder);
+			maximum = max(clamp(0, 1, value) * numberOfFreeGroundCells, remainder);
 
 			end = remainder + i;
 
 			//Zuerst den Rest abarbeiten
 			for (; i < end; ++i)
 			{
-				NewCells[cells[i]] = int4(8 - k, value + 1, 0, 0);
+				NewCells[cells[i]] = int4(k, value + 1, 0, 0);
 			}
 
-			end = (numberOfFreeGroundCells + 1) - remainder + i;
+			end = (minimum2 - remainder) + i;
 
 			for (; i < end; ++i)
 			{
-				NewCells[cells[i]] = int4(8 - k, value, 0, 0);
+				NewCells[cells[i]] = int4(k, value, 0, 0);
 			}
 
 			//Verbrauchten Inhalt abziehen
-			combinedElements[k] -= ((numberOfFreeGroundCells + 1) * value + remainder);
+			combinedElements[k] -= (minimum2 * value + remainder);
 
 			//Minus 1, da jedes Element 1 Platz für sich bereits hat
 			numberOfFreeGroundCells -= (maximum - 1);
@@ -165,31 +177,33 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 
 		if (numberOfFreeUpCells > 0 && combinedElements[k] > 0)
 		{
+			minimum2 = min(numberOfFreeUpCells + 1, numberOfUnblockedCells - numberOfGroundCells);
+
 			//Fülle nur bis zum maximalen Druck des Elements voll;
-			minimum = min(combinedElements[k], (numberOfFreeUpCells + 1) * MaximalPressure[8 - k]);
+			minimum = min(combinedElements[k], minimum2 * 4);
 			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
-			value = minimum / (numberOfFreeUpCells + 1);
+			value = minimum / minimum2;
 			//Der Rest
-			remainder = minimum % (numberOfFreeUpCells + 1);
+			remainder = minimum % minimum2;
 			//Wie viele Zellen werden verbraucht?
-			maximum = max(value * (numberOfFreeUpCells + 1), remainder);
+			maximum = max(clamp(0, 1, value) * minimum2, remainder);
 
 			end = remainder + i;
 
 			for (; i < end; ++i)
 			{
-				NewCells[cells[i]] = int4(8 - k, value + 1, 0, 0);
+				NewCells[cells[i]] = int4(k, value + 1, 0, 0);
 			}
 
-			end = (numberOfFreeUpCells + 1) - remainder + i;
+			end = minimum2 - remainder + i;
 
 			for (; i < end; ++i)
 			{
-				NewCells[cells[i]] = int4(8 - k, value, 0, 0);
+				NewCells[cells[i]] = int4(k, value, 0, 0);
 			}
 
 			//Verbrauchten Inhalt abziehen
-			combinedElements[k] -= ((numberOfFreeUpCells + 1) * value + remainder);
+			combinedElements[k] -= (minimum2 * value + remainder);
 
 			//Minus 1, da jedes Element 1 Platz für sich bereits hat
 			numberOfFreeUpCells -= (maximum - 1);
@@ -197,7 +211,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 
 		if (combinedElements[k] > 0)
 		{
-			NewCells[cells[i++]] = int4(8 - k, combinedElements[k], 0, 0);
+			NewCells[cells[i++]] = int4(k, combinedElements[k], 0, 0);
 		}
 	}
 

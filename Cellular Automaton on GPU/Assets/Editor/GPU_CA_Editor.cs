@@ -14,6 +14,11 @@ public class GPU_CA_Editor : Editor {
 
         }
 
+        if (GUILayout.Button("Light Elements"))
+        {
+            ca.elementID = 1;
+        }
+
         if (GUILayout.Button("Heavy Elements"))
         {
             ca.elementID = 2;

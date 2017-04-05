@@ -17,8 +17,8 @@ public class CellularAutomatonFinis : MonoBehaviour {
     public static int size = 8;
 
     [Range(1, 8)]
-    public int elementID = 1;
-
+    public int elementID = 2;
+    
     private RenderTexture texture3D;
 
     public SimpleVisuals visuals;
@@ -65,7 +65,9 @@ public class CellularAutomatonFinis : MonoBehaviour {
         computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
     }
 
-    public void NextGeneration()
+    int counter = 0;
+
+    void NextGeneration()
     {
         UpdateMethod();
         Render();
@@ -97,37 +99,47 @@ public class CellularAutomatonFinis : MonoBehaviour {
                 computeShader.SetInt("offsetX", 0);
                 computeShader.SetInt("offsetY", 0);
                 computeShader.SetInt("offsetZ", 0);
+                computeShader.SetInts("order", new int[] { 0, 1, 2, 3 });
                 break;
             case 1:
                 computeShader.SetInt("offsetX", 0);
                 computeShader.SetInt("offsetY", 1);
                 computeShader.SetInt("offsetZ", 0);
+                computeShader.SetInts("order", new int[] { 0, 1, 2, 3 });
                 break;
             case 2:
                 computeShader.SetInt("offsetX", 1);
                 computeShader.SetInt("offsetY", 0);
                 computeShader.SetInt("offsetZ", 0);
+                computeShader.SetInts("order", new int[] { 1, 0, 2, 3 });
                 break;
             case 3:
                 computeShader.SetInt("offsetX", 0);
                 computeShader.SetInt("offsetY", 1);
                 computeShader.SetInt("offsetZ", 0);
+                computeShader.SetInts("order", new int[] { 1, 0, 2, 3 });
                 break;
             case 4:
                 computeShader.SetInt("offsetX", 0);
                 computeShader.SetInt("offsetY", 0);
                 computeShader.SetInt("offsetZ", 1);
+                computeShader.SetInts("order", new int[] { 3, 2, 1, 0 });
                 break;
             case 5:
                 computeShader.SetInt("offsetX", 0);
                 computeShader.SetInt("offsetY", 1);
                 computeShader.SetInt("offsetZ", 0);
+                computeShader.SetInts("order", new int[] { 3, 2, 1, 0 });
                 break;
         }
 
         if (buffer == 1)
         {
-            computeShader.SetInts("fill", new int[] { 2, 3, 2, elementID });
+            //if(counter < 3)
+                computeShader.SetInts("fill", new int[] { 2, 3, 2, elementID });
+            //else
+             //   computeShader.SetInts("fill", new int[] { 4, 4, 4, elementID });
+            print(++counter);
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
             computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer2);
         }
