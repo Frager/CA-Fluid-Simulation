@@ -122,7 +122,7 @@ namespace CPUFluid
 
             for (int i = 0; i < elementCount; ++i)
             {
-                elements[i] = new Element(i, i + 1, i + 1);
+                elements[i] = new Element(i, (float)i + 1f, i + 1);
             }
         }
     }
