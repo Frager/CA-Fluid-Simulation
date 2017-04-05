@@ -27,14 +27,14 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 {
 	//Die Adressen aller 8 Zellen eines 2x2x2 CA
 	uint3 neighbours[8];
-	neighbours[0] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
-	neighbours[1] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
-	neighbours[2] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
-	neighbours[3] = uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
-	neighbours[4] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
-	neighbours[5] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
-	neighbours[6] = uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
-	neighbours[7] = uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[order.x] =		uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	neighbours[order.y] =		uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 +		offsetZ);
+	neighbours[order.z] =		uint3(id.x * 2 + 1 +	offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[order.w] =		uint3(id.x * 2 +		offsetX, id.y * 2 +		offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[order.x + 4] =	uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	neighbours[order.y + 4] =	uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 +		offsetZ);
+	neighbours[order.z + 4] =	uint3(id.x * 2 + 1 +	offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
+	neighbours[order.w + 4] =	uint3(id.x * 2 +		offsetX, id.y * 2 + 1 + offsetY, id.z * 2 + 1 + offsetZ);
 
 	//Annhame: Es gibt nur 8 Elemente mit den IDs von 0 bis 7, wobei eine höhere ID für ein dichteres/schwereres Element steht.
 	//Folgende Liste enthält zu jedem Element den Druck, in welchem es innerhalb der 8 Zellen insgesammt vorliegt.
@@ -62,11 +62,11 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 	uint3 cells[8];
 
 	[unroll(4)]
-	for (uint i = 0, k = 0; i < 4; ++i)
+	for (uint i = 0; i < 4; ++i)
 	{
 		if (OldCells[neighbours[i]].z == 0)
 		{
-			cells[k++] = neighbours[i];
+			cells[numberOfUnblockedCells++] = neighbours[i];
 			++numberOfGroundCells;
 		}
 	}
@@ -76,17 +76,15 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 	{
 		if (OldCells[neighbours[i]].z == 0)
 		{
-			cells[k++] = neighbours[i];
+			cells[numberOfUnblockedCells++] = neighbours[i];
 		}
 	}
-
-	numberOfUnblockedCells = k;
 
 	if (id.x == fill.x && id.y == fill.y && id.z == fill.z)
 	{
 		NewCells[cells[0]] = int4(fill.w, 1, 0, 0);
 
-		for (uint i = 1; i < 8; ++i)
+		for (uint i = 1; i < numberOfUnblockedCells; ++i)
 		{
 			NewCells[cells[i]] = int4(OldCells[cells[i]].x, OldCells[cells[i]].y, OldCells[cells[i]].z, 0);
 		}
@@ -137,21 +135,23 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 	uint value = 0;
 	uint remainder = 0;
 
+	i = 0;
+
 	[unroll(8)]
-	for (k = 7, i = 0; k >= 0; --k)
+	for (uint k = 7; k >= 0; --k)
 	{
 		if (numberOfFreeGroundCells > 0 && combinedElements[k] > 0)
 		{
 			minimum2 = min(numberOfFreeGroundCells + 1, numberOfGroundCells);
 
 			//Fülle nur bis zum maximalen Druck des Elements voll;
-			minimum = min(combinedElements[k], numberOfFreeGroundCells * 4);
+			minimum = min(combinedElements[k], minimum2 * 4);
 			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
 			value = minimum / minimum2;
 			//Der Rest
 			remainder = minimum % minimum2;
 			//Wie viele Zellen werden verbraucht?
-			maximum = max(clamp(0, 1, value) * numberOfFreeGroundCells, remainder);
+			maximum = max((value > 0) * minimum2, remainder);
 
 			end = remainder + i;
 
@@ -169,7 +169,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 			}
 
 			//Verbrauchten Inhalt abziehen
-			combinedElements[k] -= (minimum2 * value + remainder);
+			combinedElements[k] -= minimum;
 
 			//Minus 1, da jedes Element 1 Platz für sich bereits hat
 			numberOfFreeGroundCells -= (maximum - 1);
@@ -178,7 +178,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 		if (numberOfFreeUpCells > 0 && combinedElements[k] > 0)
 		{
 			minimum2 = min(numberOfFreeUpCells + 1, numberOfUnblockedCells - numberOfGroundCells);
-
+			minimum2 = numberOfFreeUpCells + 1;
 			//Fülle nur bis zum maximalen Druck des Elements voll;
 			minimum = min(combinedElements[k], minimum2 * 4);
 			//Abgerundeter durchschnittlicher Wert der Boden-Zellen
@@ -186,7 +186,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 			//Der Rest
 			remainder = minimum % minimum2;
 			//Wie viele Zellen werden verbraucht?
-			maximum = max(clamp(0, 1, value) * minimum2, remainder);
+			maximum = max((value > 0) * minimum2, remainder);
 
 			end = remainder + i;
 
@@ -203,7 +203,7 @@ void NextGeneration (uint3 id : SV_DispatchThreadID)
 			}
 
 			//Verbrauchten Inhalt abziehen
-			combinedElements[k] -= (minimum2 * value + remainder);
+			combinedElements[k] -= minimum;
 
 			//Minus 1, da jedes Element 1 Platz für sich bereits hat
 			numberOfFreeUpCells -= (maximum - 1);

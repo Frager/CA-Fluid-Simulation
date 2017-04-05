@@ -139,7 +139,7 @@ public class CellularAutomatonFinis : MonoBehaviour {
                 computeShader.SetInts("fill", new int[] { 2, 3, 2, elementID });
             //else
              //   computeShader.SetInts("fill", new int[] { 4, 4, 4, elementID });
-            print(++counter);
+            //print(++counter);
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
             computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer2);
         }
