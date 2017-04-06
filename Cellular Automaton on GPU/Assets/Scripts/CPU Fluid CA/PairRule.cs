@@ -1,4 +1,6 @@
-﻿namespace CPUFluid
+﻿using UnityEngine;
+
+namespace CPUFluid
 {
     public class PairRule : UpdateRule
     {
@@ -25,10 +27,10 @@
                         {
                             if (updateCycle % 2 == 0)
                             {
-                                int give = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x + shiftX, y + shiftY, z + shiftZ].content[id])) / (2f * elements[id].viscosity));
+                                int mean = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x + shiftX, y + shiftY, z + shiftZ].content[id])) / (2f));
 
-                                newGen[x, y, z].content[id] += ??;
-                                newGen[x + shiftX, y + shiftY, z + shiftZ].content[id] -= ??;
+                                newGen[x, y, z].content[id] = (int)Mathf.Lerp(newGen[x, y, z].content[id], mean, elements[id].viscosity);
+                                newGen[x + shiftX, y + shiftY, z + shiftZ].content[id] = (int)Mathf.Lerp(newGen[x + shiftX, y + shiftY, z + shiftZ].content[id], mean, elements[id].viscosity);
                             }                      
                         }
                     }

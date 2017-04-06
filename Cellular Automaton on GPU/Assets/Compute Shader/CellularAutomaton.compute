@@ -1,0 +1,65 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel UpdateX
+#pragma kernel UpdateY
+#pragma kernel UpdateZ
+
+#define NUMBER_OF_ELEMENTS 2
+#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+
+struct Cell
+{
+	float content[NUMBER_OF_ELEMENTS];
+};
+
+static int Viscosities[] =
+{
+	0, 1, 2, 3, 4, 5, 6, 7
+};
+
+StructuredBuffer<Cell> currentGeneration;
+RWStructuredBuffer<Cell> newGeneration;
+
+uint size;
+int3 offset;
+
+[numthreads(4, 8, 8)]
+void UpdateX(uint3 id : SV_DispatchThreadID)
+{
+	int mean, difference1, difference2;
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		mean = (currentGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i] - currentGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i]) / 2;
+		
+		difference1 = mean - currentGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i];
+		difference2 = mean - currentGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i];
+
+		newGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
+		newGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
+	}
+}
+
+[numthreads(8, 4, 8)]
+void UpdateY(uint3 id : SV_DispatchThreadID)
+{
+}
+
+[numthreads(8, 8, 4)]
+void UpdateZ(uint3 id : SV_DispatchThreadID)
+{
+	int mean, difference1, difference2;
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		mean = (currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i]) / 2;
+		
+		difference1 = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i];
+		difference2 = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i];
+		
+		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
+		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
+	}
+}
+

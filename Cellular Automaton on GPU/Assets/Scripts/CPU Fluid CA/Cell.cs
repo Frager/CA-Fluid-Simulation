@@ -138,26 +138,17 @@ namespace CPUFluid
 
     public struct GPUCell
     {
-        public int volume;
-        public int direction;
-
-        
+        public float[] content;
 
         public GPUCell Copy()
         {
             GPUCell copy = new GPUCell();
-            copy.volume = volume;
-            copy.direction = direction;
+            content.CopyTo(copy.content, 0);
             return copy;
         }
 
         static public implicit operator Color(GPUCell cell)
         {
-            float blue = cell.volume;
-            if (blue >= 1)
-            {
-                return new Color(0, 0, 1f, 1f);
-            }
             return new Color(1f, 1f, 1f, 0.1f);
         }
     }
