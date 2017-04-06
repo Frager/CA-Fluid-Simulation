@@ -30,7 +30,7 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
-		mean = (currentGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i] - currentGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i]) / 2;
+		mean = (currentGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i] + currentGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i]) / 2;
 		
 		difference1 = mean - currentGeneration[ADDRESS(id.x * 2 + offset.x, id.y, id.z, size)].content[i];
 		difference2 = mean - currentGeneration[ADDRESS(id.x * 2 + offset.x + 1, id.y, id.z, size)].content[i];
@@ -53,7 +53,7 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
-		mean = (currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i]) / 2;
+		mean = (currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] + currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i]) / 2;
 		
 		difference = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i];
 

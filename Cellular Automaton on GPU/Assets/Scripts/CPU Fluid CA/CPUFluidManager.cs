@@ -67,11 +67,13 @@ namespace CPUFluid
                 //}
                 if (fillAmount < 400)
                 {
-                    currentGen[8, 15, 8].addContent(1, 0);
+                    currentGen[8, 0, 8].addContent(1, 0);
+                    //currentGen[7, 0, 7].addContent(1, 0);
                 }
                 else if (fillAmount < 800)
                 {
-                    currentGen[8, 15, 8].addContent(1, 1);
+                    //currentGen[8, 0, 8].addContent(1, 1);
+                    //currentGen[7, 0, 7].addContent(1, 1);
                 }
                 fillAmount++;
                 timer -= timeframe;
