@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using System;
 
 namespace CPUFluid
 {
@@ -6,73 +6,37 @@ namespace CPUFluid
     {
         private int updateCycle = 0;
 
-        //TODO: Die int-Wert kann man auch so wie sie unten im Switch-Case vorkommen ein ein Array (8x6) packen und das Switch-Case-Statement eliminieren.
-        //Shows in which direction the next update goes.
-        private int shiftX, shiftY, shiftZ;
+        private int[][] shift = { new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
 
-        private int offsetX, offsetY, offsetZ;
+        private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
+
+        private int mean, difference1, difference2;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
-            for (int z = offsetZ; z < currentGen.GetLength(2) - offsetZ; z += (1 + shiftZ))
+            for (int z = offset[updateCycle][2]; z < currentGen.GetLength(2) - offset[updateCycle][2]; z += (1 + shift[updateCycle][2]))
             {
-                for (int y = offsetY; y < currentGen.GetLength(1) - offsetY; y += (1 + shiftY))
+                for (int y = offset[updateCycle][1]; y < currentGen.GetLength(1) - offset[updateCycle][1]; y += (1 + shift[updateCycle][1]))
                 {
-                    for (int x = offsetX; x < currentGen.GetLength(0) - offsetX; x += (1 + shiftX))
+                    for (int x = offset[updateCycle][0]; x < currentGen.GetLength(0) - offset[updateCycle][0]; x += (1 + shift[updateCycle][0]))
                     {
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
-                        newGen[x + shiftX, y + shiftY, z + shiftZ] = currentGen[x + shiftX, y + shiftY, z + shiftZ].copyCell();
+                        newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].copyCell();
 
                         for (int id = 0; id < currentGen[x, y, z].content.Length; id++)
                         {
                             if (updateCycle % 2 == 0)
                             {
-                                int mean = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x + shiftX, y + shiftY, z + shiftZ].content[id])) / (2f));
+                                mean = (currentGen[x, y, z].content[id] - currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]) / 2;
 
-                                newGen[x, y, z].content[id] = (int)Mathf.Lerp(newGen[x, y, z].content[id], mean, elements[id].viscosity);
-                                newGen[x + shiftX, y + shiftY, z + shiftZ].content[id] = (int)Mathf.Lerp(newGen[x + shiftX, y + shiftY, z + shiftZ].content[id], mean, elements[id].viscosity);
+                                newGen[x, y, z].content[id] += (mean - Math.Sign(mean) * elements[id].viscosity);
+                                newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] += (mean - Math.Sign(mean) * elements[id].viscosity);
                             }                      
                         }
                     }
                 }
             }
             updateCycle = (updateCycle + 1) % 8;
-
-            switch(updateCycle)
-            {
-                case 0:
-                    shiftX = 1;
-                    shiftY = 0;
-                    shiftZ = 0;
-                    offsetX = 0;
-                    offsetY = 0;
-                    offsetZ = 0;
-                    break;
-                case 2:
-                    shiftX = 0;
-                    shiftY = 0;
-                    shiftZ = 1;
-                    offsetX = 0;
-                    offsetY = 0;
-                    offsetZ = 0;
-                    break;
-                case 4:
-                    shiftX = 1;
-                    shiftY = 0;
-                    shiftZ = 0;
-                    offsetX = 1;
-                    offsetY = 0;
-                    offsetZ = 0;
-                    break;
-                case 6:
-                    shiftX = 0;
-                    shiftY = 0;
-                    shiftZ = 1;
-                    offsetX = 0;
-                    offsetY = 0;
-                    offsetZ = 1;
-                    break;
-            }
         }
     }
 }

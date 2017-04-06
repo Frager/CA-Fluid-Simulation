@@ -122,7 +122,7 @@ namespace CPUFluid
 
             for (int i = 0; i < elementCount; ++i)
             {
-                elements[i] = new Element(i, (float)i + 1f, i + 1);
+                elements[i] = new Element(i, i + 1, i + 1);
             }
         }
     }
@@ -130,10 +130,10 @@ namespace CPUFluid
     public struct Element
     {
         int id;
-        public float viscosity;
+        public int viscosity;
         public float density;
 
-        public Element(int id, float viscosity, float density)
+        public Element(int id, int viscosity, float density)
         {
             this.id = id;
             this.viscosity = viscosity;

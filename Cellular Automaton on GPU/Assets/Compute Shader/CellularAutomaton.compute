@@ -8,7 +8,7 @@
 
 struct Cell
 {
-	float content[NUMBER_OF_ELEMENTS];
+	int content[NUMBER_OF_ELEMENTS];
 };
 
 static int Viscosities[] =
