@@ -48,18 +48,19 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 [numthreads(8, 8, 4)]
 void UpdateZ(uint3 id : SV_DispatchThreadID)
 {
-	int mean, difference1, difference2;
+	int mean, difference, amount;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
 		mean = (currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i]) / 2;
 		
-		difference1 = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i];
-		difference2 = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i];
+		difference = mean - currentGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i];
+
+		amount = sign(difference) * max(abs(difference) - Viscosities[i], 0);
 		
-		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
-		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i] += (mean - sign(mean) * Viscosities[i]);
+		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z, size)].content[i] += amount;
+		newGeneration[ADDRESS(id.x, id.y, id.z * 2 + offset.z + 1, size)].content[i] -= amount;
 	}
 }
 

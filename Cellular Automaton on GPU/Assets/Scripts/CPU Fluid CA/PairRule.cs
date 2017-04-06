@@ -10,7 +10,7 @@ namespace CPUFluid
 
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
 
-        private int mean, difference1, difference2;
+        private int mean, difference, amount;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
@@ -29,8 +29,12 @@ namespace CPUFluid
                             {
                                 mean = (currentGen[x, y, z].content[id] - currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]) / 2;
 
-                                newGen[x, y, z].content[id] += (mean - Math.Sign(mean) * elements[id].viscosity);
-                                newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] += (mean - Math.Sign(mean) * elements[id].viscosity);
+                                difference = mean - currentGen[x, y, z].content[id];
+
+                                amount = Math.Sign(difference) * Math.Max(Math.Abs(difference) - elements[id].viscosity, 0);
+
+                                newGen[x, y, z].content[id] += amount;
+                                newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] -= amount;
                             }                      
                         }
                     }
