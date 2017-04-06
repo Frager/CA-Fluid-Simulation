@@ -4,6 +4,7 @@
     {
         private int updateCycle = 0;
 
+        //TODO: Die int-Wert kann man auch so wie sie unten im Switch-Case vorkommen ein ein Array (8x6) packen und das Switch-Case-Statement eliminieren.
         //Shows in which direction the next update goes.
         private int shiftX, shiftY, shiftZ;
 
@@ -22,7 +23,7 @@
 
                         for (int id = 0; id < currentGen[x, y, z].content.Length; id++)
                         {
-                            if (updateCycle == 0)
+                            if (updateCycle % 2 == 0)
                             {
                                 int give = (int)(((float)(currentGen[x, y, z].content[id] - currentGen[x + shiftX, y + shiftY, z + shiftZ].content[id])) / (2f * elements[id].viscosity));
 
