@@ -48,30 +48,30 @@ namespace CPUFluid
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                ////for testing if content is correct
-                //if (fillAmount == 200)
-                //{
-                //    int content = 0;
-                //    for (int x = 0; x < currentGen.GetLength(0) - 1; ++x)
-                //    {
-                //        for (int y = 0; y < currentGen.GetLength(1) - 1; ++y)
-                //        {
-                //            for (int z = 0; z < currentGen.GetLength(2) - 1; ++z)
-                //            {
-                //                content += currentGen[x, y, z].volume;
-                //            }
-                //        }
-                //    }
-                //    print("content " + content);
-                //}
-                if (fillAmount < 400)
+                //for testing if content is correct
+                if (fillAmount == 300)
                 {
-                    currentGen[8, 0, 8].addContent(1, 0);
+                    int content = 0;
+                    for (int x = 0; x < currentGen.GetLength(0) - 1; ++x)
+                    {
+                        for (int y = 0; y < currentGen.GetLength(1) - 1; ++y)
+                        {
+                            for (int z = 0; z < currentGen.GetLength(2) - 1; ++z)
+                            {
+                                content += currentGen[x, y, z].volume;
+                            }
+                        }
+                    }
+                    print("content " + content);
+                }
+                if (fillAmount < 200)
+                {
+                    currentGen[8, 8, 8].addContent(1, 1);
                     //currentGen[7, 0, 7].addContent(1, 0);
                 }
-                else if (fillAmount < 800)
+                if (fillAmount < 200)
                 {
-                    //currentGen[8, 0, 8].addContent(1, 1);
+                    currentGen[8, 0, 8].addContent(1, 0);
                     //currentGen[7, 0, 7].addContent(1, 1);
                 }
                 fillAmount++;
@@ -123,7 +123,7 @@ namespace CPUFluid
 
             for (int i = 0; i < elementCount; ++i)
             {
-                elements[i] = new Element(i, i + 1, i + 1);
+                elements[i] = new Element(i,  i + 1, (float)i + 0.5f);
             }
         }
     }

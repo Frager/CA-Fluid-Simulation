@@ -9,7 +9,7 @@ namespace CPUFluid
         private int[][] shift = { new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, };
 
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
-        private int mean, difference, amount;
+        private int mean, difference, amount, volume;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
@@ -22,15 +22,16 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].copyCell();
 
-                        for (int id = 0; id < currentGen[x, y, z].content.Length; ++id)
+
+                        if (updateCycle % 2 == 0)
                         {
-                            if (updateCycle % 2 == 0)
+                            for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
                                 mean = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]) / 2;
 
                                 difference = (mean - currentGen[x, y, z].content[id]);
 
-                                if(Math.Abs(difference) < 2)
+                                if (Math.Abs(difference) < 2)
                                 {
                                     difference = 0;
                                 }
@@ -52,8 +53,32 @@ namespace CPUFluid
                                     print("Neighbour: (" + (x + shift[updateCycle][0]) + ", " + (y + shift[updateCycle][1]) + ", " + (z + shift[updateCycle][2]) + ") --- new content: " + newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
                                     print("------------------------------------------------------------------");
                                 }*/
-                            }                      
+                            }
                         }
+                        else
+                        {
+                            volume = 0;
+                            newGen[x, y + shift[updateCycle][1], z].volume = 0;
+                            for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
+                            {
+                                //sum of bottom and top elenemt[id] amount
+                                amount = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
+                                //min of available space in bottom cell or content amount
+                                int bottom = (int)Math.Min(maxVolume - volume, Math.Min(elements[id].density, 1) * amount);
+                                volume += bottom;
+
+                                newGen[x, y, z].content[id] = bottom;
+                                newGen[x, y, z].volume = volume;
+
+                                newGen[x , y + shift[updateCycle][1], z ].content[id] = amount - bottom;
+                                newGen[x , y + shift[updateCycle][1], z ].volume += amount - bottom;
+                                ////sets content of bottom cell to 'bottom' amount
+                                //newGen[x, y, z].addContent(bottom - currentGen[x, y, z].content[id]);
+                                ////sets content of top cell to 'amount-bottom' amount
+                                //newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].addContent(amount - bottom - currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].volume);
+                            }
+                        }
+                                      
                     }
                 }
             }
