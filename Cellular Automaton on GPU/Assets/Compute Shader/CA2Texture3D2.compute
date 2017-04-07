@@ -1,0 +1,43 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#define NUMBER_OF_ELEMENTS 2
+#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+
+struct Cell
+{
+	int volume;
+	int content[NUMBER_OF_ELEMENTS];
+};
+
+StructuredBuffer<Cell> currentGeneration;
+RWTexture3D<float4> Result;
+
+int maxVolume;
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, 16)];
+
+	float4 color = float4(1, 1, 1, 0.1);
+
+	if (cell.volume < 0)
+	{
+		color = float4(1, 0, 0, 1);
+	}
+	else if (cell.volume > maxVolume)
+	{
+		color = float4(0, 0, 0, 1);
+	}
+	else if (cell.volume == maxVolume)
+	{
+		color = float4(0.8 * (float)(cell.content[1] + 4) / (float)maxVolume, 0.3, 0.8 * (float)(cell.content[0] + 4) / (float)maxVolume, 1);
+	}
+	else if (cell.volume > 0)
+	{
+		color = float4((float)(cell.content[1] + 4) / (float)(maxVolume), 0, (float)(cell.content[0] + 4) / (float)maxVolume, 1);
+	}
+
+	Result[id] = color;
+}

@@ -39,13 +39,34 @@ namespace GPUFLuid
             {
                 KernelOrder[i] = computeShader.FindKernel(FunctionOrder[i]);
             }
+
+            InitializeBuffers();
+            Render();
+        }
+
+        private void OnApplicationQuit()
+        {
+            for(int i = 0; i < buffer.Length; ++i)
+            {
+                buffer[i].Dispose();
+            }
         }
 
         void InitializeBuffers()
         {
-            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, 2 * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, 2 * sizeof(float), ComputeBufferType.GPUMemory) };
+            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory) };
 
             computeShader.SetInt("size", gridSize);
+
+            int kernelHandle = computeShader.FindKernel("Initialize");
+
+            computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+
+            computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+
+            computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+
+            computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
         }
 
         private float timer = 0;
@@ -60,9 +81,24 @@ namespace GPUFLuid
                 computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
                 computeShader.SetInts("offset", offset[updateCycle]);
                 computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
+                Render();
+
                 timer -= timeframe;
                 updateCycle = (updateCycle + 1) % 8;
             }
+        }
+
+        void Render()
+        {
+            int kernelHandle = CA2Texture3D.FindKernel("CSMain");
+
+            CA2Texture3D.SetBuffer(kernelHandle, "currentGeneration", buffer[updateCycle % 2]);
+
+            CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
+
+            CA2Texture3D.SetInt("maxVolume", maxVolume);
+
+            CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
         }
     }
 }

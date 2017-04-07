@@ -6,7 +6,6 @@ namespace CPUFluid
 {
     public class CPUFluidManager : MonoBehaviour
     {
-
         public int gridSize = 16;
         public int maxVolume = 8;
         int elementCount = 2;
