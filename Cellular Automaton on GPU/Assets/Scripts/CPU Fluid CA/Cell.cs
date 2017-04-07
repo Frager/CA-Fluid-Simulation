@@ -30,7 +30,7 @@ namespace CPUFluid
         {
             Cell copy = new Cell();
             copy.maxVolume = maxVolume;
-            copy.addContent(volume);
+            copy.volume = volume;
             copy.setDirection(direction);
             copy.moveElementId = moveElementId;
             int[] copyContent = new int[content.Length];

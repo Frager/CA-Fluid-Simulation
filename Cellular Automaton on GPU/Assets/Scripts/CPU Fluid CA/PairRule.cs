@@ -55,10 +55,12 @@ namespace CPUFluid
                                 }*/
                             }
                         }
-                        else
+                        else //vertical update if (updateCycle % 2 == 1)
                         {
+                            //sets volume of both cells to 0
                             newGen[x, y, z].volume = 0;
                             newGen[x, y + shift[updateCycle][1], z].volume = 0;
+                            //for each content (from highest to lowest density)
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
                                 //sum of bottom and top elenemt[id] amount
@@ -70,14 +72,8 @@ namespace CPUFluid
                                 newGen[x, y, z].volume += bottom;
 
                                 newGen[x, y + shift[updateCycle][1], z].content[id] = amount - bottom;
-                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;
-                                ////sets content of bottom cell to 'bottom' amount
-                                //newGen[x, y, z].addContent(bottom - currentGen[x, y, z].content[id]);
-                                ////sets content of top cell to 'amount-bottom' amount
-                                //newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].addContent(amount - bottom - currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].volume);
-                            }
+                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;}
                         }
-
                     }
                 }
             }
