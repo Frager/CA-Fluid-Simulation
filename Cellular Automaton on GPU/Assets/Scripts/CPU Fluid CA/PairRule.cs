@@ -57,28 +57,27 @@ namespace CPUFluid
                         }
                         else
                         {
-                            volume = 0;
+                            newGen[x, y, z].volume = 0;
                             newGen[x, y + shift[updateCycle][1], z].volume = 0;
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
                                 //sum of bottom and top elenemt[id] amount
                                 amount = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
                                 //min of available space in bottom cell or content amount
-                                int bottom = (int)Math.Min(maxVolume - volume, Math.Min(elements[id].density, 1) * amount);
-                                volume += bottom;
+                                int bottom = (int)Math.Min(maxVolume - newGen[x, y, z].volume, Math.Min(elements[id].density, 1) * amount);
 
                                 newGen[x, y, z].content[id] = bottom;
-                                newGen[x, y, z].volume = volume;
+                                newGen[x, y, z].volume += bottom;
 
-                                newGen[x , y + shift[updateCycle][1], z ].content[id] = amount - bottom;
-                                newGen[x , y + shift[updateCycle][1], z ].volume += amount - bottom;
+                                newGen[x, y + shift[updateCycle][1], z].content[id] = amount - bottom;
+                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;
                                 ////sets content of bottom cell to 'bottom' amount
                                 //newGen[x, y, z].addContent(bottom - currentGen[x, y, z].content[id]);
                                 ////sets content of top cell to 'amount-bottom' amount
                                 //newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].addContent(amount - bottom - currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].volume);
                             }
                         }
-                                      
+
                     }
                 }
             }

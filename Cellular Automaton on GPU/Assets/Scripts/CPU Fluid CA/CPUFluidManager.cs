@@ -42,14 +42,14 @@ namespace CPUFluid
         
         float timer = 0;
         float timeframe = 0.1f;
-        float fillAmount = 0;
+        float updateCount = 0;
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
                 //for testing if content is correct
-                if (fillAmount == 300)
+                if (updateCount == 300)
                 {
                     int content = 0;
                     for (int x = 0; x < currentGen.GetLength(0) - 1; ++x)
@@ -64,17 +64,17 @@ namespace CPUFluid
                     }
                     print("content " + content);
                 }
-                if (fillAmount < 200)
+                if (updateCount < 200)
                 {
-                    currentGen[8, 8, 8].addContent(1, 1);
+                        currentGen[8, 0, 8].addContent(1, 1);
                     //currentGen[7, 0, 7].addContent(1, 0);
                 }
-                if (fillAmount < 200)
-                {
-                    //currentGen[8, 0, 8].addContent(1, 0);
-                    //currentGen[7, 0, 7].addContent(1, 1);
-                }
-                fillAmount++;
+                //if (updateCount < 200)
+                //{
+                //        currentGen[8, 0, 8].addContent(1, 0);
+                //    //currentGen[7, 0, 7].addContent(1, 1);
+                //}
+                updateCount++;
                 timer -= timeframe;
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
