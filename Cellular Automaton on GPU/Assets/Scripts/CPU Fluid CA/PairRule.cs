@@ -31,7 +31,7 @@ namespace CPUFluid
 
                                 difference = (mean - currentGen[x, y, z].content[id]);
 
-                                if (Math.Abs(difference) < 2)
+                                if (mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id])
                                 {
                                     difference = 0;
                                 }
