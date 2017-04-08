@@ -42,17 +42,6 @@ namespace CPUFluid
                                 newGen[x, y, z].volume += amount;
                                 newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] -= amount;
                                 newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].volume -= amount;
-
-                                /*if (currentGen[x, y, z].content[id] > 0 || currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] > 0)
-                                {
-                                    print("Update Cycle: " + updateCycle);
-                                    print("Cell: (" + x + ", " + y + ", " + z + ") --- content: " + currentGen[x, y, z].content[id]);
-                                    print("Neighbour: (" + (x + shift[updateCycle][0]) + ", " + (y + shift[updateCycle][1]) + ", " + (z + shift[updateCycle][2]) + ") --- content: " + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
-                                    print("Mean: " + mean);
-                                    print("Cell: (" + x + ", " + y + ", " + z + ") --- new content: " + newGen[x, y, z].content[id]);
-                                    print("Neighbour: (" + (x + shift[updateCycle][0]) + ", " + (y + shift[updateCycle][1]) + ", " + (z + shift[updateCycle][2]) + ") --- new content: " + newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
-                                    print("------------------------------------------------------------------");
-                                }*/
                             }
                         }
                         else
