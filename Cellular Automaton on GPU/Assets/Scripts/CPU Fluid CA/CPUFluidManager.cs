@@ -70,8 +70,7 @@ namespace CPUFluid
                 }
                 if (updateCount < 100 && updateCount % 2 == 0)
                 {
-                    if(currentGen[8, 15, 8].volume < maxVolume)
-                        currentGen[8, 15, 8].addContent(1, 1);
+                        currentGen[8, 8, 8].addContent(1, 1);
                     //currentGen[7, 0, 7].addContent(1, 0);
                 }
                 if (updateCount < 100 && updateCount % 2 == 0)

@@ -79,6 +79,7 @@ namespace GPUFLuid
             {
                 computeShader.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
                 computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
+                computeShader.SetInt("maxVolume", maxVolume);
                 computeShader.SetInts("offset", offset[updateCycle]);
                 computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
                 Render();

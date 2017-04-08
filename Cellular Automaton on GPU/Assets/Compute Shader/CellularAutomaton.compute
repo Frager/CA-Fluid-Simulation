@@ -18,11 +18,16 @@ static int Viscosities[] =
 	0, 0, 0, 0, 0, 0, 0, 0
 };
 
+static int Densities[] =
+{
+	0, 1, 2, 3, 4, 5, 6, 7
+};
+
 StructuredBuffer<Cell> currentGeneration;
 RWStructuredBuffer<Cell> newGeneration;
 
-
 uint size;
+int maxVolume;
 int3 offset;
 
 [numthreads(8, 8, 8)]
@@ -34,6 +39,11 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	}
 
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
+
+	if (id.x == 15 || id.y == 15 || id.z == 15)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -1;
+	}
 }
 
 [numthreads(4, 8, 8)]
@@ -41,6 +51,11 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 {
 	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)] = currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)];
 	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)] = currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)];
+
+	if (newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume == -1 || newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume == -1)
+	{
+		return;
+	}
 
 	int mean, difference, amount;
 
@@ -51,7 +66,7 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 
 		difference = mean - currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i];
 
-		if (abs(difference) < 2)
+		if (mean == currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] || mean == currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i])
 		{
 			difference = 0;
 		}
@@ -64,22 +79,48 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume -= amount;
 	}
 
-	if (id.x * 2 + offset.x == 8 && id.y == 0 && id.z == 8)
+	if (id.x * 2 + offset.x == 8 && id.y == 8 && id.z == 8)
 	{
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[0] += 1;
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[1] += 1;
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
 	}
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(8, 4, 8)]
 void UpdateY(uint3 id : SV_DispatchThreadID)
 {
-	newGeneration[ADDRESS(id.x, id.y, id.z, size)] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)];
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)];
 
-	if (id.x == 8 && id.y == 0 && id.z == 8)
+	if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume == -1 || newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume == -1)
 	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[0] += 1;
-		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume += 1;
+		return;
+	}
+
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume = 0;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = 0;
+
+	int amount, bottom;
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		//sum of bottom and top elenemt[id] amount
+		amount = (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i]);
+		//min of available space in bottom cell or content amount
+		bottom = (int)min(maxVolume - newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, min(Densities[i], 1) * amount);
+
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] = bottom;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += bottom;
+
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i] = amount - bottom;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += amount - bottom;
+	}
+
+	if (id.x == 8 && id.y * 2 + offset.y == 8 && id.z == 8)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[1] += 1;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
 	}
 }
 
@@ -88,6 +129,11 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 {
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)];
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)];
+
+	if (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1 || newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1)
+	{
+		return;
+	}
 
 	int mean, difference, amount;
 
@@ -98,7 +144,7 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 		
 		difference = mean - currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i];
 
-		if (abs(difference) < 2)
+		if (mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] || mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i])
 		{
 			difference = 0;
 		}
@@ -111,9 +157,9 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume -= amount;
 	}
 
-	if (id.x == 8 && id.y == 0 && 8 == id.z * 2 + offset.z)
+	if (id.x == 8 && id.y == 8 && 8 == id.z * 2 + offset.z)
 	{
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[0] += 1;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[1] += 1;
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
 	}
 }
