@@ -65,8 +65,6 @@ public class CellularAutomatonFinis : MonoBehaviour {
         computeShader.Dispatch(kernelHandle, size / 8, size / 8, size / 8);
     }
 
-    int counter = 0;
-
     void NextGeneration()
     {
         UpdateMethod();
@@ -135,11 +133,7 @@ public class CellularAutomatonFinis : MonoBehaviour {
 
         if (buffer == 1)
         {
-            //if(counter < 3)
-                computeShader.SetInts("fill", new int[] { 2, 3, 2, elementID });
-            //else
-             //   computeShader.SetInts("fill", new int[] { 4, 4, 4, elementID });
-            //print(++counter);
+            computeShader.SetInts("fill", new int[] { 2, 3, 2, elementID });
             computeShader.SetTexture(kernelHandle, "NewCells", cellBuffer1);
             computeShader.SetTexture(kernelHandle, "OldCells", cellBuffer2);
         }

@@ -314,6 +314,8 @@ static int triTable[256][16] =
 
 StructuredBuffer<Cell> currentGeneration;
 
+RWStructuredBuffer<float3> vertices;
+
 
 /*
 Linearly interpolate the position where an isosurface cuts
@@ -429,10 +431,10 @@ TRIANGLES Polygonise(GRIDCELL grid, int isolevel)
 	return triangles;
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(1, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	GRIDCELL cell;
+	/*GRIDCELL cell;
 	cell.p[0] = int3(id.x - 1, id.y - 1, id.z + 1);
 	cell.p[1] = int3(id.x + 1, id.y - 1, id.z + 1);
 	cell.p[2] = int3(id.x + 1, id.y - 1, id.z - 1);
@@ -449,5 +451,18 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	cell.val[4] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z + 1), 16)].volume;
 	cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), 16)].volume;
 	cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z - 1), 16)].volume;
-	cell.val[7] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z - 1), 16)].volume;
+	cell.val[7] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z - 1), 16)].volume;*/
+
+	if (id.x == 0)
+	{
+		vertices[id.x] = float3(0, 0, 0);
+	}
+	else if (id.x == 1)
+	{
+		vertices[id.x] = float3(2, 2, 0);
+	}
+	else if (id.x == 2)
+	{
+		vertices[id.x] = float3(4, 0, 0);
+	}
 }
