@@ -124,11 +124,11 @@ namespace CPUFluid
             }
             else if (cell.volume == cell.maxVolume)
             {
-                color = new Color(0.8f * (float)(cell.content[1] +4)/ (float)cell.maxVolume, .3f, 0.8f * (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
+                color = new Color(0.8f * (float)(cell.content[1] +4)/ (float)cell.maxVolume, 0.8f * (float)(cell.content[2] + 4) / (float)cell.maxVolume, 0.8f * (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
             }
             else if (cell.volume >= 1)
             {
-                color = new Color((float)(cell.content[1] + 4) / (float)(cell.maxVolume), 0, (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
+                color = new Color((float)(cell.content[1] + 4) / (float)(cell.maxVolume), (float)(cell.content[2] + 4) / (float)(cell.maxVolume), (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
             }
             if (cell.direction != Direction.none) color.r += 0.3f;
             return color;

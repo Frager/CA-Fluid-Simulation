@@ -9,7 +9,7 @@ namespace CPUFluid
         private int[][] shift = { new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, };
 
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
-        private int mean, difference, amount, volume;
+        private int mean, difference, amount;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
@@ -22,21 +22,26 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].copyCell();
 
-                        if (updateCycle % 2 == 0)
+                        if (updateCycle % 2 == 0) //horizontal update
                         {
+                            //for each content (from highest to lowest density)
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
+                                //mean = both content[id] / 2
                                 mean = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id]) / 2;
-
+                                //the difference from current cell content to mean
+                                //if difference > 0 current cell gets content from neighbour cell
+                                //if difference < 0 neighbour cell gets content from current cell
                                 difference = (mean - currentGen[x, y, z].content[id]);
-
+                                //if one cell content == mean set difference = 0 
                                 if (mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id])
                                 {
                                     difference = 0;
                                 }
-
+                                //take viscosity into account (difference - viscosity)
                                 amount = Math.Sign(difference) * Math.Max(Math.Abs(difference) - elements[id].viscosity, 0);
-
+                                
+                                //swap contents
                                 newGen[x, y, z].content[id] += amount;
                                 newGen[x, y, z].volume += amount;
                                 newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] -= amount;

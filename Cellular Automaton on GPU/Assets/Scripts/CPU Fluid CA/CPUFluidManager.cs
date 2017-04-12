@@ -8,7 +8,7 @@ namespace CPUFluid
     {
         public int gridSize = 16;
         public int maxVolume = 8;
-        int elementCount = 2;
+        int elementCount = 3;
 
         public Material testMaterial;
         public SimpleVisuals visuals;
@@ -49,7 +49,7 @@ namespace CPUFluid
             if (timer >= timeframe)
             {
                 //for testing if content is correct
-                if (updateCount == 150)
+                if (updateCount == 1000)
                 {
                     int content = 0;
                     for (int x = 0; x < currentGen.GetLength(0); ++x)
@@ -66,12 +66,12 @@ namespace CPUFluid
                 }
                 if (updateCount < 100)
                 {
-                    currentGen[8, 8, 8].addContent(1, 1);
                 }
                 if (updateCount < 100)
                 {
-                    currentGen[8, 14, 8].addContent(1, 0);
-                    //currentGen[7, 0, 7].addContent(1, 1);
+                    currentGen[8, 15, 8].addContent(1, 0);
+                    currentGen[8, 15, 8].addContent(1, 1);
+                    //currentGen[8, 8, 8].addContent(1, 2);
                 }
 
                 updateRule.updateCells(currentGen, newGen);
@@ -122,10 +122,13 @@ namespace CPUFluid
         {
             elements = new Element[elementCount];
 
-            for (int i = 0; i < elementCount; ++i)
-            {
-                elements[i] = new Element(i,  i, (float)i + 0.5f);
-            }
+            //Element (id, viscosity, density)
+            //gas
+            //elements[0] = new Element(0, -1, 0.45f);
+            elements[0] = new Element(0, 1, 1f);
+            //wasser
+            elements[1] = new Element(1, 2, 2f);
+            //elements[2] = new Element(1, 1, 2f);
         }
     }
     
