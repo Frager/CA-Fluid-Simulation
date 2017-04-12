@@ -40,7 +40,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
 
-	if (id.x == 15 || id.y == 15 || id.z == 15)
+	if (id.x == 0 || id.y == 0 || id.z == 0 || id.x == 15 || id.y == 15 || id.z == 15)
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -1;
 	}
@@ -130,7 +130,7 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)];
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)];
 
-	if (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1 || newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1)
+	if (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1 || newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume == -1)
 	{
 		return;
 	}

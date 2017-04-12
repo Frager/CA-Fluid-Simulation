@@ -42,21 +42,21 @@ namespace CPUFluid
         
         float timer = 0;
         float timeframe = 0.1f;
-        float updateCount = 0;
+        int updateCount = 0;
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
                 //for testing if content is correct
-                if (updateCount == 100)
+                if (updateCount == 400)
                 {
                     int content = 0;
-                    for (int x = 0; x < currentGen.GetLength(0) - 1; ++x)
+                    for (int x = 0; x < currentGen.GetLength(0); ++x)
                     {
-                        for (int y = 0; y < currentGen.GetLength(1) - 1; ++y)
+                        for (int y = 0; y < currentGen.GetLength(1); ++y)
                         {
-                            for (int z = 0; z < currentGen.GetLength(2) - 1; ++z)
+                            for (int z = 0; z < currentGen.GetLength(2); ++z)
                             {
                                 content += currentGen[x, y, z].volume;
                             }
@@ -66,19 +66,20 @@ namespace CPUFluid
                 }
                 if (updateCount < 100)
                 {
-                    //currentGen[8, 8, 8].addContent(1, 1);
-                    //currentGen[7, 0, 7].addContent(1, 0);
+                    currentGen[8, 8, 8].addContent(1, 1);
                 }
                 if (updateCount < 100)
                 {
-                    currentGen[8, 0, 8].addContent(1, 0);
+                    //currentGen[8, 0, 8].addContent(1, 0);
                     //currentGen[7, 0, 7].addContent(1, 1);
                 }
-                updateCount++;
-                timer -= timeframe;
+
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
                 updateTexture();
+
+                updateCount++;
+                timer -= timeframe;
             }
         }
 
@@ -106,7 +107,7 @@ namespace CPUFluid
                 {
                     for (int x = 0; x < gridSize; ++x)
                     {
-                        colors[x + y * gridSize + z * gridsize2] = (Color)currentGen[x,y,z];
+                        colors[x + y * gridSize + z * gridsize2] = (Color)currentGen[x, y, z];
                     }
                 }
             }
@@ -123,7 +124,7 @@ namespace CPUFluid
 
             for (int i = 0; i < elementCount; ++i)
             {
-                elements[i] = new Element(i,  i + 1, (float)i + 0.5f);
+                elements[i] = new Element(i,  i, (float)i + 0.5f);
             }
         }
     }

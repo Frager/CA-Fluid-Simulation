@@ -22,26 +22,25 @@ namespace CPUFluid
                         newGen[x, y, z] = currentGen[x, y, z].copyCell();
                         newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].copyCell();
 
-
                         if (updateCycle % 2 == 0)
                         {
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
-                                mean = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]) / 2;
+                                mean = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id]) / 2;
 
                                 difference = (mean - currentGen[x, y, z].content[id]);
 
-                                if (mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id])
+                                if (mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id])
                                 {
                                     difference = 0;
                                 }
 
-                                amount = Math.Sign(difference) * Math.Max(Math.Abs(difference) - 0 /*elements[id].viscosity*/, 0);
+                                amount = Math.Sign(difference) * Math.Max(Math.Abs(difference) - elements[id].viscosity, 0);
 
                                 newGen[x, y, z].content[id] += amount;
                                 newGen[x, y, z].volume += amount;
-                                newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id] -= amount;
-                                newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].volume -= amount;
+                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] -= amount;
+                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume -= amount;
                             }
                         }
                         else //vertical update if (updateCycle % 2 == 1)
@@ -53,7 +52,7 @@ namespace CPUFluid
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
                                 //sum of bottom and top elenemt[id] amount
-                                amount = (currentGen[x, y, z].content[id] + currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].content[id]);
+                                amount = (currentGen[x, y, z].content[id] + currentGen[x, y + shift[updateCycle][1], z].content[id]);
                                 //min of available space in bottom cell or content amount
                                 int bottom = (int)Math.Min(maxVolume - newGen[x, y, z].volume, Math.Min(elements[id].density, 1) * amount);
 
