@@ -24,7 +24,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (cell.volume < 0)
 	{
-		color = float4(1, 0, 0, 1);
+		color = float4(0, 0, 0, 0);
 	}
 	else if (cell.volume > maxVolume)
 	{
