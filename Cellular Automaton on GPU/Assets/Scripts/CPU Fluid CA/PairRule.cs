@@ -19,11 +19,11 @@ namespace CPUFluid
                 {
                     for (int x = offset[updateCycle][0]; x < currentGen.GetLength(0) - offset[updateCycle][0]; x += (1 + shift[updateCycle][0]))
                     {
-                        newGen[x, y, z] = currentGen[x, y, z].copyCell();
-                        newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]].copyCell();
-
                         if (updateCycle % 2 == 0) //horizontal update
                         {
+                            newGen[x, y, z].volume = 0;
+                            newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume = 0;
+
                             //for each content (from highest to lowest density)
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
@@ -33,19 +33,28 @@ namespace CPUFluid
                                 //if difference > 0 current cell gets content from neighbour cell
                                 //if difference < 0 neighbour cell gets content from current cell
                                 difference = (mean - currentGen[x, y, z].content[id]);
+
                                 //if one cell content == mean set difference = 0 
-                                if (mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id])
-                                {
-                                    difference = 0;
-                                }
+                                difference *= (1 - Convert.ToInt32(mean == currentGen[x, y, z].content[id] || mean == currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id]));
+
                                 //take viscosity into account (difference - viscosity)
                                 amount = Math.Sign(difference) * Math.Max(Math.Abs(difference) - elements[id].viscosity, 0);
-                                
+
+                                if ((newGen[x, y, z].volume + currentGen[x, y, z].content[id] + amount) > maxVolume)
+                                {
+                                    amount -= (newGen[x, y, z].volume + currentGen[x, y, z].content[id] + amount - maxVolume);
+                                }
+
+                                if ((newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] - amount) > maxVolume)
+                                {
+                                    amount += newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] - amount - maxVolume;
+                                }
+
                                 //swap contents
-                                newGen[x, y, z].content[id] += amount;
-                                newGen[x, y, z].volume += amount;
-                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] -= amount;
-                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume -= amount;
+                                newGen[x, y, z].content[id] = currentGen[x, y, z].content[id] + amount;
+                                newGen[x, y, z].volume += currentGen[x, y, z].content[id] + amount;
+                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] = currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] - amount;
+                                newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume += currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] - amount;
                             }
                         }
                         else //vertical update if (updateCycle % 2 == 1)
@@ -65,7 +74,8 @@ namespace CPUFluid
                                 newGen[x, y, z].volume += bottom;
 
                                 newGen[x, y + shift[updateCycle][1], z].content[id] = amount - bottom;
-                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;}
+                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;
+                            }
                         }
                     }
                 }

@@ -57,26 +57,37 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
+	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume = 0;
+	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume = 0;
+
 	int mean, difference, amount;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	for (int i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		mean = (currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i]) / 2;
 
 		difference = mean - currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i];
 
-		if (mean == currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] || mean == currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i])
-		{
-			difference = 0;
-		}
+		difference *= 1 - (mean == currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] || mean == currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i]);
 
 		amount = sign(difference) * max(abs(difference) - Viscosities[i], 0);
 
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] += amount;
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += amount;
-		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] -= amount;
-		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume -= amount;
+		if ((newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + amount) > maxVolume)
+		{
+			amount -= (newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + amount - maxVolume);
+		}
+
+		if ((newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - amount) > maxVolume)
+		{
+			amount += (newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - amount - maxVolume);
+		}
+
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] = currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + amount;
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + amount;
+
+		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] = currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - amount;
+		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume += currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - amount;
 	}
 
 	if (id.x * 2 + offset.x == 8 && id.y == 8 && id.z == 8)
@@ -135,26 +146,37 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
+	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume = 0;
+	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume = 0;
+
 	int mean, difference, amount;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	for (int i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		mean = (currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i]) / 2;
 		
 		difference = mean - currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i];
-
-		if (mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] || mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i])
-		{
-			difference = 0;
-		}
+		
+		difference *= 1 - (mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] || mean == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i]);
 
 		amount = sign(difference) * max(abs(difference) - Viscosities[i], 0);
 		
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] += amount;
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += amount;
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] -= amount;
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume -= amount;
+		if ((newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + amount) > maxVolume)
+		{
+			amount -= (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + amount - maxVolume);
+		}
+
+		if ((newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - amount) > maxVolume)
+		{
+			amount += (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - amount - maxVolume);
+		}
+
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + amount;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + amount;
+
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - amount;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume += currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - amount;
 	}
 
 	if (id.x == 8 && id.y == 8 && 8 == id.z * 2 + offset.z)

@@ -18,7 +18,12 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
-			StructuredBuffer<float3> vertices;
+			struct Triangle
+			{
+				float3 vertex[3];
+			};
+
+			StructuredBuffer<Triangle> triangles;
 
 			#include "UnityCG.cginc"
 
@@ -47,16 +52,15 @@
 			GS_INPUT vert (VS_INPUT input)
 			{
 				GS_INPUT o;
-				o.position.xyz = vertices[input.vertexid];
+				o.position.xyz = triangles[input.vertexid / 3].vertex[input.vertexid % 3];
 				o.position.w = 1.0;
 				o.vertexid = input.vertexid;
 				return o;
 			}
 
-			[maxvertexcount(6)]
+			[maxvertexcount(64)]
 			void geom(triangle GS_INPUT p[3], inout TriangleStream<PS_INPUT> triStream)
 			{
-
 				PS_INPUT pIn = (PS_INPUT)0;
 
 				pIn.position = mul(UNITY_MATRIX_MVP, p[0].position);

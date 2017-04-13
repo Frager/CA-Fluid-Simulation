@@ -49,7 +49,7 @@ namespace CPUFluid
             if (timer >= timeframe)
             {
                 //for testing if content is correct
-                if (updateCount == 1000)
+                if (updateCount == 200)
                 {
                     int content = 0;
                     for (int x = 0; x < currentGen.GetLength(0); ++x)
@@ -69,8 +69,8 @@ namespace CPUFluid
                 }
                 if (updateCount < 100)
                 {
-                    currentGen[8, 15, 8].addContent(1, 0);
-                    currentGen[8, 15, 8].addContent(1, 1);
+                    //currentGen[8, 15, 8].addContent(1, 0);
+                    currentGen[8, 14, 8].addContent(1, 1);
                     //currentGen[8, 8, 8].addContent(1, 2);
                 }
 

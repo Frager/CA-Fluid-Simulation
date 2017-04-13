@@ -1,5 +1,5 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
+#pragma kernel Initialize
 
 #define NUMBER_OF_ELEMENTS 2
 #define ADDRESS(x,y,z,size) x + y * size + z * size * size
@@ -10,16 +10,18 @@ struct Cell
 	int content[NUMBER_OF_ELEMENTS];
 };
 
-typedef struct {
-	int3 tri[5][3];
-} TRIANGLES;
+struct Triangle
+{
+	float3 vertex[3];
+};
 
-typedef struct {
-	int3 p[8];
+struct GridCell
+{
+	float3 p[8];
 	float val[8];
-} GRIDCELL;
+};
 
-static int edgeTable[256] = {
+const static int edgeTable[256] = {
 	0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 	0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
 	0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -53,7 +55,7 @@ static int edgeTable[256] = {
 	0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
 	0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0 };
 
-static int triTable[256][16] =
+const static int triTable[256][16] =
 { { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 { 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 { 0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -312,19 +314,19 @@ static int triTable[256][16] =
 { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };
 
 
+RWStructuredBuffer<Cell> newGeneration;
 StructuredBuffer<Cell> currentGeneration;
 
-RWStructuredBuffer<float3> vertices;
-
+AppendStructuredBuffer<Triangle> triangles;
 
 /*
 Linearly interpolate the position where an isosurface cuts
 an edge between two vertices, each with their own scalar value
 */
-int3 VertexInterp(int isolevel, int3 p1, int3 p2, float valp1, float valp2)
+float3 VertexInterp(float isolevel, float3 p1, float3 p2, float valp1, float valp2)
 {
 	float mu;
-	int3 p;
+	float3 p;
 
 	if (abs(isolevel - valp1) < 0.00001)
 		return(p1);
@@ -340,33 +342,12 @@ int3 VertexInterp(int isolevel, int3 p1, int3 p2, float valp1, float valp2)
 	return(p);
 }
 
-/*
-Given a grid cell and an isolevel, calculate the triangular
-facets required to represent the isosurface through the cell.
-Return the number of triangular facets, the array "triangles"
-will be loaded up with the vertices at most 5 triangular facets.
-0 will be returned if the grid cell is either totally above
-of totally below the isolevel.
-*/
-TRIANGLES Polygonise(GRIDCELL grid, int isolevel)
+
+void Polygonise(GridCell grid, float isolevel)
 {
-	int i, ntriang;
 	int cubeindex;
-	int3 vertlist[12];
+	float3 vertlist[12];
 
-	TRIANGLES triangles;
-	for (i = 0; i < 5; ++i)
-	{
-		for (int j = 0; j < 3; ++j)
-		{
-			triangles.tri[i][j] = int3(-1, -1, -1);
-		}
-	}
-
-	/*
-	Determine the index into the edge table which
-	tells us which vertices are inside of the surface
-	*/
 	cubeindex = 0;
 	if (grid.val[0] > isolevel) cubeindex |= 1;
 	if (grid.val[1] > isolevel) cubeindex |= 2;
@@ -377,11 +358,11 @@ TRIANGLES Polygonise(GRIDCELL grid, int isolevel)
 	if (grid.val[6] > isolevel) cubeindex |= 64;
 	if (grid.val[7] > isolevel) cubeindex |= 128;
 
-	/* Cube is entirely in/out of the surface */
 	if (edgeTable[cubeindex] == 0)
-		return triangles;
+	{
+		return;
+	}
 
-	/* Find the vertices where the surface intersects the cube */
 	if (edgeTable[cubeindex] & 1)
 		vertlist[0] =
 		VertexInterp(isolevel, grid.p[0], grid.p[1], grid.val[0], grid.val[1]);
@@ -419,50 +400,67 @@ TRIANGLES Polygonise(GRIDCELL grid, int isolevel)
 		vertlist[11] =
 		VertexInterp(isolevel, grid.p[3], grid.p[7], grid.val[3], grid.val[7]);
 
-	/* Create the triangle */
-	ntriang = 0;
-	for (i = 0; triTable[cubeindex][i] != -1; i += 3) {
-		triangles.tri[ntriang][0] = vertlist[triTable[cubeindex][i]];
-		triangles.tri[ntriang][1] = vertlist[triTable[cubeindex][i + 1]];
-		triangles.tri[ntriang][2] = vertlist[triTable[cubeindex][i + 2]];
-		ntriang++;
-	}
+	Triangle tris;
 
-	return triangles;
+	[unroll]
+	for (int i = 0, ntriang = 0; triTable[cubeindex][i] != -1; i += 3, ++ntriang) {
+		tris.vertex[0] = vertlist[triTable[cubeindex][i]];
+		tris.vertex[1] = vertlist[triTable[cubeindex][i + 1]];
+		tris.vertex[2] = vertlist[triTable[cubeindex][i + 2]];
+
+		triangles.Append(tris);
+	}
 }
 
-[numthreads(1, 1, 1)]
+[numthreads(8, 8, 8)]
+void Initialize(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < 15 || id.y < 15 || id.z < 15)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume = 1;
+	}
+	else
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume = 0;
+	}
+}
+
+[numthreads(8, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	/*GRIDCELL cell;
-	cell.p[0] = int3(id.x - 1, id.y - 1, id.z + 1);
-	cell.p[1] = int3(id.x + 1, id.y - 1, id.z + 1);
-	cell.p[2] = int3(id.x + 1, id.y - 1, id.z - 1);
-	cell.p[3] = int3(id.x - 1, id.y - 1, id.z - 1);
-	cell.p[4] = int3(id.x - 1, id.y + 1, id.z + 1);
-	cell.p[5] = int3(id.x + 1, id.y + 1, id.z + 1);
-	cell.p[6] = int3(id.x + 1, id.y + 1, id.z - 1);
-	cell.p[7] = int3(id.x - 1, id.y + 1, id.z - 1);
+	GridCell cell;
+	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < 15 || id.y < 15 || id.z < 15)
+	{
+		cell.p[0] = int3(id.x - 1, id.y - 1, id.z + 1);
+		cell.p[1] = int3(id.x + 1, id.y - 1, id.z + 1);
+		cell.p[2] = int3(id.x + 1, id.y - 1, id.z - 1);
+		cell.p[3] = int3(id.x - 1, id.y - 1, id.z - 1);
+		cell.p[4] = int3(id.x - 1, id.y + 1, id.z + 1);
+		cell.p[5] = int3(id.x + 1, id.y + 1, id.z + 1);
+		cell.p[6] = int3(id.x + 1, id.y + 1, id.z - 1);
+		cell.p[7] = int3(id.x - 1, id.y + 1, id.z - 1);
 
-	cell.val[0] = currentGeneration[ADDRESS((id.x - 1), (id.y - 1), (id.z + 1), 16)].volume;
-	cell.val[1] = currentGeneration[ADDRESS((id.x + 1), (id.y - 1), (id.z + 1), 16)].volume;
-	cell.val[2] = currentGeneration[ADDRESS((id.x + 1), (id.y - 1), (id.z - 1), 16)].volume;
-	cell.val[3] = currentGeneration[ADDRESS((id.x - 1), (id.y - 1), (id.z - 1), 16)].volume;
-	cell.val[4] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z + 1), 16)].volume;
-	cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), 16)].volume;
-	cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z - 1), 16)].volume;
-	cell.val[7] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z - 1), 16)].volume;*/
+		cell.val[0] = currentGeneration[ADDRESS((id.x - 1), (id.y - 1), (id.z + 1), 16)].volume;
+		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), (id.y - 1), (id.z + 1), 16)].volume;
+		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), (id.y - 1), (id.z - 1), 16)].volume;
+		cell.val[3] = currentGeneration[ADDRESS((id.x - 1), (id.y - 1), (id.z - 1), 16)].volume;
+		cell.val[4] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z + 1), 16)].volume;
+		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), 16)].volume;
+		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z - 1), 16)].volume;
+		cell.val[7] = currentGeneration[ADDRESS((id.x - 1), (id.y + 1), (id.z - 1), 16)].volume;
+	}
+	else
+	{
 
-	if (id.x == 0)
-	{
-		vertices[id.x] = float3(0, 0, 0);
+		cell.val[0] = 0;
+		cell.val[1] = 0;
+		cell.val[2] = 0;
+		cell.val[3] = 0;
+		cell.val[4] = 0;
+		cell.val[5] = 0;
+		cell.val[6] = 0;
+		cell.val[7] = 0;
 	}
-	else if (id.x == 1)
-	{
-		vertices[id.x] = float3(2, 2, 0);
-	}
-	else if (id.x == 2)
-	{
-		vertices[id.x] = float3(4, 0, 0);
-	}
+
+	Polygonise(cell, 0);
 }

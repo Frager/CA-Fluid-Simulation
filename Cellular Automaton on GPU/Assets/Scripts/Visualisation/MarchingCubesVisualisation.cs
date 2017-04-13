@@ -5,27 +5,33 @@ public class MarchingCubesVisualisation : MonoBehaviour {
     public ComputeShader marchingCubesCS;
     public Material material;
 
-    private ComputeBuffer vertices;
+    private ComputeBuffer cells;
+    private ComputeBuffer triangles;
 
 	void Start ()
     {
-        vertices = new ComputeBuffer(3, 3 * sizeof(float), ComputeBufferType.GPUMemory);
+        cells = new ComputeBuffer(16 * 16 * 16, 3 * sizeof(int));
+        marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("Initialize"), "newGeneration", cells);
+        marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("Initialize"), 2, 2, 2);
 
-        marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "vertices", vertices);
-        marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), 3, 1, 1);
+        triangles = new ComputeBuffer(1024, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+
+        marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
+        marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", cells);
+        marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), 2, 2, 2);
     }
 
 
     private void OnPostRender()
     {
         material.SetPass(0);
-        material.SetBuffer("vertices", vertices);
-
-        Graphics.DrawProcedural(MeshTopology.Triangles, 3);
+        material.SetBuffer("triangles", triangles);
+        print(triangles.count);
+        Graphics.DrawProcedural(MeshTopology.Triangles, triangles.count * 3);
     }
 
     void OnDisable()
     {
-        vertices.Release();
+        triangles.Release();
     }
 }
