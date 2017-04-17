@@ -10,13 +10,18 @@ namespace GPUFLuid
 
         public ComputeShader computeShader;
         public ComputeShader CA2Texture3D;
+        public ComputeShader marchingCubesCS;
 
         public Material testMaterial;
         public SimpleVisuals visuals;
 
-        private RenderTexture texture3D;
+        public RenderTexture texture3D;
 
         private ComputeBuffer[] buffer;
+
+        private ComputeBuffer triangles;
+        private ComputeBuffer args;
+        private int[] data;
 
         private int updateCycle = 0;
 
@@ -33,7 +38,7 @@ namespace GPUFLuid
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
             for(int i = 0; i < 8; ++i)
             {
@@ -44,12 +49,14 @@ namespace GPUFLuid
             Render();
         }
 
-        private void OnApplicationQuit()
+        private void OnDisable()
         {
             for(int i = 0; i < buffer.Length; ++i)
             {
                 buffer[i].Dispose();
             }
+            triangles.Dispose();
+            args.Release();
         }
 
         void InitializeBuffers()
@@ -67,6 +74,15 @@ namespace GPUFLuid
             computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
 
             computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+
+            args = new ComputeBuffer(4, sizeof(int), ComputeBufferType.IndirectArguments);
+            data = new int[4] { 0, 1, 0, 0 };
+            args.SetData(data);
+
+            triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+
+            ComputeBuffer.CopyCount(triangles, args, 0);
+            args.GetData(data);
         }
 
         private float timer = 0;
@@ -100,6 +116,21 @@ namespace GPUFLuid
             CA2Texture3D.SetInt("maxVolume", maxVolume);
 
             CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+
+            triangles.SetCounterValue(0);
+            marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
+            marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
+            marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);
+        }
+
+
+        private void OnPostRender()
+        {
+            ComputeBuffer.CopyCount(triangles, args, 0);
+            args.GetData(data);
+            testMaterial.SetPass(0);
+            testMaterial.SetBuffer("triangles", triangles);
+            Graphics.DrawProcedural(MeshTopology.Triangles, data[0] * 3);
         }
     }
 }

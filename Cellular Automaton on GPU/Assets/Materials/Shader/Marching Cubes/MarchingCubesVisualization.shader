@@ -1,18 +1,23 @@
-﻿Shader "Unlit/MarchingCubesVisualization"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Unlit/MarchingCubesVisualization"
 {
 	Properties
 	{
-		_MainTex ("Texture", 2D) = "white" {}
+		_MainTex("Texture", 3D) = "white" {}
 	}
+
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags{ "LightMode" = "ForwardBase" }
 		LOD 100
 
 		Pass
 		{
 			CGPROGRAM
-
+			#include "UnityLightingCommon.cginc"
 			#pragma target 5.0
 			#pragma vertex vert
 			#pragma geometry geom
@@ -43,13 +48,14 @@
 			struct PS_INPUT
 			{
 				float4 position : SV_POSITION;
-				float3 color : COLOR;
+				float light : BLENDINDICES;
+				float3 uv : TEXCOORDS;
 			};
 
-			sampler2D _MainTex;
+			sampler3D _MainTex;
 			float4 _MainTex_ST;
-			
-			GS_INPUT vert (VS_INPUT input)
+
+			GS_INPUT vert(VS_INPUT input)
 			{
 				GS_INPUT o;
 				o.position.xyz = triangles[input.vertexid / 3].vertex[input.vertexid % 3];
@@ -63,24 +69,32 @@
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				pIn.position = mul(UNITY_MATRIX_MVP, p[0].position);
-				pIn.color = float3(1.0f, 0.0f, 0.0f);
+				float3 normal = cross(p[2].position - p[1].position, p[0].position - p[1].position);
+				normal = UnityObjectToWorldNormal(normal);
+				float NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
+				float light = _LightColor0 * NdotL;
+
+				pIn.position = UnityObjectToClipPos(p[0].position);
+				pIn.light = light;
+				pIn.uv = p[0].position / 16.0;
 				triStream.Append(pIn);
 
-				pIn.position = mul(UNITY_MATRIX_MVP, p[1].position);
-				pIn.color = float3(0.0f, 1.0f, 0.0f);
+				pIn.position = UnityObjectToClipPos(p[1].position);
+				pIn.light = light;
+				pIn.uv = p[1].position / 16.0;
 				triStream.Append(pIn);
 
-				pIn.position = mul(UNITY_MATRIX_MVP, p[2].position);
-				pIn.color = float3(0.0f, 0.0f, 1.0f);
+				pIn.position = UnityObjectToClipPos(p[2].position);
+				pIn.light = light;
+				pIn.uv = p[2].position / 16.0;
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
 			}
 
-			fixed4 frag (PS_INPUT input) : SV_Target
+			fixed4 frag(PS_INPUT input) : SV_Target
 			{
-				return float4(input.color, 1);
+				return tex3D(_MainTex, input.uv) * input.light;
 			}
 			ENDCG
 		}
