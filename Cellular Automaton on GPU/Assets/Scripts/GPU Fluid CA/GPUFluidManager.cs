@@ -132,11 +132,11 @@ namespace GPUFLuid
 
         private void OnPostRender()
         {
-            //ComputeBuffer.CopyCount(triangles, args, 0);
-            //args.GetData(data);
+            ComputeBuffer.CopyCount(triangles, args, 0);
+            args.GetData(data);
             testMaterial.SetPass(0);
             testMaterial.SetBuffer("triangles", triangles);
-            Graphics.DrawProcedural(MeshTopology.Triangles, /*data[0]*/ 1024 * 3);
+            Graphics.DrawProcedural(MeshTopology.Triangles, data[0] * 3);
         }
     }
 }

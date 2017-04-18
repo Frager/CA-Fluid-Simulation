@@ -81,7 +81,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	{
 		Triangle tri;
 		tri.vertex[0] = float3(id.x * scale, id.y * scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale + left.volume / maxVol, id.z * scale);
+		tri.vertex[1] = float3(id.x * scale, id.y * scale + left.volume / maxVol * scale, id.z * scale);
 		tri.vertex[2] = float3(id.x * scale, id.y * scale, id.z * scale + scale);
 		triangles.Append(tri);
 
