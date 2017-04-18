@@ -93,8 +93,8 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 	{
 		//newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[0] += 1;
 		//newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[1] += 1;
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[1] += 4;
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 4;
 	}
 }
 
@@ -133,8 +133,8 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	{
 		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[0] += 1;
 		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[1] += 1;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[1] += 4;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 4;
 	}
 }
 
@@ -186,8 +186,8 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	{
 		//newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[0] += 1;
 		//newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[1] += 1;
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[1] += 4;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 4;
 	}
 }
 
