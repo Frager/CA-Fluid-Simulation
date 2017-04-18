@@ -114,9 +114,9 @@ namespace CPUFluid
                             }
 
 
-                            //testing aggregate change
-                            if (y == 0) currentGen[x, y, z].temperature = 100;
-                            if (y == currentGen.GetLength(2) - 2) currentGen[x, y, z].temperature = 0;
+                            ////testing aggregate change
+                            //if (y == 0) currentGen[x, y, z].temperature = 100;
+                            //if (y == currentGen.GetLength(2) - 2) currentGen[x, y, z].temperature = 0;
 
 
                             //check for aggregate state changes

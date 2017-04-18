@@ -21,13 +21,30 @@ namespace CPUFluid
         private Cell[,,] currentGen;
         //private CPUFluidCA CA;
         private Element[] elements;
-        
+
+        public Representation visualsRepresentation = Representation.Content;
+
+        public enum Representation
+        {
+            Content, Temperature
+        }
+
         void Start()
         {
             //init Cells (grid) and Element List
             CPUFluidCA CA = new CPUFluidCA();
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
+
+            for(int x = 0; x < gridSize; x++)
+            {
+                for (int z = 0; z < gridSize; z++)
+                {
+                    currentGen[x, 0, z].temperature = 100;
+                    currentGen[x, gridSize - 1, z].temperature = 0;
+                }
+            }
+
             initElements();
             updateRule.elements = elements;
             updateRule.maxVolume = maxVolume;
@@ -99,6 +116,9 @@ namespace CPUFluid
 
         void updateTexture()
         {
+            if (Input.GetKey(KeyCode.C)) visualsRepresentation = Representation.Content;
+            if (Input.GetKey(KeyCode.T)) visualsRepresentation = Representation.Temperature;
+
             int gridsize2 = gridSize * gridSize;
             Color[] colors = new Color[gridSize * gridsize2];
             for (int z = 0; z < gridSize; ++z)
@@ -107,7 +127,10 @@ namespace CPUFluid
                 {
                     for (int x = 0; x < gridSize; ++x)
                     {
-                        colors[x + y * gridSize + z * gridsize2] = (Color)currentGen[x, y, z];
+                        if(visualsRepresentation == Representation.Content)
+                            colors[x + y * gridSize + z * gridsize2] = (Color)currentGen[x, y, z];
+                        else
+                            colors[x + y * gridSize + z * gridsize2] = currentGen[x, y, z].getTempColor();
                     }
                 }
             }
