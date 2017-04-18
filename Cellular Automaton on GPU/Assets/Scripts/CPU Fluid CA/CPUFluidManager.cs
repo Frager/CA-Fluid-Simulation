@@ -70,7 +70,7 @@ namespace CPUFluid
                 if (updateCount < 100)
                 {
                     //currentGen[8, 15, 8].addContent(1, 0);
-                    currentGen[8, 14, 8].addContent(1, 1);
+                    currentGen[8, 14, 8].addContent(1, 2);
                     //currentGen[8, 8, 8].addContent(1, 2);
                 }
 
@@ -128,7 +128,7 @@ namespace CPUFluid
             //elements[0] = new Element(0, -1, 0.45f);
 
             //wasserdampf
-            elements[0] = new Element(0, -1, 0.45f);
+            elements[0] = new Element(0, -1, 0.4f);
             elements[0].setFreezeTransition(10f,2);
             //öl
             elements[1] = new Element(1, 2, 1f);

@@ -73,6 +73,8 @@ namespace CPUFluid
                         }
                         else //vertical update if (updateCycle % 2 == 1)
                         {
+                            
+
                             //sets volume of both cells to 0
                             newGen[x, y, z].volume = 0;
                             newGen[x, y + shift[updateCycle][1], z].volume = 0;
@@ -89,6 +91,36 @@ namespace CPUFluid
 
                                 newGen[x, y + shift[updateCycle][1], z].content[id] = amount - bottom;
                                 newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;
+                            }
+
+
+                            //testing aggregate change
+                            if (y == 0) currentGen[x, y, z].temperature = 100;
+                            if (y == currentGen.GetLength(2) - 2) currentGen[x, y, z].temperature = 0;
+
+
+                            //check for aggregate state changes
+                            for (int id = elements.Length - 1; id >= 0; --id)
+                            {
+                                if (newGen[x, y, z].content[id] > 0)
+                                {
+                                    if (currentGen[x, y, z].temperature >= elements[id].evaporateTemperature)
+                                    {
+                                        print("vape");
+                                        //temperature cost to evaporate
+                                        newGen[x, y, z].temperature -= 2f;
+                                        --newGen[x, y, z].content[id];
+                                        ++newGen[x, y, z].content[elements[id].evaporateElementId];
+                                    }
+                                    if (currentGen[x, y, z].temperature < elements[id].freezeTemperature)
+                                    {
+                                        print("freeze");
+                                        //temperature cost for freezing
+                                        newGen[x, y, z].temperature += 2f;
+                                        --newGen[x, y, z].content[id];
+                                        ++newGen[x, y, z].content[elements[id].freezeElementId];
+                                    }
+                                }
                             }
                         }
                     }
