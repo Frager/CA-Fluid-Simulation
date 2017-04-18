@@ -15,7 +15,7 @@ namespace GPUFLuid
         public Material testMaterial;
         public SimpleVisuals visuals;
 
-        public RenderTexture texture3D;
+        private RenderTexture texture3D;
 
         private ComputeBuffer[] buffer;
 
@@ -38,8 +38,6 @@ namespace GPUFLuid
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
-
             for(int i = 0; i < 8; ++i)
             {
                 KernelOrder[i] = computeShader.FindKernel(FunctionOrder[i]);
@@ -53,9 +51,9 @@ namespace GPUFLuid
         {
             for(int i = 0; i < buffer.Length; ++i)
             {
-                buffer[i].Dispose();
+                buffer[i].Release();
             }
-            triangles.Dispose();
+            triangles.Release();
             args.Release();
         }
 
@@ -126,11 +124,11 @@ namespace GPUFLuid
 
         private void OnPostRender()
         {
-            ComputeBuffer.CopyCount(triangles, args, 0);
-            args.GetData(data);
+            //ComputeBuffer.CopyCount(triangles, args, 0);
+            //args.GetData(data);
             testMaterial.SetPass(0);
             testMaterial.SetBuffer("triangles", triangles);
-            Graphics.DrawProcedural(MeshTopology.Triangles, data[0] * 3);
+            Graphics.DrawProcedural(MeshTopology.Triangles, /*data[0]*/ 1024 * 3);
         }
     }
 }

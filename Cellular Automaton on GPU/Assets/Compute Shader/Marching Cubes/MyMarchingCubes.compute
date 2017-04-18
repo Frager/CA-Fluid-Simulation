@@ -15,6 +15,8 @@ struct Triangle
 	float3 vertex[3];
 };
 
+static float maxVolume = 8.0;
+
 RWStructuredBuffer<Cell> newGeneration;
 StructuredBuffer<Cell> currentGeneration;
 AppendStructuredBuffer<Triangle> triangles;
@@ -35,6 +37,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+	Cell current = currentGeneration[ADDRESS(id.x, id.y, id.z, 16)];
 	Cell down = currentGeneration[ADDRESS(id.x, (id.y - 1), id.z, 16)];
 	Cell up = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, 16)];
 	Cell left = currentGeneration[ADDRESS((id.x - 1), id.y, id.z, 16)];
@@ -44,24 +47,24 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (currentGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume > 0)
 	{
-		return;
+		//return;
 	}
 
-	if (down.volume > 0 && id.y > 0)
+	if (down.volume > 0 && down.volume > current.volume && id.y > 0)
 	{
 		Triangle tri;
-		tri.vertex[0] = float3(id.x, id.y, id.z);
-		tri.vertex[1] = float3(id.x, id.y, id.z + 1);
-		tri.vertex[2] = float3(id.x + 1, id.y, id.z);
+		tri.vertex[0] = float3(id.x, id.y - 1 + down.volume / maxVolume, id.z);
+		tri.vertex[1] = float3(id.x, id.y - 1 + down.volume / maxVolume, id.z + 1);
+		tri.vertex[2] = float3(id.x + 1, id.y - 1 + down.volume / maxVolume, id.z);
 		triangles.Append(tri);
 
 		Triangle tri2;
-		tri2.vertex[0] = float3(id.x, id.y, id.z + 1);
-		tri2.vertex[1] = float3(id.x + 1, id.y, id.z + 1);
-		tri2.vertex[2] = float3(id.x + 1, id.y, id.z);
+		tri2.vertex[0] = float3(id.x, id.y - 1 + down.volume / maxVolume, id.z + 1);
+		tri2.vertex[1] = float3(id.x + 1, id.y - 1 + down.volume / maxVolume, id.z + 1);
+		tri2.vertex[2] = float3(id.x + 1, id.y - 1 + down.volume / maxVolume, id.z);
 		triangles.Append(tri2);
 	}
-	if (up.volume > 0 && id.y < 15)
+	if (up.volume > 0 && up.volume > current.volume && id.y < 15)
 	{
 		Triangle tri;
 		tri.vertex[2] = float3(id.x, id.y + 1, id.z);
@@ -75,59 +78,59 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		tri2.vertex[0] = float3(id.x + 1, id.y + 1, id.z);
 		triangles.Append(tri2);
 	}
-	if (left.volume > 0 && id.x > 0)
+	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
 	{
 		Triangle tri;
 		tri.vertex[0] = float3(id.x, id.y, id.z);
-		tri.vertex[1] = float3(id.x, id.y + 1, id.z);
+		tri.vertex[1] = float3(id.x, id.y + left.volume / maxVolume, id.z);
 		tri.vertex[2] = float3(id.x, id.y, id.z + 1);
 		triangles.Append(tri);
 
 		Triangle tri2;
-		tri2.vertex[0] = float3(id.x, id.y + 1, id.z);
-		tri2.vertex[1] = float3(id.x, id.y + 1, id.z + 1);
+		tri2.vertex[0] = float3(id.x, id.y + left.volume / maxVolume, id.z);
+		tri2.vertex[1] = float3(id.x, id.y + left.volume / maxVolume, id.z + 1);
 		tri2.vertex[2] = float3(id.x, id.y, id.z + 1);
 		triangles.Append(tri2);
 	}
-	if (right.volume > 0 && id.x < 15)
+	if (right.volume > 0 && right.volume > current.volume && id.x < 15)
 	{
 		Triangle tri;
 		tri.vertex[2] = float3(id.x + 1, id.y, id.z);
-		tri.vertex[1] = float3(id.x + 1, id.y + 1, id.z);
+		tri.vertex[1] = float3(id.x + 1, id.y + right.volume / maxVolume, id.z);
 		tri.vertex[0] = float3(id.x + 1, id.y, id.z + 1);
 		triangles.Append(tri);
 
 		Triangle tri2;
-		tri2.vertex[2] = float3(id.x + 1, id.y + 1, id.z);
-		tri2.vertex[1] = float3(id.x + 1, id.y + 1, id.z + 1);
+		tri2.vertex[2] = float3(id.x + 1, id.y + right.volume / maxVolume, id.z);
+		tri2.vertex[1] = float3(id.x + 1, id.y + right.volume / maxVolume, id.z + 1);
 		tri2.vertex[0] = float3(id.x + 1, id.y, id.z + 1);
 		triangles.Append(tri2);
 	}
-	if (front.volume > 0 && id.z > 0)
+	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
 	{
 		Triangle tri;
 		tri.vertex[2] = float3(id.x, id.y, id.z);
-		tri.vertex[1] = float3(id.x, id.y + 1, id.z);
+		tri.vertex[1] = float3(id.x, id.y + front.volume / maxVolume, id.z);
 		tri.vertex[0] = float3(id.x + 1, id.y, id.z);
 		triangles.Append(tri);
 
 		Triangle tri2;
-		tri2.vertex[2] = float3(id.x, id.y + 1, id.z);
-		tri2.vertex[1] = float3(id.x + 1, id.y + 1, id.z);
+		tri2.vertex[2] = float3(id.x, id.y + front.volume / maxVolume, id.z);
+		tri2.vertex[1] = float3(id.x + 1, id.y + front.volume / maxVolume, id.z);
 		tri2.vertex[0] = float3(id.x + 1, id.y, id.z);
 		triangles.Append(tri2);
 	}
-	if (back.volume > 0 && id.z < 15)
+	if (back.volume > 0 && back.volume > current.volume && id.z < 15)
 	{
 		Triangle tri;
 		tri.vertex[0] = float3(id.x, id.y, id.z + 1);
-		tri.vertex[1] = float3(id.x, id.y + 1, id.z + 1);
+		tri.vertex[1] = float3(id.x, id.y + back.volume / maxVolume, id.z + 1);
 		tri.vertex[2] = float3(id.x + 1, id.y, id.z + 1);
 		triangles.Append(tri);
 
 		Triangle tri2;
-		tri2.vertex[0] = float3(id.x, id.y + 1, id.z + 1);
-		tri2.vertex[1] = float3(id.x + 1, id.y + 1, id.z + 1);
+		tri2.vertex[0] = float3(id.x, id.y + back.volume / maxVolume, id.z + 1);
+		tri2.vertex[1] = float3(id.x + 1, id.y + back.volume / maxVolume, id.z + 1);
 		tri2.vertex[2] = float3(id.x + 1, id.y, id.z + 1);
 		triangles.Append(tri2);
 	}
