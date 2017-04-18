@@ -55,6 +55,9 @@ Shader "Unlit/MarchingCubesVisualization"
 			sampler3D _MainTex;
 			float4 _MainTex_ST;
 
+			float scale;
+			int size;
+
 			GS_INPUT vert(VS_INPUT input)
 			{
 				GS_INPUT o;
@@ -76,17 +79,17 @@ Shader "Unlit/MarchingCubesVisualization"
 
 				pIn.position = UnityObjectToClipPos(p[0].position);
 				pIn.light = light;
-				pIn.uv = p[0].position / 16.0;
+				pIn.uv = p[0].position / (size * scale);
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[1].position);
 				pIn.light = light;
-				pIn.uv = p[1].position / 16.0;
+				pIn.uv = p[1].position / (size * scale);
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[2].position);
 				pIn.light = light;
-				pIn.uv = p[2].position / 16.0;
+				pIn.uv = p[2].position / (size * scale);
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();

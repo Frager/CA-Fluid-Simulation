@@ -26,8 +26,7 @@ static int Densities[] =
 StructuredBuffer<Cell> currentGeneration;
 RWStructuredBuffer<Cell> newGeneration;
 
-uint size;
-int maxVolume;
+int maxVolume, size;
 int3 offset;
 
 [numthreads(8, 8, 8)]
@@ -40,7 +39,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
 
-	if (id.x == 0 || id.y == 0 || id.z == 0 || id.x == 15 || id.y == 15 || id.z == 15)
+	if (id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1)
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -1;
 	}

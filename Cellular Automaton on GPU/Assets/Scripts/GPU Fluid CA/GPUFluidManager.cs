@@ -8,6 +8,8 @@ namespace GPUFLuid
         public int maxVolume = 8;
         public int elementCount = 2;
 
+        public float scale = 1;
+
         public ComputeShader computeShader;
         public ComputeShader CA2Texture3D;
         public ComputeShader marchingCubesCS;
@@ -62,25 +64,34 @@ namespace GPUFLuid
             buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory) };
 
             computeShader.SetInt("size", gridSize);
+            computeShader.SetInt("maxVolume", maxVolume);
 
             int kernelHandle = computeShader.FindKernel("Initialize");
 
             computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-
             computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
 
             computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-
             computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
 
             args = new ComputeBuffer(4, sizeof(int), ComputeBufferType.IndirectArguments);
             data = new int[4] { 0, 1, 0, 0 };
             args.SetData(data);
 
+            marchingCubesCS.SetFloat("scale", scale);
+            marchingCubesCS.SetInt("size", gridSize);
+            marchingCubesCS.SetInt("maxVolume", maxVolume);
+
             triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
 
             ComputeBuffer.CopyCount(triangles, args, 0);
             args.GetData(data);
+
+            CA2Texture3D.SetInt("size", gridSize);
+            CA2Texture3D.SetInt("maxVolume", maxVolume);
+
+            testMaterial.SetFloat("scale", scale);
+            testMaterial.SetFloat("size", gridSize);
         }
 
         private float timer = 0;
@@ -93,7 +104,6 @@ namespace GPUFLuid
             {
                 computeShader.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
                 computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
-                computeShader.SetInt("maxVolume", maxVolume);
                 computeShader.SetInts("offset", offset[updateCycle]);
                 computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
                 Render();
@@ -108,14 +118,12 @@ namespace GPUFLuid
             int kernelHandle = CA2Texture3D.FindKernel("CSMain");
 
             CA2Texture3D.SetBuffer(kernelHandle, "currentGeneration", buffer[updateCycle % 2]);
-
             CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
-
-            CA2Texture3D.SetInt("maxVolume", maxVolume);
-
             CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
 
             triangles.SetCounterValue(0);
+            marchingCubesCS.SetInt("size", gridSize);
+            marchingCubesCS.SetInt("maxVolume", maxVolume);
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
             marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);

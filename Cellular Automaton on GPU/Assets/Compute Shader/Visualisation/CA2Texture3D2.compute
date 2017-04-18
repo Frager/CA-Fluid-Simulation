@@ -13,12 +13,12 @@ struct Cell
 StructuredBuffer<Cell> currentGeneration;
 RWTexture3D<float4> Result;
 
-int maxVolume;
+int maxVolume, size;
 
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, 16)];
+	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
 
 	float4 color = float4(1, 1, 1, 0.1);
 
