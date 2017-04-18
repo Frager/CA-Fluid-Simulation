@@ -123,12 +123,18 @@ namespace CPUFluid
             elements = new Element[elementCount];
 
             //Element (id, viscosity, density)
-            //gas
+
+            //gasverhalten
             //elements[0] = new Element(0, -1, 0.45f);
-            elements[0] = new Element(0, 1, 1f);
+
+            //wasserdampf
+            elements[0] = new Element(0, -1, 0.45f);
+            elements[0].setFreezeTransition(10f,2);
+            //öl
+            elements[1] = new Element(1, 2, 1f);
             //wasser
-            elements[1] = new Element(1, 2, 2f);
-            //elements[2] = new Element(1, 1, 2f);
+            elements[2] = new Element(2, 1, 2f);
+            elements[2].setEvaporateTransition(100f, 0);
         }
     }
     
@@ -137,12 +143,32 @@ namespace CPUFluid
         int id;
         public int viscosity;
         public float density;
+        public float evaporateTemperature;
+        public float freezeTemperature;
+        public int evaporateElementId;
+        public int freezeElementId;
 
         public Element(int id, int viscosity, float density)
         {
             this.id = id;
             this.viscosity = viscosity;
             this.density = density;
+            evaporateTemperature = float.MaxValue;
+            evaporateElementId = id;
+            freezeTemperature = float.MinValue;
+            freezeElementId = id;
+        }
+
+        public void setFreezeTransition (float freezeTemp, int freezeElementId)
+        {
+            freezeTemperature = freezeTemp;
+            this.freezeElementId = freezeElementId;
+        }
+
+        public void setEvaporateTransition(float evaporateTemp, int evaporateElementId)
+        {
+            evaporateTemperature = evaporateTemp;
+            this.evaporateElementId = evaporateElementId;
         }
     }
 }

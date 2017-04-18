@@ -16,6 +16,7 @@ namespace CPUFluid
         Direction direction;
         public int moveElementId;
         public int[] content;
+        public float temperature;
 
         public Cell(int elementAmount, int maxVolume)
         {
@@ -24,6 +25,7 @@ namespace CPUFluid
             this.direction = Direction.none;
             moveElementId = -1;
             content = new int[elementAmount];
+            temperature = 20f;
         }
 
         public Cell copyCell()
@@ -33,6 +35,7 @@ namespace CPUFluid
             copy.volume = volume;
             copy.setDirection(direction);
             copy.moveElementId = moveElementId;
+            copy.temperature = temperature;
             int[] copyContent = new int[content.Length];
             for (int i = 0; i < content.Length; ++i)
             {
