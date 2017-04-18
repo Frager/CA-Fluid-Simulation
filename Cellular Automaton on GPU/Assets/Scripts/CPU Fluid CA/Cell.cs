@@ -116,24 +116,34 @@ namespace CPUFluid
             //if (cell.volume == 0) return new Color(1, 1, 1, .1f);
             //else return new Color(0, 0, 1, 1f);
 
-            Color color = new Color(1,1,1, 0.1f);
-            if (cell.volume < 0 )
+            //Color color = new Color(1,1,1, 0.1f);
+            //if (cell.volume < 0 )
+            //{
+            //    color = new Color(1f, 1f, 1f, 1f);
+            //}
+            //else if (cell.volume > cell.maxVolume)
+            //{
+            //    color = new Color(0f, 0f, 0f, 1f);
+            //}
+            //else if (cell.volume == cell.maxVolume)
+            //{
+            //    color = new Color(0.8f * (float)(cell.content[1] +4)/ (float)cell.maxVolume, 0.8f * (float)(cell.content[2] + 4) / (float)cell.maxVolume, 0.8f * (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
+            //}
+            //else if (cell.volume >= 1)
+            //{
+            //    color = new Color((float)(cell.content[1] + 4) / (float)(cell.maxVolume), (float)(cell.content[2] + 4) / (float)(cell.maxVolume), (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
+            //}
+            //if (cell.direction != Direction.none) color.r += 0.3f;
+
+            Color color;
+            if(cell.volume != 0)
             {
-                color = new Color(1f, 1f, 1f, 1f);
+                color = new Color(cell.temperature/100f,0, 1f - (cell.temperature / 100f), 1f);
             }
-            else if (cell.volume > cell.maxVolume)
+            else
             {
-                color = new Color(0f, 0f, 0f, 1f);
+                color = new Color(cell.temperature / 100f, 0, 1f - (cell.temperature / 100f), 0.1f);
             }
-            else if (cell.volume == cell.maxVolume)
-            {
-                color = new Color(0.8f * (float)(cell.content[1] +4)/ (float)cell.maxVolume, 0.8f * (float)(cell.content[2] + 4) / (float)cell.maxVolume, 0.8f * (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
-            }
-            else if (cell.volume >= 1)
-            {
-                color = new Color((float)(cell.content[1] + 4) / (float)(cell.maxVolume), (float)(cell.content[2] + 4) / (float)(cell.maxVolume), (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
-            }
-            if (cell.direction != Direction.none) color.r += 0.3f;
             return color;
         }
 

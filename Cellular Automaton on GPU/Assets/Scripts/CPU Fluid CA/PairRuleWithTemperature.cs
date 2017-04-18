@@ -9,7 +9,7 @@ namespace CPUFluid
         private int[][] shift = { new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 }, };
 
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
-        private int mean, difference, amount;
+        private int mean, difference, amount, volume;
 
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
@@ -50,13 +50,13 @@ namespace CPUFluid
                                     amount += newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].content[id] - amount - maxVolume;
                                 }
 
-                                //mix temparature with content
+                                //temperature excange from new content
                                 if (amount > 0)
                                 {
                                     //Sum of weighted Temperatures = SUM(temp * content amount of this temp)
-                                    float sumWeightedTemps = newGen[x, y, z].temperature * newGen[x, y, z].volume + newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * amount;
+                                    float sumWeightedTemps = newGen[x, y, z].temperature * currentGen[x, y, z].volume + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * amount;
                                     //normalize Temp (Temp / total amount)
-                                    newGen[x, y, z].temperature = sumWeightedTemps / (float)(newGen[x, y, z].volume +amount);
+                                    newGen[x, y, z].temperature = sumWeightedTemps / (float)(currentGen[x, y, z].volume + amount);
                                 }
                                 if (amount < 0)
                                 {
@@ -73,24 +73,44 @@ namespace CPUFluid
                         }
                         else //vertical update if (updateCycle % 2 == 1)
                         {
-                            
+
 
                             //sets volume of both cells to 0
-                            newGen[x, y, z].volume = 0;
-                            newGen[x, y + shift[updateCycle][1], z].volume = 0;
+                            //newGen[x, y, z].volume = 0;
+                            volume = 0;
+                            //newGen[x, y + shift[updateCycle][1], z].volume = 0;
                             //for each content (from highest to lowest density)
                             for (int id = currentGen[x, y, z].content.Length - 1; id >= 0; --id)
                             {
                                 //sum of bottom and top elenemt[id] amount
                                 amount = (currentGen[x, y, z].content[id] + currentGen[x, y + shift[updateCycle][1], z].content[id]);
                                 //min of available space in bottom cell or content amount
-                                int bottom = (int)Math.Min(maxVolume - newGen[x, y, z].volume, Math.Min(elements[id].density, 1) * amount);
+                                int bottom = (int)Math.Min(maxVolume - volume, Math.Min(elements[id].density, 1) * amount);
 
-                                newGen[x, y, z].content[id] = bottom;
-                                newGen[x, y, z].volume += bottom;
+                                difference = bottom - newGen[x, y, z].content[id];
+                                //temperature excange from new content to bottom cell
+                                if (difference > 0)
+                                {
+                                    //Sum of weighted Temperatures = SUM(temp * content amount of this temp)
+                                    float sumWeightedTemps = newGen[x, y, z].temperature * currentGen[x, y, z].volume + currentGen[x, y + shift[updateCycle][1], z].temperature * difference;
+                                    //normalize Temp (Temp / total amount)
+                                    newGen[x, y, z].temperature = sumWeightedTemps / (float)(currentGen[x, y, z].volume + difference);
+                                }
 
-                                newGen[x, y + shift[updateCycle][1], z].content[id] = amount - bottom;
-                                newGen[x, y + shift[updateCycle][1], z].volume += amount - bottom;
+                                newGen[x, y, z].content[id] += difference;
+                                newGen[x, y, z].volume += difference;
+                                volume += bottom;
+                                
+                                difference = amount - bottom - newGen[x, y + shift[updateCycle][1], z].content[id];
+                                //temperature excange from new content to top cell
+                                if (difference > 0)
+                                {
+                                    float sumWeightedTemps = newGen[x, y + shift[updateCycle][1], z].temperature * currentGen[x, y + shift[updateCycle][1], z].volume + currentGen[x, y , z].temperature * difference;
+                                    newGen[x, y + shift[updateCycle][1], z].temperature = sumWeightedTemps / (float)(currentGen[x, y + shift[updateCycle][1], z].volume + difference);
+                                }
+
+                                newGen[x, y + shift[updateCycle][1], z].content[id] += difference;
+                                newGen[x, y + shift[updateCycle][1], z].volume += difference;
                             }
 
 
@@ -106,7 +126,6 @@ namespace CPUFluid
                                 {
                                     if (currentGen[x, y, z].temperature >= elements[id].evaporateTemperature)
                                     {
-                                        print("vape");
                                         //temperature cost to evaporate
                                         newGen[x, y, z].temperature -= 2f;
                                         --newGen[x, y, z].content[id];
@@ -114,7 +133,6 @@ namespace CPUFluid
                                     }
                                     if (currentGen[x, y, z].temperature < elements[id].freezeTemperature)
                                     {
-                                        print("freeze");
                                         //temperature cost for freezing
                                         newGen[x, y, z].temperature += 2f;
                                         --newGen[x, y, z].content[id];
