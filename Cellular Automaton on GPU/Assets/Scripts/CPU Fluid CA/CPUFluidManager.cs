@@ -58,7 +58,7 @@ namespace CPUFluid
         }
         
         float timer = 0;
-        float timeframe = 0.1f;
+        float timeframe = 0.02f;
         int updateCount = 0;
         void Update()
         {
@@ -87,9 +87,11 @@ namespace CPUFluid
                 if (updateCount < 100)
                 {
                     //currentGen[8, 15, 8].addContent(1, 0);
-                    currentGen[8, 14, 8].addContent(1, 2);
                     //currentGen[8, 8, 8].addContent(1, 2);
                 }
+                currentGen[8, 3, 8].addContent(1, 0);
+                //currentGen[5, 14, 8].addContent(1, 1);
+                //currentGen[8, 14, 8].addContent(1, 2);
 
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
@@ -151,12 +153,12 @@ namespace CPUFluid
             //elements[0] = new Element(0, -1, 0.45f);
 
             //wasserdampf
-            elements[0] = new Element(0, -1, 0.4f);
+            elements[0] = new Element(0, 0, .3f);
             elements[0].setFreezeTransition(10f,2);
             //öl
             elements[1] = new Element(1, 2, 1f);
             //wasser
-            elements[2] = new Element(2, 1, 2f);
+            elements[2] = new Element(2, 0, 2f);
             elements[2].setEvaporateTransition(100f, 0);
         }
     }
