@@ -5,8 +5,8 @@ namespace GPUFLuid
     public class GPUFluidManager : MonoBehaviour
     {
         public int gridSize = 16;
-        public int maxVolume = 8;
-        public int elementCount = 2;
+        public int maxVolume;
+        public int elementCount;
 
         public float scale = 1;
 
@@ -61,7 +61,7 @@ namespace GPUFLuid
 
         void InitializeBuffers()
         {
-            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory) };
+            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory) };
 
             computeShader.SetInt("size", gridSize);
             computeShader.SetInt("maxVolume", maxVolume);

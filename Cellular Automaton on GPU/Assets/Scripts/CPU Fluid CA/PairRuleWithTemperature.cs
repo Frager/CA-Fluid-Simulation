@@ -19,6 +19,9 @@ namespace CPUFluid
                 {
                     for (int x = offset[updateCycle][0]; x < currentGen.GetLength(0) - offset[updateCycle][0]; x += (1 + shift[updateCycle][0]))
                     {
+                        //newGen[x, y, z] = currentGen[x, y, z];
+                        //newGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]] = currentGen[x + shift[updateCycle][0], y + shift[updateCycle][1], z + shift[updateCycle][2]];
+
                         if (updateCycle % 2 == 0) //horizontal update
                         {
                             newGen[x, y, z].volume = 0;
