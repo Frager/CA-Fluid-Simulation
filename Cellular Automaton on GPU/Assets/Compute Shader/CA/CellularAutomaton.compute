@@ -14,12 +14,12 @@ struct Cell
 
 static int Viscosities[] =
 {
-	0, 0, 0, 0, 0, 0, 0, 0
+	0, 1, 2
 };
 
-static int Densities[] =
+static float Densities[] =
 {
-	0, 1, 2, 3, 4, 5, 6, 7
+	0, 1, 2
 };
 
 StructuredBuffer<Cell> currentGeneration;
@@ -91,8 +91,6 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 
 	if (id.x * 2 + offset.x == 8 && id.y == 8 && id.z == 8)
 	{
-		//newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[0] += 1;
-		//newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[1] += 4;
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 4;
 	}
@@ -115,11 +113,9 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	int amount, bottom;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	for (int i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
-		//sum of bottom and top elenemt[id] amount
 		amount = (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i]);
-		//min of available space in bottom cell or content amount
 		bottom = (int)min(maxVolume - newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, min(Densities[i], 1) * amount);
 
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] = bottom;
@@ -131,8 +127,6 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 	if (id.x == 8 && id.y * 2 + offset.y == 8 && id.z == 8)
 	{
-		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[0] += 1;
-		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[1] += 4;
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 4;
 	}
@@ -184,8 +178,6 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 
 	if (id.x == 8 && id.y == 8 && 8 == id.z * 2 + offset.z)
 	{
-		//newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[0] += 1;
-		//newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[1] += 4;
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 4;
 	}

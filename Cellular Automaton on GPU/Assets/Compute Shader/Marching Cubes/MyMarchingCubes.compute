@@ -8,6 +8,7 @@ struct Cell
 {
 	int volume;
 	int content[NUMBER_OF_ELEMENTS];
+	float temperature;
 };
 
 struct Triangle
