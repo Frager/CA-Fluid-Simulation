@@ -1,13 +1,14 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-#define NUMBER_OF_ELEMENTS 2
+#define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size + z * size * size
 
 struct Cell
 {
 	int volume;
 	int content[NUMBER_OF_ELEMENTS];
+	float temperature;
 };
 
 StructuredBuffer<Cell> currentGeneration;
