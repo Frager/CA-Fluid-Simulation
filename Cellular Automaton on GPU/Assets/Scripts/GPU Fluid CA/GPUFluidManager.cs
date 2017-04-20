@@ -26,7 +26,7 @@ namespace GPUFLuid
 
         private ComputeBuffer[] buffer;
 
-        private ComputeBuffer triangles;
+        private ComputeBuffer quads;
         private ComputeBuffer args;
         private int[] data;
 
@@ -42,7 +42,6 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
-            //texture3D.filterMode = FilterMode.Point;
 
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
@@ -62,7 +61,7 @@ namespace GPUFLuid
             {
                 buffer[i].Release();
             }
-            triangles.Release();
+            quads.Release();
             args.Release();
         }
 
@@ -89,9 +88,9 @@ namespace GPUFLuid
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCS.SetInt("maxVolume", maxVolume);
 
-            triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+            quads = new ComputeBuffer(gridSize * gridSize * gridSize, 4 * 3 * sizeof(float), ComputeBufferType.Append);
 
-            ComputeBuffer.CopyCount(triangles, args, 0);
+            ComputeBuffer.CopyCount(quads, args, 0);
             args.GetData(data);
 
             CA2Texture3D.SetInt("size", gridSize);
@@ -102,7 +101,7 @@ namespace GPUFLuid
         }
 
         private float timer = 0;
-        private float timeframe = 0.02f;
+        private float timeframe = 0.01f;
 
         void Update()
         {
@@ -129,21 +128,20 @@ namespace GPUFLuid
             CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
             CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
 
-            triangles.SetCounterValue(0);
+            quads.SetCounterValue(0);
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCS.SetInt("maxVolume", maxVolume);
-            marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
+            marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "quads", quads);
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
             marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);
         }
 
         private void OnPostRender()
         {
-            ComputeBuffer.CopyCount(triangles, args, 0);
-            args.GetData(data);
+            ComputeBuffer.CopyCount(quads, args, 0);
             testMaterial.SetPass(0);
-            testMaterial.SetBuffer("triangles", triangles);
-            Graphics.DrawProcedural(MeshTopology.Triangles, data[0] * 3);
+            testMaterial.SetBuffer("quads", quads);
+            Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
         }
     }
 }
