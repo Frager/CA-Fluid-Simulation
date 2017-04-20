@@ -16,7 +16,7 @@ namespace GPUFLuid
 
         public Material testMaterial;
 
-        [Range(1, 14)]
+        [Range(0, 14)]
         public int x, y, z;
 
         [Range(0, 2)]
