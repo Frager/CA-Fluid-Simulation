@@ -42,7 +42,7 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
-            texture3D.filterMode = FilterMode.Point;
+            //texture3D.filterMode = FilterMode.Point;
 
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
