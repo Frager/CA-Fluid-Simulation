@@ -84,9 +84,9 @@ namespace CPUFluid
                 if (updateCount < 100)
                 {
                 }
-                if (updateCount < 100)
+                if (updateCount < 1000)
                 {
-                    //currentGen[8, 15, 8].addContent(1, 0);
+                    currentGen[8, 14, 8].addContent(1, 2);
                     currentGen[8, 14, 8].addContent(1, 1);
                     //currentGen[8, 8, 8].addContent(1, 2);
                 }

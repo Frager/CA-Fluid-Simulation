@@ -15,7 +15,12 @@ namespace GPUFLuid
         public ComputeShader marchingCubesCS;
 
         public Material testMaterial;
-        public SimpleVisuals visuals;
+
+        [Range(1, 14)]
+        public int x, y, z;
+
+        [Range(0, 2)]
+        public int element;
 
         private RenderTexture texture3D;
 
@@ -37,6 +42,8 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
+            texture3D.filterMode = FilterMode.Point;
+
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
 
@@ -61,7 +68,7 @@ namespace GPUFLuid
 
         void InitializeBuffers()
         {
-            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int), ComputeBufferType.GPUMemory) };
+            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory) };
 
             computeShader.SetInt("size", gridSize);
             computeShader.SetInt("maxVolume", maxVolume);
@@ -95,7 +102,7 @@ namespace GPUFLuid
         }
 
         private float timer = 0;
-        private float timeframe = 0.1f;
+        private float timeframe = 0.02f;
 
         void Update()
         {
@@ -104,6 +111,7 @@ namespace GPUFLuid
             {
                 computeShader.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
                 computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
+                computeShader.SetInts("fill", new int[] { x, y, z, element });
                 computeShader.SetInts("offset", offset[updateCycle]);
                 computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
                 Render();
@@ -128,7 +136,6 @@ namespace GPUFLuid
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
             marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);
         }
-
 
         private void OnPostRender()
         {

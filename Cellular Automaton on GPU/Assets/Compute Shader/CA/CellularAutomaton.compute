@@ -18,7 +18,7 @@ struct Cell
 
 static int Viscosities[] =
 {
-	-1, 2, 1
+	-1, 2, 0
 };
 
 static float Densities[] =
@@ -47,6 +47,8 @@ RWStructuredBuffer<Cell> newGeneration;
 uint size;
 int maxVolume;
 int3 offset;
+
+int4 fill;
 
 [numthreads(8, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
@@ -117,9 +119,9 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume += currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - amount;
 	}
 
-	if (id.x * 2 + offset.x == 8 && id.y == 8 && id.z == 8)
+	if (id.x * 2 + offset.x == fill.x && id.y == fill.y && id.z == fill.z)
 	{
-		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[1] += 1;
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[fill.w] += 1;
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
 	}
 }
@@ -190,9 +192,9 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	if (id.x == 8 && id.y * 2 + offset.y == 8 && id.z == 8)
+	if (id.x == fill.x && id.y * 2 + offset.y == fill.y && id.z == fill.z)
 	{
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[1] += 1;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 1;
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
 	}
 }
@@ -249,9 +251,9 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume += currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - amount;
 	}
 
-	if (id.x == 8 && id.y == 8 && 8 == id.z * 2 + offset.z)
+	if (id.x == fill.x && id.y == fill.y && id.z * 2 + offset.z == fill.z)
 	{
-		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[1] += 1;
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[fill.w] += 1;
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
 	}
 }
