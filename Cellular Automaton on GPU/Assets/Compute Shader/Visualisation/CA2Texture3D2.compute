@@ -1,8 +1,14 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
 
 #define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size + z * size * size
+
+static float4 Colors[] =
+{
+	float4(0,1,1,1),
+	float4(1,1,0,1),
+	float4(0,0,1,1)
+};
 
 struct Cell
 {
@@ -31,13 +37,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	{
 		color = float4(0, 0, 0, 1);
 	}
-	else if (cell.volume == maxVolume)
+	else
 	{
-		color = float4(0.8 * (float)(cell.content[1] + 4) / (float)maxVolume, 0.3, 0.8 * (float)(cell.content[0] + 4) / (float)maxVolume, 1);
-	}
-	else if (cell.volume > 0)
-	{
-		color = float4((float)(cell.content[1] + 4) / (float)(maxVolume), 0, (float)(cell.content[0] + 4) / (float)maxVolume, 1);
+		int pos = 0;
+		[unroll(NUMBER_OF_ELEMENTS)]
+		for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+		{
+			if (cell.content[i] > cell.content[pos])
+			{
+				pos = i;
+			}
+		}
+		color = Colors[pos];
 	}
 
 	Result[id] = color;
