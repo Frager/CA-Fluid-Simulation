@@ -18,7 +18,7 @@ struct Cell
 
 static int Viscosities[] =
 {
-	-1, 2, 0
+	-1, 1, 0
 };
 
 static float Densities[] =
@@ -48,7 +48,7 @@ uint size;
 int maxVolume;
 int3 offset;
 
-int4 fill;
+uint4 fill;
 
 [numthreads(8, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
@@ -60,11 +60,6 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20;
-
-	//if (id.x == 8 && id.y == 8 && id.z == 8)
-	//{
-	//	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 8;
-	//}
 
 	if (id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1)
 	{
