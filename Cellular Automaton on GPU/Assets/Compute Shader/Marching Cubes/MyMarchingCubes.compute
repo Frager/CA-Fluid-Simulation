@@ -11,9 +11,9 @@ struct Cell
 	float temperature;
 };
 
-struct Triangle
+struct Quad
 {
-	float3 vertex[3];
+	float3 vertex[4];
 };
 
 float scale;
@@ -22,7 +22,7 @@ int maxVolume;
 
 RWStructuredBuffer<Cell> newGeneration;
 StructuredBuffer<Cell> currentGeneration;
-AppendStructuredBuffer<Triangle> triangles;
+AppendStructuredBuffer<Quad> quads;
 
 [numthreads(8, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
@@ -52,91 +52,61 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (down.volume > 0 && (down.volume > current.volume || down.volume < maxVolume) && id.y > 0)
 	{
-		Triangle tri;
-		tri.vertex[0] = float3(id.x * scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale + scale);
-		tri.vertex[2] = float3(id.x * scale + scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[0] = float3(id.x * scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[1] = float3(id.x * scale + scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[2] = float3(id.x * scale + scale, id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale - scale + (down.volume / maxVol) * scale, id.z * scale + scale);
+		quads.Append(quad);
 	}
 	
 	if (up.volume > 0 && (up.volume > current.volume || current.volume < maxVolume) && id.y < size - 1)
 	{
-		Triangle tri;
-		tri.vertex[2] = float3(id.x * scale, id.y * scale + scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale + scale, id.z * scale + scale);
-		tri.vertex[0] = float3(id.x * scale + scale, id.y * scale + scale, id.z * scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[2] = float3(id.x * scale, id.y * scale + scale, id.z * scale + scale);
-		tri2.vertex[1] = float3(id.x * scale + scale, id.y * scale + scale, id.z * scale + scale);
-		tri2.vertex[0] = float3(id.x * scale + scale, id.y * scale + scale, id.z * scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale + scale, id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + scale, id.z * scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + scale, id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale + scale, id.z * scale + scale);
+		quads.Append(quad);
 	}
 	
 	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
 	{
-		Triangle tri;
-		tri.vertex[0] = float3(id.x * scale, id.y * scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale + (left.volume / maxVol) * scale, id.z * scale);
-		tri.vertex[2] = float3(id.x * scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[0] = float3(id.x * scale, id.y * scale + (left.volume / maxVol) * scale, id.z * scale);
-		tri2.vertex[1] = float3(id.x * scale, id.y * scale + (left.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[2] = float3(id.x * scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[0] = float3(id.x * scale, id.y * scale,										id.z * scale);
+		quad.vertex[1] = float3(id.x * scale, id.y * scale,										id.z * scale + scale);
+		quad.vertex[2] = float3(id.x * scale, id.y * scale + (left.volume / maxVol) * scale,	id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale, id.y * scale + (left.volume / maxVol) * scale,	id.z * scale);
+		quads.Append(quad);
 	}
 	
 	if (right.volume > 0 && right.volume > current.volume && id.x < size - 1)
 	{
-		Triangle tri;
-		tri.vertex[2] = float3(id.x * scale + scale, id.y * scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale + scale, id.y * scale + (right.volume / maxVol) * scale, id.z * scale);
-		tri.vertex[0] = float3(id.x * scale + scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[2] = float3(id.x * scale + scale, id.y * scale + (right.volume / maxVol) * scale, id.z * scale);
-		tri2.vertex[1] = float3(id.x * scale + scale, id.y * scale + (right.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[0] = float3(id.x * scale + scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[3] = float3(id.x * scale + scale, id.y * scale,										id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale, id.y * scale,										id.z * scale + scale);
+		quad.vertex[1] = float3(id.x * scale + scale, id.y * scale + (right.volume / maxVol) * scale,	id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * scale + scale, id.y * scale + (right.volume / maxVol) * scale,	id.z * scale);
+		quads.Append(quad);
 	}
 	
 	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
 	{
-		Triangle tri;
-		tri.vertex[2] = float3(id.x * scale, id.y * scale, id.z * scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale + (front.volume / maxVol) * scale, id.z * scale);
-		tri.vertex[0] = float3(id.x * scale + scale, id.y * scale, id.z * scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[2] = float3(id.x * scale, id.y * scale + (front.volume / maxVol) * scale, id.z * scale);
-		tri2.vertex[1] = float3(id.x * scale + scale, id.y * scale + (front.volume / maxVol) * scale, id.z * scale);
-		tri2.vertex[0] = float3(id.x * scale + scale, id.y * scale, id.z * scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale,									id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale,									id.z * scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + (front.volume / maxVol) * scale, id.z * scale);
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale + (front.volume / maxVol) * scale, id.z * scale);
+		quads.Append(quad);
 	}
 	
 	if (back.volume > 0 && back.volume > current.volume && id.z < size - 1)
 	{
-		Triangle tri;
-		tri.vertex[0] = float3(id.x * scale, id.y * scale, id.z * scale + scale);
-		tri.vertex[1] = float3(id.x * scale, id.y * scale + (back.volume / maxVol) * scale, id.z * scale + scale);
-		tri.vertex[2] = float3(id.x * scale + scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri);
-
-		Triangle tri2;
-		tri2.vertex[0] = float3(id.x * scale, id.y * scale + (back.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[1] = float3(id.x * scale + scale, id.y * scale + (back.volume / maxVol) * scale, id.z * scale + scale);
-		tri2.vertex[2] = float3(id.x * scale + scale, id.y * scale, id.z * scale + scale);
-		triangles.Append(tri2);
+		Quad quad;
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale,									id.z * scale + scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale,									id.z * scale + scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + (back.volume / maxVol) * scale,	id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale + (back.volume / maxVol) * scale,	id.z * scale + scale);
+		quads.Append(quad);
 	}
 }

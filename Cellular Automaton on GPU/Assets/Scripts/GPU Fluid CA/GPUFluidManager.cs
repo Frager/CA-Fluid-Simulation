@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#define TRIANGLES
+
+using UnityEngine;
 
 namespace GPUFLuid
 {
@@ -26,7 +28,12 @@ namespace GPUFLuid
 
         private ComputeBuffer[] buffer;
 
+        #if CUBES
+        private ComputeBuffer quads;
+        #else
         private ComputeBuffer triangles;
+        #endif
+
         private ComputeBuffer args;
         private int[] data;
 
@@ -42,7 +49,6 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
-            //texture3D.filterMode = FilterMode.Point;
 
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
@@ -62,7 +68,11 @@ namespace GPUFLuid
             {
                 buffer[i].Release();
             }
+#if CUBES
+            quads.Release();
+#else
             triangles.Release();
+#endif
             args.Release();
         }
 
@@ -89,9 +99,14 @@ namespace GPUFLuid
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCS.SetInt("maxVolume", maxVolume);
 
+#if CUBES
+            quads = new ComputeBuffer(gridSize * gridSize * gridSize, 4 * 3 * sizeof(float), ComputeBufferType.Append);
+            ComputeBuffer.CopyCount(quads, args, 0);
+#else
             triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
-
             ComputeBuffer.CopyCount(triangles, args, 0);
+#endif
+
             args.GetData(data);
 
             CA2Texture3D.SetInt("size", gridSize);
@@ -102,23 +117,29 @@ namespace GPUFLuid
         }
 
         private float timer = 0;
-        private float timeframe = 0.02f;
+        private float timeframe = 0.01f;
 
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                computeShader.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
-                computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
-                computeShader.SetInts("fill", new int[] { x, y, z, element });
-                computeShader.SetInts("offset", offset[updateCycle]);
-                computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
+                NextGeneration();
+
                 Render();
 
                 timer -= timeframe;
                 updateCycle = (updateCycle + 1) % 8;
             }
+        }
+
+        void NextGeneration()
+        {
+            computeShader.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
+            computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
+            computeShader.SetInts("fill", new int[] { x, y, z, element });
+            computeShader.SetInts("offset", offset[updateCycle]);
+            computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
         }
 
         void Render()
@@ -129,21 +150,31 @@ namespace GPUFLuid
             CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
             CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
 
-            triangles.SetCounterValue(0);
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCS.SetInt("maxVolume", maxVolume);
+#if CUBES
+            quads.SetCounterValue(0);
+            marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "cubes", quads);
+#else
+            triangles.SetCounterValue(0);
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
+#endif
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
             marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);
         }
 
         private void OnPostRender()
         {
-            ComputeBuffer.CopyCount(triangles, args, 0);
-            args.GetData(data);
             testMaterial.SetPass(0);
+#if CUBES
+            ComputeBuffer.CopyCount(quads, args, 0);
+            testMaterial.SetBuffer("quads", quads);
+            Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
+#else
+            ComputeBuffer.CopyCount(triangles, args, 0);
             testMaterial.SetBuffer("triangles", triangles);
-            Graphics.DrawProcedural(MeshTopology.Triangles, data[0] * 3);
+            Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
+#endif
         }
     }
 }

@@ -18,7 +18,7 @@ struct Cell
 
 static int Viscosities[] =
 {
-	-1, 2, 0
+	-1, 1, 0
 };
 
 static float Densities[] =
@@ -48,7 +48,7 @@ uint size;
 int maxVolume;
 int3 offset;
 
-int4 fill;
+uint4 fill;
 
 [numthreads(8, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
