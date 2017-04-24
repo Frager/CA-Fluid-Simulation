@@ -36,7 +36,6 @@ namespace CPUFluid
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
             
-
             initElements();
             updateRule.elements = elements;
             updateRule.maxVolume = maxVolume;
@@ -44,7 +43,7 @@ namespace CPUFluid
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
             updateTexture();
         }
@@ -81,8 +80,9 @@ namespace CPUFluid
                     }
                     print("content " + content);
                 }
-                if (updateCount < 100)
+                if (updateCount == 100)
                 {
+                    print("Durchschnittliche Berechnungszeit:" + updateRule.MeanMilliseconds());
                 }
                 if (updateCount < 1000)
                 {
@@ -96,7 +96,7 @@ namespace CPUFluid
 
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
-                updateTexture();
+                //updateTexture();
 
                 updateCount++;
                 timer -= timeframe;

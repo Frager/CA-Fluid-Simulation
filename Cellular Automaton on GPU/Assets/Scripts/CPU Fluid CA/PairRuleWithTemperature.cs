@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace CPUFluid
 {
@@ -13,8 +14,15 @@ namespace CPUFluid
 
         private float temperatureSpread = 32f;
 
+        private Stopwatch stopWatch = new Stopwatch();
+        private TimeSpan ts;
+
+        private double accumulatedMilliseconds = 0;
+        private int counter = 0;
+
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
+            stopWatch = Stopwatch.StartNew();
             for (int z = offset[updateCycle][2]; z < currentGen.GetLength(2) - offset[updateCycle][2]; z += (1 + shift[updateCycle][2]))
             {
                 for (int y = offset[updateCycle][1]; y < currentGen.GetLength(1) - offset[updateCycle][1]; y += (1 + shift[updateCycle][1]))
@@ -160,6 +168,14 @@ namespace CPUFluid
                 }
             }
             updateCycle = (updateCycle + 1) % shift.Length;
+            stopWatch.Stop();
+            accumulatedMilliseconds += stopWatch.Elapsed.TotalMilliseconds; 
+            ++counter;
+        }
+
+        public override double MeanMilliseconds()
+        {
+            return accumulatedMilliseconds / counter;
         }
     }
 }
