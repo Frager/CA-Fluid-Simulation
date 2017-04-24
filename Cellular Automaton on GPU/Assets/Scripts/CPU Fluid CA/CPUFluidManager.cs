@@ -35,15 +35,7 @@ namespace CPUFluid
             CPUFluidCA CA = new CPUFluidCA();
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
-
-            for(int x = 0; x < gridSize; x++)
-            {
-                for (int z = 0; z < gridSize; z++)
-                {
-                    currentGen[x, 0, z].temperature = 100;
-                    currentGen[x, gridSize - 1, z].temperature = 0;
-                }
-            }
+            
 
             initElements();
             updateRule.elements = elements;
@@ -52,7 +44,7 @@ namespace CPUFluid
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
             updateTexture();
         }
@@ -65,6 +57,14 @@ namespace CPUFluid
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
+                ////heat up floor
+                //for (int x = 0; x < gridSize; ++x)
+                //{
+                //    for (int z = 0; z < gridSize; ++z)
+                //    {
+                //        currentGen[x, 0, z].temperature += 10;
+                //    }
+                //}
                 //for testing if content is correct
                 if (updateCount == 200)
                 {
@@ -86,14 +86,17 @@ namespace CPUFluid
                 }
                 if (updateCount < 1000)
                 {
-                    currentGen[8, 14, 8].addContent(1, 2);
-                    currentGen[8, 14, 8].addContent(1, 1);
+                    currentGen[8, 10, 8].temperature = 20;
+                    currentGen[8, 10, 8].addContent(1, 2);
+
+                    currentGen[3, 10, 3].temperature = 1000;
+                    currentGen[3, 10, 3].addContent(1, 1);
                     //currentGen[8, 8, 8].addContent(1, 2);
                 }
 
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
-                //updateTexture();
+                updateTexture();
 
                 updateCount++;
                 timer -= timeframe;
@@ -151,12 +154,12 @@ namespace CPUFluid
             //elements[0] = new Element(0, -1, 0.45f);
 
             //wasserdampf
-            elements[0] = new Element(0, -1, 0.4f);
-            elements[0].setFreezeTransition(10f,2);
+            elements[0] = new Element(0, -1, 0.49f);
+            elements[0].setFreezeTransition(50f,2);
             //öl
             elements[1] = new Element(1, 2, 1f);
             //wasser
-            elements[2] = new Element(2, 1, 2f);
+            elements[2] = new Element(2, 0, 2f);
             elements[2].setEvaporateTransition(100f, 0);
         }
     }

@@ -11,6 +11,8 @@ namespace CPUFluid
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
         private int mean, difference, amount, volume;
 
+        private float temperatureSpread = 32f;
+
         public override void updateCells(Cell[,,] currentGen, Cell[,,] newGen)
         {
             for (int z = offset[updateCycle][2]; z < currentGen.GetLength(2) - offset[updateCycle][2]; z += (1 + shift[updateCycle][2]))
@@ -57,14 +59,20 @@ namespace CPUFluid
                                 if (amount > 0)
                                 {
                                     //Sum of weighted Temperatures = SUM(temp * content amount of this temp)
-                                    float sumWeightedTemps = newGen[x, y, z].temperature * currentGen[x, y, z].volume + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * amount;
+                                    float sumWeightedTemps = newGen[x, y, z].temperature * (currentGen[x, y, z].volume + 1) + currentGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * amount;
                                     //normalize Temp (Temp / total amount)
-                                    newGen[x, y, z].temperature = sumWeightedTemps / (float)(currentGen[x, y, z].volume + amount);
+                                    newGen[x, y, z].temperature = sumWeightedTemps / (float)(currentGen[x, y, z].volume + 1 + amount);
                                 }
                                 if (amount < 0)
                                 {
-                                    float sumWeightedTemps = newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume - newGen[x, y, z].temperature * amount;
-                                    newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature = sumWeightedTemps / (float)(newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume - amount);
+                                    float sumWeightedTemps = newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature * (newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + 1) - newGen[x, y, z].temperature * amount;
+                                    newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature = sumWeightedTemps / (float)(newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + 1 - amount);
+                                }
+                                else
+                                {
+                                    float difference = (newGen[x, y, z].temperature - newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature)/ temperatureSpread;
+                                    newGen[x, y, z].temperature -= difference / ((float)newGen[x, y, z].volume + 1f);
+                                    newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature += difference / ((float)newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + 1f); ;
                                 }
 
                                 //swap contents
@@ -111,9 +119,13 @@ namespace CPUFluid
                                     float sumWeightedTemps = newGen[x, y + shift[updateCycle][1], z].temperature * currentGen[x, y + shift[updateCycle][1], z].volume + currentGen[x, y , z].temperature * difference;
                                     newGen[x, y + shift[updateCycle][1], z].temperature = sumWeightedTemps / (float)(currentGen[x, y + shift[updateCycle][1], z].volume + difference);
                                 }
+                                    
 
                                 newGen[x, y + shift[updateCycle][1], z].content[id] += difference;
                                 newGen[x, y + shift[updateCycle][1], z].volume += difference;
+                                float tempDifference = (newGen[x, y, z].temperature - newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature) / temperatureSpread;
+                                    newGen[x, y, z].temperature += tempDifference / ((float)newGen[x, y, z].volume + 1f);
+                                    newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].temperature -= tempDifference / ((float)newGen[x + shift[updateCycle][0], y, z + shift[updateCycle][2]].volume + 1f);
                             }
 
 

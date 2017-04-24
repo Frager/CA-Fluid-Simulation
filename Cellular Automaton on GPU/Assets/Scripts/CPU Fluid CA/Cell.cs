@@ -142,10 +142,14 @@ namespace CPUFluid
             Color color;
             if (volume != 0)
             {
+                if (temperature > 100)
+                    color = new Color(1f-(temperature) / 100f, ((temperature) / 100f), 0, 1f);
                 color = new Color(temperature / 100f, 0, 1f - (temperature / 100f), 1f);
             }
             else
             {
+                if(temperature > 100)
+                    color = new Color(1f-(temperature) / 100f, ((temperature) / 100f), 0, 0.1f);
                 color = new Color(temperature / 100f, 0, 1f - (temperature / 100f), 0.1f);
             }
             return color;
