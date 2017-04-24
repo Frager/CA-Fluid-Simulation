@@ -18,7 +18,7 @@ struct Cell
 
 static int Viscosities[] =
 {
-	-1, 1, 0
+	0, 1, 0
 };
 
 static float Densities[] =
@@ -50,7 +50,7 @@ int3 offset;
 
 uint4 fill;
 
-[numthreads(8, 8, 8)]
+[numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
 	for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
@@ -67,7 +67,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	}
 }
 
-[numthreads(4, 8, 8)]
+[numthreads(8, 16, 8)]
 void UpdateX(uint3 id : SV_DispatchThreadID)
 {
 	if (currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume == -1 || currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume == -1)
@@ -124,9 +124,14 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[fill.w] += 1;
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume += 1;
 	}
+
+	if (id.x * 2 + offset.x == 8 && id.y == 1 && id.z == 8)
+	{
+		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature = 120;
+	}
 }
 
-[numthreads(8, 4, 8)]
+[numthreads(16, 8, 8)]
 void UpdateY(uint3 id : SV_DispatchThreadID)
 {
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)];
@@ -197,9 +202,14 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 1;
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 1;
 	}
+
+	if (id.x == 8 && id.y * 2 + offset.y == 1 && id.z == 8)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = 120;
+	}
 }
 
-[numthreads(8, 8, 4)]
+[numthreads(16, 16, 4)]
 void UpdateZ(uint3 id : SV_DispatchThreadID)
 {
 	if (currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume == -1 || currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume == -1)
@@ -255,6 +265,11 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	{
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[fill.w] += 1;
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume += 1;
+	}
+
+	if (id.x == 8 && id.y == 1 && id.z * 2 + offset.z == 8)
+	{
+		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature = 120;
 	}
 }
 

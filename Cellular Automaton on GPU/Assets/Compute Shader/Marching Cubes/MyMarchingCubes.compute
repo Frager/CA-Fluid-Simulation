@@ -24,7 +24,7 @@ RWStructuredBuffer<Cell> newGeneration;
 StructuredBuffer<Cell> currentGeneration;
 AppendStructuredBuffer<Quad> quads;
 
-[numthreads(8, 8, 8)]
+[numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
 	if (id.x == 8 && id.z == 8)
@@ -37,7 +37,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	}
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(16, 8, 8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	Cell current = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];

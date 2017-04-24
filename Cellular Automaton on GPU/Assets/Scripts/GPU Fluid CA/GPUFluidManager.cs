@@ -42,6 +42,7 @@ namespace GPUFLuid
         private string[] FunctionOrder = { "UpdateX", "UpdateY", "UpdateZ", "UpdateY", "UpdateX", "UpdateY", "UpdateZ", "UpdateY" };
         private int[] KernelOrder = new int[8];
         private int[][] offset = { new int[]{ 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
+        private int[][] threadGroups;
 
         void Start()
         {
@@ -49,7 +50,7 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
-
+            //texture3D.filterMode = FilterMode.Point;
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
 
@@ -78,6 +79,8 @@ namespace GPUFLuid
 
         void InitializeBuffers()
         {
+            threadGroups = new int[][]{ new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 } };
+
             buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory) };
 
             computeShader.SetInt("size", gridSize);
@@ -86,10 +89,10 @@ namespace GPUFLuid
             int kernelHandle = computeShader.FindKernel("Initialize");
 
             computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+            computeShader.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
 
             computeShader.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            computeShader.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+            computeShader.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
 
             args = new ComputeBuffer(4, sizeof(int), ComputeBufferType.IndirectArguments);
             data = new int[4] { 0, 1, 0, 0 };
@@ -139,7 +142,7 @@ namespace GPUFLuid
             computeShader.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
             computeShader.SetInts("fill", new int[] { x, y, z, element });
             computeShader.SetInts("offset", offset[updateCycle]);
-            computeShader.Dispatch(KernelOrder[updateCycle], gridSize / 8, gridSize / 8, gridSize / 8);
+            computeShader.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
         }
 
         void Render()
@@ -148,7 +151,7 @@ namespace GPUFLuid
 
             CA2Texture3D.SetBuffer(kernelHandle, "currentGeneration", buffer[updateCycle % 2]);
             CA2Texture3D.SetTexture(kernelHandle, "Result", texture3D);
-            CA2Texture3D.Dispatch(kernelHandle, gridSize / 8, gridSize / 8, gridSize / 8);
+            CA2Texture3D.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
 
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCS.SetInt("maxVolume", maxVolume);
@@ -160,7 +163,7 @@ namespace GPUFLuid
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "triangles", triangles);
 #endif
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
-            marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 8, gridSize / 8, gridSize / 8);
+            marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 16, gridSize / 8, gridSize / 8);
         }
 
         private void OnPostRender()

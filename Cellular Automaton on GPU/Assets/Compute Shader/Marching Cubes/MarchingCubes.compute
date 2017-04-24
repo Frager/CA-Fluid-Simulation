@@ -4,6 +4,9 @@
 #define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size + z * size * size
 
+//Algorithm based on:
+//http://paulbourke.net/geometry/polygonise/
+
 struct Cell
 {
 	int volume;
@@ -21,6 +24,8 @@ struct GridCell
 	float3 p[8];
 	int val[8];
 };
+
+uint size;
 
 const static int edgeTable[256] = {
 	0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -425,20 +430,20 @@ void Polygonise(GridCell grid)
 	}
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
-	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < 15 || id.y < 15 || id.z < 15)
+	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
 	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume = 1;
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 1;
 	}
 	else
 	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume = 0;
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
 	}
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(16, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	GridCell cell;
@@ -451,16 +456,16 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	cell.p[6] = float3(id.x + 1, id.y + 1, id.z);
 	cell.p[7] = float3(id.x, id.y + 1, id.z);
 
-	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < 15 || id.y < 15 || id.z < 15)
+	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
 	{
-		cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), 16)].volume;
-		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), 16)].volume;
-		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, 16)].volume;
-		cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, 16)].volume;
-		cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), 16)].volume;
-		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), 16)].volume;
-		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, 16)].volume;
-		cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, 16)].volume;
+		cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
+		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;
+		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume;
+		cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume;
+		cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume;
+		cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume;
 	}
 	else
 	{
