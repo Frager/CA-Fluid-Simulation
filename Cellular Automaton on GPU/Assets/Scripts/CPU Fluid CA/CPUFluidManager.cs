@@ -44,9 +44,9 @@ namespace CPUFluid
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
-            updateTexture();
+            //updateTexture();
         }
         
         float timer = 0;
@@ -96,7 +96,7 @@ namespace CPUFluid
 
                 updateRule.updateCells(currentGen, newGen);
                 CopyNewToCurrentCells();
-                updateTexture();
+                //updateTexture();
 
                 updateCount++;
                 timer -= timeframe;
