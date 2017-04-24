@@ -36,7 +36,6 @@ namespace CPUFluid
             newGen = CA.initGrid(gridSize, maxVolume, elementCount);
             currentGen = CA.initGrid(gridSize, maxVolume, elementCount);
             
-
             initElements();
             updateRule.elements = elements;
             updateRule.maxVolume = maxVolume;
@@ -81,8 +80,9 @@ namespace CPUFluid
                     }
                     print("content " + content);
                 }
-                if (updateCount < 100)
+                if (updateCount == 100)
                 {
+                    print("Durchschnittliche Berechnungszeit:" + updateRule.MeanMilliseconds());
                 }
                 if (updateCount < 1000)
                 {

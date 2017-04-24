@@ -122,17 +122,26 @@ namespace GPUFLuid
         private float timer = 0;
         private float timeframe = 0.01f;
 
+        private int timeCounter = 0;
+
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
+                if(timeCounter == 100)
+                {
+                    Application.Quit();
+                }
+
                 NextGeneration();
 
-                Render();
+                //Render();
 
                 timer -= timeframe;
                 updateCycle = (updateCycle + 1) % 8;
+
+                ++timeCounter;
             }
         }
 
