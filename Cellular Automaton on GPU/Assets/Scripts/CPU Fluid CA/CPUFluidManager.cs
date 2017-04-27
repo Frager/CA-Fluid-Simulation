@@ -6,14 +6,19 @@ namespace CPUFluid
 {
     public class CPUFluidManager : MonoBehaviour
     {
+        //gridsize^3 is the amount of cells in the 3 dimensional grid
         public int gridSize = 16;
+        //the maximum amount of contents a cell can hold
         public int maxVolume = 8;
+        //the number of elements that will be simulated in the cellular automata
         int elementCount = 3;
 
         public Material testMaterial;
         public SimpleVisuals visuals;
+        //the rules performed each cellular automata update
         public UpdateRule updateRule;
 
+        //visuals use this texture
         private Texture3D texture3D;
         //stores update results for next generation
         private Cell[,,] newGen;
@@ -43,66 +48,55 @@ namespace CPUFluid
 
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            //visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
+            visuals.GenerateVisuals(transform.position, gridSize, gridSize, gridSize, testMaterial);
 
-            //updateTexture();
+            updateTexture();
         }
         
         float timer = 0;
+        //how many ms to wait until next update will be performed
         float timeframe = 0.1f;
+        //counts the number of performed updates
         int updateCount = 0;
+
+        // the general unity monobehavior update
+        // uses a timer to control simulation speed (one update every timeframe)
         void Update()
         {
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                ////heat up floor
-                //for (int x = 0; x < gridSize; ++x)
-                //{
-                //    for (int z = 0; z < gridSize; ++z)
-                //    {
-                //        currentGen[x, 0, z].temperature += 10;
-                //    }
-                //}
-                //for testing if content is correct
-                if (updateCount == 200)
-                {
-                    int content = 0;
-                    for (int x = 0; x < currentGen.GetLength(0); ++x)
-                    {
-                        for (int y = 0; y < currentGen.GetLength(1); ++y)
-                        {
-                            for (int z = 0; z < currentGen.GetLength(2); ++z)
-                            {
-                                content += currentGen[x, y, z].volume;
-                            }
-                        }
-                    }
-                    print("content " + content);
-                }
-                if (updateCount == 100)
-                {
-                    print("Durchschnittliche Berechnungszeit:" + updateRule.MeanMilliseconds());
-                }
+                
                 if (updateCount < 1000)
                 {
-                    currentGen[8, 10, 8].temperature = 20;
-                    currentGen[8, 10, 8].addContent(1, 2);
-
-                    currentGen[3, 10, 3].temperature = 1000;
-                    currentGen[3, 10, 3].addContent(1, 1);
-                    //currentGen[8, 8, 8].addContent(1, 2);
+                    fillCell(8, 10, 8, 2, 1, 20);
+                    fillCell(3, 10, 3, 1, 1, 1000);
                 }
 
-                updateRule.updateCells(currentGen, newGen);
-                CopyNewToCurrentCells();
-                //updateTexture();
+                updateGrid();
 
                 updateCount++;
                 timer -= timeframe;
             }
         }
 
+        //fills a cell with content
+        public void fillCell(int x, int y, int z, int elementId, int elementCount, int cellTemperature)
+        {
+            currentGen[x, y, z].temperature = cellTemperature;
+            currentGen[x, y, z].addContent(elementCount, elementId);
+        }
+
+        //performes an update on all cells and updates the texture3D for visualisation 
+        private void updateGrid()
+        {
+            updateRule.updateCells(currentGen, newGen);
+            CopyNewToCurrentCells();
+            updateTexture();
+        }
+
+        //copies the array of new generation of cells to the current aray of cells
+        //needs to be performed between each update
         void CopyNewToCurrentCells()
         {
             for (int z = 0; z < gridSize; ++z)
@@ -117,6 +111,8 @@ namespace CPUFluid
             }
         }
 
+        //updates the Texture to represent the current generation of cells
+        //possible to switch between visual representations (Content and Temperature)
         void updateTexture()
         {
             if (Input.GetKey(KeyCode.C)) visualsRepresentation = Representation.Content;
@@ -140,61 +136,26 @@ namespace CPUFluid
             texture3D.SetPixels(colors);
             texture3D.Apply();
         }
-        
 
-        //TODO:
-        //replace placeholder elements with real elements
+
+        
+        /// <summary>
+        /// initialises the element list. Edit element properties here
+        /// </summary>
         private void initElements()
         {
             elements = new Element[elementCount];
-
             //Element (id, viscosity, density)
-
-            //gasverhalten
-            //elements[0] = new Element(0, -1, 0.45f);
-
-            //wasserdampf
+           
+            //vapor
             elements[0] = new Element(0, -1, 0.49f);
             elements[0].setFreezeTransition(50f,2);
-            //öl
+            //oil
             elements[1] = new Element(1, 2, 1f);
-            //wasser
+            //water
             elements[2] = new Element(2, 0, 2f);
             elements[2].setEvaporateTransition(100f, 0);
         }
     }
     
-    public struct Element
-    {
-        int id;
-        public int viscosity;
-        public float density;
-        public float evaporateTemperature;
-        public float freezeTemperature;
-        public int evaporateElementId;
-        public int freezeElementId;
-
-        public Element(int id, int viscosity, float density)
-        {
-            this.id = id;
-            this.viscosity = viscosity;
-            this.density = density;
-            evaporateTemperature = float.MaxValue;
-            evaporateElementId = id;
-            freezeTemperature = float.MinValue;
-            freezeElementId = id;
-        }
-
-        public void setFreezeTransition (float freezeTemp, int freezeElementId)
-        {
-            freezeTemperature = freezeTemp;
-            this.freezeElementId = freezeElementId;
-        }
-
-        public void setEvaporateTransition(float evaporateTemp, int evaporateElementId)
-        {
-            evaporateTemperature = evaporateTemp;
-            this.evaporateElementId = evaporateElementId;
-        }
-    }
 }

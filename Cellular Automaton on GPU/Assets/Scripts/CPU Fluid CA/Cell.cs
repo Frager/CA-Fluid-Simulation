@@ -4,37 +4,30 @@ using UnityEngine;
 
 namespace CPUFluid
 {
-    public enum Direction
-    {
-        xPos, xNeg, yPos, yNeg, zPos, zNeg, none
-    }
 
+    //basic CA element
     public struct Cell
     {
-        public int maxVolume;
+        //volume describes the combined amount of all contents in the cell
         public int volume;
-        Direction direction;
-        public int moveElementId;
+        //list of contents in cell. Index equals id and number represents amount
         public int[] content;
+        //cells temperature in celcius
         public float temperature;
 
         public Cell(int elementAmount, int maxVolume)
         {
-            this.maxVolume = maxVolume;
             this.volume = 0;
-            this.direction = Direction.none;
-            moveElementId = -1;
             content = new int[elementAmount];
             temperature = 20f;
         }
 
+        //creates an exact copy of the cell
+        //used to copy the new generation to current ceneration before computing updates
         public Cell copyCell()
         {
             Cell copy = new Cell();
-            copy.maxVolume = maxVolume;
             copy.volume = volume;
-            copy.setDirection(direction);
-            copy.moveElementId = moveElementId;
             copy.temperature = temperature;
             int[] copyContent = new int[content.Length];
             for (int i = 0; i < content.Length; ++i)
@@ -101,39 +94,17 @@ namespace CPUFluid
             volume = 0;
         }
 
-        public void setDirection(Direction dir)
-        {
-            direction = dir;
-        }
-
-        public Direction getDirection()
-        {
-            return direction;
-        }
-
         static public implicit operator Color(Cell cell)
         {
-            //if (cell.volume == 0) return new Color(1, 1, 1, .1f);
-            //else return new Color(0, 0, 1, 1f);
-
             Color color = new Color(1, 1, 1, 0.1f);
             if (cell.volume < 0)
             {
                 color = new Color(1f, 1f, 1f, 1f);
             }
-            else if (cell.volume > cell.maxVolume)
-            {
-                color = new Color(0f, 0f, 0f, 1f);
-            }
-            else if (cell.volume == cell.maxVolume)
-            {
-                color = new Color(0.8f * (float)(cell.content[1] + 4) / (float)cell.maxVolume, 0.8f * (float)(cell.content[2] + 4) / (float)cell.maxVolume, 0.8f * (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
-            }
             else if (cell.volume >= 1)
             {
-                color = new Color((float)(cell.content[1] + 4) / (float)(cell.maxVolume), (float)(cell.content[2] + 4) / (float)(cell.maxVolume), (float)(cell.content[0] + 4) / (float)cell.maxVolume, 1f);
+                color = new Color((cell.content[1] == 0)? 0: 1, (cell.content[0] == 0) ? 0 : 1, (cell.content[2] == 0) ? 0 : 1, 1f);
             }
-            if (cell.direction != Direction.none) color.r += 0.3f;
             return color;
         }
 
