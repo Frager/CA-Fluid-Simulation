@@ -2,11 +2,13 @@
 {
 	Properties
 	{
+		//Part of the wtare-shader from the standard assets
 		_horizonColor("Horizon color", COLOR) = (.172 , .463 , .435 , 0)
 		_WaveScale("Wave scale", Range(0.02,0.15)) = .07
 		[NoScaleOffset] _ColorControl("Reflective color (RGB) fresnel (A) ", 2D) = "" { }
 		[NoScaleOffset] _BumpMap("Waves Normalmap ", 2D) = "" { }
 		WaveSpeed("Wave speed (map1 x,y; map2 x,y)", Vector) = (19,9,-16,-7)
+		///////
 		_MainTex("Texture", 3D) = "white" {}
 	}
 
@@ -26,11 +28,13 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
+			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
 			{
 				float3 vertex[3];
 			};
 
+			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
 			StructuredBuffer<Triangle> triangles;
 
 			#include "UnityCG.cginc"
@@ -89,6 +93,7 @@
 
 				float4 temp, wpos;
 
+				//First point
 				pIn.position = UnityObjectToClipPos(p[0].positions[2]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[2] / (size * scale);
@@ -101,6 +106,7 @@
 
 				triStream.Append(pIn);
 
+				//Second point
 				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[1] / (size * scale);
@@ -113,6 +119,7 @@
 
 				triStream.Append(pIn);
 
+				//Thirs point
 				pIn.position = UnityObjectToClipPos(p[0].positions[0]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[0] / (size * scale);
