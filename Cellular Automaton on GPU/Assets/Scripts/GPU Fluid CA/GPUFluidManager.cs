@@ -50,11 +50,10 @@ namespace GPUFLuid
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.volumeDepth = gridSize;
             texture3D.enableRandomWrite = true;
-            //texture3D.filterMode = FilterMode.Point;
             texture3D.Create();
             testMaterial.SetTexture("_MainTex", texture3D);
 
-            for(int i = 0; i < 8; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 KernelOrder[i] = computeShader.FindKernel(FunctionOrder[i]);
             }
@@ -136,7 +135,7 @@ namespace GPUFLuid
 
                 NextGeneration();
 
-                //Render();
+                Render();
 
                 timer -= timeframe;
                 updateCycle = (updateCycle + 1) % 8;
@@ -173,6 +172,16 @@ namespace GPUFLuid
 #endif
             marchingCubesCS.SetBuffer(marchingCubesCS.FindKernel("CSMain"), "currentGeneration", buffer[updateCycle % 2]);
             marchingCubesCS.Dispatch(marchingCubesCS.FindKernel("CSMain"), gridSize / 16, gridSize / 8, gridSize / 8);
+
+
+            Vector4 waveSpeed = testMaterial.GetVector("WaveSpeed");
+            float waveScale = testMaterial.GetFloat("_WaveScale");
+            float t = Time.time / 20.0f;
+
+            Vector4 offset4 = waveSpeed * (t * waveScale);
+            Vector4 offsetClamped = new Vector4(Mathf.Repeat(offset4.x, 1.0f), Mathf.Repeat(offset4.y, 1.0f),
+            Mathf.Repeat(offset4.z, 1.0f), Mathf.Repeat(offset4.w, 1.0f));
+            testMaterial.SetVector("_WaveOffset", offsetClamped);
         }
 
         private void OnPostRender()

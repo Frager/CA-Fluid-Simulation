@@ -2,13 +2,20 @@
 {
 	Properties
 	{
+		_horizonColor("Horizon color", COLOR) = (.172 , .463 , .435 , 0)
+		_WaveScale("Wave scale", Range(0.02,0.15)) = .07
+		[NoScaleOffset] _ColorControl("Reflective color (RGB) fresnel (A) ", 2D) = "" { }
+		[NoScaleOffset] _BumpMap("Waves Normalmap ", 2D) = "" { }
+		WaveSpeed("Wave speed (map1 x,y; map2 x,y)", Vector) = (19,9,-16,-7)
 		_MainTex("Texture", 3D) = "white" {}
 	}
 
 	SubShader
 	{
-		Tags{ "LightMode" = "ForwardBase"  }
+		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
+
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -28,6 +35,12 @@
 
 			#include "UnityCG.cginc"
 
+			uniform float4 _horizonColor;
+
+			uniform float4 WaveSpeed;
+			uniform float _WaveScale;
+			uniform float4 _WaveOffset;
+
 			struct VS_INPUT
 			{
 				uint vertexid : SV_VertexID;
@@ -43,8 +56,12 @@
 				float4 position : SV_POSITION;
 				float light : BLENDINDICES;
 				float3 uv : TEXCOORDS;
+				float2 bumpuv[2] : TEXCOORD0;
+				float3 viewDir : TEXCOORD2;
 			};
 
+			sampler2D _BumpMap;
+			sampler2D _ColorControl;
 			sampler3D _MainTex;
 			float4 _MainTex_ST;
 
@@ -70,19 +87,42 @@
 				float NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
 				float light = _LightColor0 * NdotL;
 
+				float4 temp, wpos;
+
 				pIn.position = UnityObjectToClipPos(p[0].positions[2]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[2] / (size * scale);
+
+				wpos = mul(unity_ObjectToWorld, p[0].positions[2]);
+				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
+				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[1] = temp.wz;
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[2]));
+
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[1] / (size * scale);
+
+				wpos = mul(unity_ObjectToWorld, p[0].positions[1]);
+				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
+				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[1] = temp.wz;
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[1]));
+
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[0]);
 				pIn.light = light;
 				pIn.uv = p[0].positions[0] / (size * scale);
+
+				wpos = mul(unity_ObjectToWorld, p[0].positions[0]);
+				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
+				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[1] = temp.wz;
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[0]));
+
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
@@ -90,7 +130,18 @@
 
 			fixed4 frag(PS_INPUT input) : SV_Target
 			{
-				return tex3D(_MainTex, input.uv);
+				half3 bump1 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[0])).rgb;
+				half3 bump2 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[1])).rgb;
+				half3 bump = (bump1 + bump2) * 0.5;
+
+				half fresnel = dot(input.viewDir, bump);
+				half4 water = tex2D(_ColorControl, float2(fresnel,fresnel));
+
+				half4 col;
+				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
+				col.a = _horizonColor.a;
+
+				return col * tex3D(_MainTex, input.uv);
 			}
 			ENDCG
 		}
