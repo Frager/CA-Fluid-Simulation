@@ -89,7 +89,7 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 
 	if (SOLID == currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature ||
 		SOLID == currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature ||
-		abs(volume) < 1)
+		abs(volume) < 0.5)
 	{
 		return;
 	}
@@ -249,7 +249,7 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 
 	if (SOLID == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature ||
 		SOLID == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature ||
-		abs(volume) < 1)
+		abs(volume) < 0.5)
 	{
 		return;
 	}
