@@ -10,9 +10,6 @@ namespace GPUFLuid
         //The size of the cellular automaton (width = height = depth)
         public int gridSize;
 
-        //The maximal volume of a cell
-        public int maxVolume;
-
         //The number of different elements in the simulation
         //Warning: This value must be identical to that in the shaders
         private int elementCount = 3;
@@ -41,11 +38,11 @@ namespace GPUFLuid
 
             threadGroups = new int[][] { new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 } };
 
-            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(int) + sizeof(float), ComputeBufferType.GPUMemory) };
+            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 1) * sizeof(float), ComputeBufferType.GPUMemory) };
 
             InitializeComputeShader();
 
-            visualization.Initialize(gridSize, maxVolume);
+            visualization.Initialize(gridSize);
         }
 
 
@@ -54,7 +51,6 @@ namespace GPUFLuid
             int kernelHandle = cs.FindKernel("Initialize");
 
             cs.SetInt("size", gridSize);
-            cs.SetInt("maxVolume", maxVolume);
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
             cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);

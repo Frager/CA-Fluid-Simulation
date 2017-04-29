@@ -148,7 +148,7 @@
 				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 
-				return col * tex3D(_MainTex, input.uv);
+				return tex3D(_MainTex, input.uv) * col;
 			}
 			ENDCG
 		}

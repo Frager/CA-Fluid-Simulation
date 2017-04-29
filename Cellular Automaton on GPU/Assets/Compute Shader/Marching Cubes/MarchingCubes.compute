@@ -1,5 +1,4 @@
 ﻿#pragma kernel CSMain
-#pragma kernel Initialize
 
 #define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size + z * size * size
@@ -9,8 +8,7 @@
 
 struct Cell
 {
-	int volume;
-	int content[NUMBER_OF_ELEMENTS];
+	float content[NUMBER_OF_ELEMENTS];
 	float temperature;
 };
 
@@ -22,7 +20,7 @@ struct Triangle
 struct GridCell
 {
 	float3 p[8];
-	int val[8];
+	float val[8];
 };
 
 uint size;
@@ -320,7 +318,6 @@ const static int triTable[256][16] =
 { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };
 
 
-RWStructuredBuffer<Cell> newGeneration;
 StructuredBuffer<Cell> currentGeneration;
 
 AppendStructuredBuffer<Triangle> triangles;
@@ -403,19 +400,19 @@ void Polygonise(GridCell grid)
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		vertlist[8] = lerp(grid.p[0], grid.p[4], grid.val[0] / 8.0);
+		vertlist[8] = lerp(grid.p[0], grid.p[4], grid.val[0]);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		vertlist[9] = lerp(grid.p[1], grid.p[5], grid.val[1] / 8.0);
+		vertlist[9] = lerp(grid.p[1], grid.p[5], grid.val[1]);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		vertlist[10] = lerp(grid.p[2], grid.p[6], grid.val[2] / 8.0);
+		vertlist[10] = lerp(grid.p[2], grid.p[6], grid.val[2]);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		vertlist[11] = lerp(grid.p[3], grid.p[7], grid.val[3] / 8.0);
+		vertlist[11] = lerp(grid.p[3], grid.p[7], grid.val[3]);
 	}
 
 	[unroll]
@@ -430,17 +427,16 @@ void Polygonise(GridCell grid)
 	}
 }
 
-[numthreads(16, 8, 8)]
-void Initialize(uint3 id : SV_DispatchThreadID)
+float Volume(Cell cell)
 {
-	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
+	float volume = 0;
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 1;
+		volume += cell.content[i];
 	}
-	else
-	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
-	}
+	volume = max(0, volume);
+	return volume;
 }
 
 [numthreads(16, 8, 8)]
@@ -458,14 +454,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
 	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
 	{
-		cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
-		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;
-		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume;
-		cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume;
-		cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume;
-		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume;
-		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume;
-		cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume;
+		cell.val[0] = Volume(currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)]);
+		cell.val[1] = Volume(currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)]);
+		cell.val[2] = Volume(currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)]);
+		cell.val[3] = Volume(currentGeneration[ADDRESS(id.x, id.y, id.z, size)]);
+		cell.val[4] = Volume(currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)]);
+		cell.val[5] = Volume(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)]);
+		cell.val[6] = Volume(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)]);
+		cell.val[7] = Volume(currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)]);
 	}
 	else
 	{

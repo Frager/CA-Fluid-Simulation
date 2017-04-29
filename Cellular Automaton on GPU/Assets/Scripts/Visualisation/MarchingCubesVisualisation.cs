@@ -1,4 +1,4 @@
-﻿#define TRIANGLE
+﻿#define TRIANGLES
 
 using UnityEngine;
 
@@ -18,9 +18,6 @@ namespace GPUFLuid
 
         //The size of the CellularAutomaton
         private int gridSize;
-
-        //The maximal volume of a cell
-        private int maxVolume;
 
         //A compute shader that generates a texture3D out of a cellular automaton
         public ComputeShader texture3DCS;
@@ -47,10 +44,9 @@ namespace GPUFLuid
         private ComputeBuffer args;
         private int[] data;
 
-        public void Initialize(int gridSize, int maxVolume)
+        public void Initialize(int gridSize)
         {
             this.gridSize = gridSize;
-            this.maxVolume = maxVolume;
 
             texture3D = new RenderTexture(gridSize, gridSize, 1);
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
@@ -82,11 +78,9 @@ namespace GPUFLuid
         {
             marchingCubesCS.SetFloat("scale", scale);
             marchingCubesCS.SetInt("size", gridSize);
-            marchingCubesCS.SetInt("maxVolume", maxVolume);
             marchingCubesCSKernel = marchingCubesCS.FindKernel("CSMain");
 
             texture3DCS.SetInt("size", gridSize);
-            texture3DCS.SetInt("maxVolume", maxVolume);
             texture3DCSKernel = texture3DCS.FindKernel("CSMain");
 
             material.SetFloat("scale", scale);
@@ -137,7 +131,9 @@ namespace GPUFLuid
             marchingCubesCS.Dispatch(marchingCubesCSKernel, gridSize / 16, gridSize / 8, gridSize / 8);
 
             RenderTexture3D(cells);
+#if  !CUBES
             RenderRealisticWater();
+#endif
         }
 
         void OnPostRender()
@@ -145,7 +141,7 @@ namespace GPUFLuid
             material.SetPass(0);
 #if CUBES
             ComputeBuffer.CopyCount(quads, args, 0);
-            testMaterial.SetBuffer("quads", quads);
+            material.SetBuffer("quads", quads);
             Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
 #else
             ComputeBuffer.CopyCount(triangles, args, 0);
