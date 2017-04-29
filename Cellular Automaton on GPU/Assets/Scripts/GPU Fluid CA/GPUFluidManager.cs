@@ -11,6 +11,9 @@ namespace GPUFLuid
 
         public int x, y, z;
 
+        [Range(0,2)]
+        public int elementID = 2;
+
         private float timer = 0;
 
         void Update()
@@ -18,7 +21,7 @@ namespace GPUFLuid
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                ca.Fill(new int[] { x, y, z, 2 });
+                ca.Fill(new int[] { x, y, z, elementID });
                 ca.NextGeneration();
 
                 timer -= timeframe;
