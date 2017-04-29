@@ -13,12 +13,13 @@
 struct Cell
 {
 	float content[NUMBER_OF_ELEMENTS];
+	float volume;
 	int temperature;
 };
 
 static float Viscosities[] =
 {
-	0, 0.1, 1
+	0, 0.1, 0.9
 };
 
 static float Densities[] =
@@ -53,23 +54,18 @@ uint4 fill;
 [numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20.0;
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0.0;
+
+	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = 0.0;
+	}
+
 	if (id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1 || (id.z == 20 && id.y < 3))
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = SOLID;
-
-		for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
-		{
-			newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = SOLID;
-		}
-	}
-	else
-	{
-		newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20.0;
-
-		for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
-		{
-			newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = 0.0;
-		}
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -1.0;
 	}
 }
 
@@ -79,28 +75,18 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)] = currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)];
 	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)] = currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)];
 
-	float volume = 0, volume2 = 0;
-
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		volume += currentGeneration[ADDRESS((id.x * 2 + offset.x), (id.y - 1), id.z, size)].content[i];
-	}
-
 	if (SOLID == currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature ||
 		SOLID == currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature ||
-		abs(volume) < 0.5)
+		(abs(currentGeneration[ADDRESS((id.x * 2 + offset.x), (id.y - 1), id.z, size)].volume) < 0.5 &&
+		abs(currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), (id.y - 1), id.z, size)].volume) < 0.5))
 	{
 		return;
 	}
 
-	float mean, difference;
-
-	volume = 0;
-	volume2 = 0;
+	float mean, difference, volume = 0, volume2 = 0;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		mean = (currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i]) / 2.0;
 
@@ -121,22 +107,22 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 			difference += (volume2 + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - difference - 1);
 		}
 
-		//if (amount > 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature * volume + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature * amount;
-		//	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature = sumWeightedTemps / (volume + amount);
-		//}
-		//else if (amount < 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature * volume - newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature * amount;
-		//	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature = sumWeightedTemps / (volume2 - amount);
-		//}
-		//else
-		//{
-		//	float diff = (newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature - newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature) / temperatureSpread;
-		//	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature -= diff / (volume + 1);
-		//	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature += diff / (volume2 + 1); 
-		//}
+		if (difference > 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature * currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature * difference;
+			newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature = sumWeightedTemps / (currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume + difference);
+		}
+		else if (difference < 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature * volume - newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature * difference;
+			newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature = sumWeightedTemps / (volume2 - difference);
+		}
+		else if (abs(difference) < 0.001)
+		{
+			float diff = (newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature - newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature) / temperatureSpread;
+			newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].temperature -= diff / (volume + 1);
+			newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].temperature += diff / (volume2 + 1); 
+		}
 
 		newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] = currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + difference;
 		volume += currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content[i] + difference;
@@ -144,6 +130,9 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] = currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - difference;
 		volume2 += currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content[i] - difference;
 	}
+
+	newGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume = volume;
+	newGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume = volume2;
 
 	//if (id.x * 2 + offset.x == 8 && id.y == 1 && id.z == 8)
 	//{
@@ -157,7 +146,8 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)];
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)];
 
-	if (SOLID == currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature || SOLID == currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature)
+	if (SOLID == currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature ||
+		SOLID == currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature)
 	{
 		return;
 	}
@@ -172,50 +162,52 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 		difference = bottom - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i];
 
-		//if (difference > 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * difference;
-		//	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = sumWeightedTemps / (float)(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + difference);
-		//}
+		if (difference > 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * difference;
+			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + difference);
+		}
 
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] += difference;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += difference;
 
 		volume += bottom;
 
 		difference = amount - bottom - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i];
 
-		//if (difference > 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
-		//	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = sumWeightedTemps / (float)(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + difference);
-		//}
+		if (difference > 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
+			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + difference);
+		}
 
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i] += difference;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += difference;
 
-		//float tempDifference = (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature - newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature) / temperatureSpread;
-		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature += tempDifference / ((float)newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + 1);
-		//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature -= tempDifference / ((float)newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + 1);
+		float tempDifference = (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature - newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature) / temperatureSpread;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature += tempDifference / (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + 1);
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature -= tempDifference / (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + 1);
 	}
 
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0)
-		{
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
-			{
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
-			}
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
-			{
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
-			}
-		}
-	}
+	//[unroll(NUMBER_OF_ELEMENTS)]
+	//for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	//{
+	//	if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0)
+	//	{
+	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
+	//		{
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
+	//		}
+	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
+	//		{
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
+	//		}
+	//	}
+	//}
 
 	if (id.x == fill.x && id.y * 2 + offset.y == fill.y && id.z == fill.z)
 	{
@@ -239,28 +231,18 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)];
 	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)];
 
-	float volume = 0, volume2 = 0;
-
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		volume += currentGeneration[ADDRESS(id.x, (id.y - 1), (id.z * 2 + offset.z), size)].content[i];
-	}
-
 	if (SOLID == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature ||
 		SOLID == currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature ||
-		abs(volume) < 0.5)
+		(abs(currentGeneration[ADDRESS(id.x, (id.y - 1), (id.z * 2 + offset.z), size)].volume) < 0.5 &&
+		abs(currentGeneration[ADDRESS(id.x, (id.y - 1), (id.z * 2 + offset.z + 1), size)].volume) < 0.5))
 	{
 		return;
 	}
 
-	float mean, difference;
-
-	volume = 0;
-	volume2 = 0;
+	float mean, difference, volume = 0, volume2 = 0;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		mean = (currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i]) / 2.0;
 
@@ -281,22 +263,22 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 			difference += (volume2 + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - difference - 1);
 		}
 
-		//if (amount > 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature * volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature * amount;
-		//	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature = sumWeightedTemps / (volume + amount);
-		//}
-		//else if (amount < 0)
-		//{
-		//	float sumWeightedTemps = newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature * volume2 - newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature * amount;
-		//	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature = sumWeightedTemps / (volume2 - amount);
-		//}
-		//else
-		//{
-		//	float diff = (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature - newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature) / temperatureSpread;
-		//	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature -= diff / (volume + 1);
-		//	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature += diff / (volume2 + 1);
-		//}
+		if (difference > 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature * currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature * difference;
+			newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume + difference);
+		}
+		else if (difference < 0)
+		{
+			float sumWeightedTemps = newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature * volume2 - newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature * difference;
+			newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature = sumWeightedTemps / (volume2 - difference);
+		}
+		else if(abs(difference) < 0.001)
+		{
+			float diff = (newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature - newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature) / temperatureSpread;
+			newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].temperature -= diff / (volume + 1);
+			newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].temperature += diff / (volume2 + 1);
+		}
 
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + difference;
 		volume += currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content[i] + difference;
@@ -304,6 +286,9 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - difference;
 		volume2 += currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content[i] - difference;
 	}
+
+	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume = volume;
+	newGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume = volume2;
 
 	//if (id.x == 8 && id.y == 1 && id.z * 2 + offset.z == 8)
 	//{

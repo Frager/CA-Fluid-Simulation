@@ -9,7 +9,8 @@
 struct Cell
 {
 	float content[NUMBER_OF_ELEMENTS];
-	float temperature;
+	float volume;
+	int temperature;
 };
 
 struct Triangle
@@ -427,18 +428,6 @@ void Polygonise(GridCell grid)
 	}
 }
 
-float Volume(Cell cell)
-{
-	float volume = 0;
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		volume += cell.content[i];
-	}
-	volume = max(0, volume);
-	return volume;
-}
-
 [numthreads(16, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
@@ -454,14 +443,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
 	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
 	{
-		cell.val[0] = Volume(currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)]);
-		cell.val[1] = Volume(currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)]);
-		cell.val[2] = Volume(currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)]);
-		cell.val[3] = Volume(currentGeneration[ADDRESS(id.x, id.y, id.z, size)]);
-		cell.val[4] = Volume(currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)]);
-		cell.val[5] = Volume(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)]);
-		cell.val[6] = Volume(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)]);
-		cell.val[7] = Volume(currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)]);
+		cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
+		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;
+		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume;
+		cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume;
+		cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume;
+		cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume;
 	}
 	else
 	{

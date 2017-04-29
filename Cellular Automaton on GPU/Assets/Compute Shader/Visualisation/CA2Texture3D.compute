@@ -13,6 +13,7 @@ static float4 Colors[] =
 struct Cell
 {
 	float content[NUMBER_OF_ELEMENTS];
+	float volume;
 	int temperature;
 };
 
@@ -21,31 +22,18 @@ RWTexture3D<float4> Result;
 
 uint size;
 
-float Volume(Cell cell)
-{
-	float volume = 0;
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		volume += cell.content[i];
-	}
-	return volume;
-}
-
 [numthreads(16,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
 
-	float volume = Volume(cell);
-
 	float4 color = float4(1, 1, 1, 0.1);
 
-	if (volume <= 0)
+	if (cell.volume <= 0)
 	{
 		color = float4(0, 0, 0, 1);
 	}
-	else if (volume > 1)
+	else if (cell.volume > 1)
 	{
 		color = float4(0, 0, 0, 1);
 	}

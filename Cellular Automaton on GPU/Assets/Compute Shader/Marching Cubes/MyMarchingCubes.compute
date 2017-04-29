@@ -6,6 +6,7 @@
 struct Cell
 {
 	float content[NUMBER_OF_ELEMENTS];
+	float volume;
 	int temperature;
 };
 
@@ -20,22 +21,6 @@ uint size;
 StructuredBuffer<Cell> currentGeneration;
 AppendStructuredBuffer<Quad> quads;
 
-float Volume(Cell cell)
-{
-	float volume = 0;
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		volume += cell.content[i];
-	}
-	if (volume < 0.001)
-	{
-		return -1.0;
-	}
-
-	return volume;
-}
-
 [numthreads(16, 8, 8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
@@ -47,20 +32,17 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	Cell front = currentGeneration[ADDRESS(id.x, id.y, (id.z - 1), size)];
 	Cell back = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)];
 
-	float volumeCurrent = Volume(current);
-	float volume = Volume(down);
-	if (volume > 0 && (volume > volumeCurrent || volume < 1) && id.y > 0)
+	if (down.volume > 0 && (down.volume > current.volume || down.volume < 1) && id.y > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale - scale + volume * scale, id.z * scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale - scale + volume * scale, id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale - scale + volume * scale, id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale - scale + volume * scale, id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale - scale + down.volume * scale, id.z * scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale - scale + down.volume * scale, id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale - scale + down.volume * scale, id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale - scale + down.volume * scale, id.z * scale + scale);
 		quads.Append(quad);
 	}
-	
-	volume = Volume(up);
-	if (volume > 0 && (volume > volumeCurrent || volumeCurrent < 1) && id.y < size - 1)
+
+	if (up.volume > 0 && (up.volume > current.volume || current.volume < 1) && id.y < size - 1)
 	{
 		Quad quad;
 		quad.vertex[3] = float3(id.x * scale,			id.y * scale + scale, id.z * scale);
@@ -70,47 +52,43 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quads.Append(quad);
 	}
 	
-	volume = Volume(left);
-	if (volume > 0 && volume > volumeCurrent && id.x > 0)
+	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale, id.y * scale,						id.z * scale);
-		quad.vertex[1] = float3(id.x * scale, id.y * scale,						id.z * scale + scale);
-		quad.vertex[2] = float3(id.x * scale, id.y * scale + volume * scale,	id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale, id.y * scale + volume * scale,	id.z * scale);
+		quad.vertex[0] = float3(id.x * scale, id.y * scale,							id.z * scale);
+		quad.vertex[1] = float3(id.x * scale, id.y * scale,							id.z * scale + scale);
+		quad.vertex[2] = float3(id.x * scale, id.y * scale + left.volume * scale,	id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale, id.y * scale + left.volume * scale,	id.z * scale);
 		quads.Append(quad);
 	}
 	
-	volume = Volume(right);
-	if (volume > 0 && volume > volumeCurrent && id.x < size - 1)
+	if (right.volume > 0 && right.volume > current.volume && id.x < size - 1)
 	{
 		Quad quad;
-		quad.vertex[3] = float3(id.x * scale + scale, id.y * scale,						id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale, id.y * scale,						id.z * scale + scale);
-		quad.vertex[1] = float3(id.x * scale + scale, id.y * scale + volume * scale,	id.z * scale + scale);
-		quad.vertex[0] = float3(id.x * scale + scale, id.y * scale + volume * scale,	id.z * scale);
+		quad.vertex[3] = float3(id.x * scale + scale, id.y * scale,							id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale, id.y * scale,							id.z * scale + scale);
+		quad.vertex[1] = float3(id.x * scale + scale, id.y * scale + right.volume * scale,	id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * scale + scale, id.y * scale + right.volume * scale,	id.z * scale);
 		quads.Append(quad);
 	}
 
-	volume = Volume(front);
-	if (volume > 0 && volume > volumeCurrent && id.z > 0)
+	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
 	{
 		Quad quad;
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale,					id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale,					id.z * scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + volume * scale,	id.z * scale);
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale + volume * scale,	id.z * scale);
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale,							id.z * scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale,							id.z * scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + front.volume * scale,	id.z * scale);
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale + front.volume * scale,	id.z * scale);
 		quads.Append(quad);
 	}
 
-	volume = Volume(back);
-	if (volume > 0 && volume > volumeCurrent && id.z < size - 1)
+	if (back.volume > 0 && back.volume > current.volume && id.z < size - 1)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale,					id.z * scale + scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale,					id.z * scale + scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + volume * scale,	id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale + volume * scale,	id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * scale,			id.y * scale,						id.z * scale + scale);
+		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale,						id.z * scale + scale);
+		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + back.volume * scale,	id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * scale,			id.y * scale + back.volume * scale,	id.z * scale + scale);
 		quads.Append(quad);
 	}
 }
