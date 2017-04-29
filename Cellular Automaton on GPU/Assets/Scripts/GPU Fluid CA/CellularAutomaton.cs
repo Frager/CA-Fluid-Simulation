@@ -69,6 +69,15 @@ namespace GPUFLuid
         }
 
         /// <summary>
+        /// This function determines where and how much a cell is heaten.
+        /// </summary>
+        /// <param name="heat">An array of size 4. The first three values determine the position and the last value determines the temperature in degree Celsius.</param>
+        public void Heat(int[] heat)
+        {
+            cs.SetInts("heat", heat);
+        }
+
+        /// <summary>
         /// Computes the next generation.
         /// </summary>
         public void NextGeneration()

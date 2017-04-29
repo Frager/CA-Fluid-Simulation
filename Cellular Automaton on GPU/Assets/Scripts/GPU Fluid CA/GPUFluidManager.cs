@@ -16,6 +16,11 @@ namespace GPUFLuid
 
         private float timer = 0;
 
+        private void Start()
+        {
+            ca.Heat(new int[] { 0, 0, 0, 0 });
+        }
+
         void Update()
         {
             timer += Time.deltaTime;
