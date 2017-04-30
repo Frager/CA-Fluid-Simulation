@@ -14,7 +14,7 @@ struct Cell
 {
 	float content[NUMBER_OF_ELEMENTS];
 	float volume;
-	int temperature;
+	float temperature;
 };
 
 static float Viscosities[] =
@@ -159,7 +159,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		amount = (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i]);
-		bottom = min(1 - volume, min(Densities[i], 1) * amount);
+		bottom = min(1.0 - volume, min(Densities[i], 1.0) * amount);
 
 		difference = bottom - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i];
 
@@ -197,25 +197,25 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature -= tempDifference / (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + 1);
 	}
 
-	//[unroll(NUMBER_OF_ELEMENTS)]
-	//for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	//{
-	//	if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
-	//	{
-	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
-	//		{
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
-	//		}
-	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
-	//		{
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
-	//		}
-	//	}
-	//}
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	{
+		if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
+		{
+			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
+			{
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
+			}
+			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
+			{
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
+			}
+		}
+	}
 
 	if (id.x == fill.x && id.y * 2 + offset.y == fill.y && id.z == fill.z && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.8)
 	{
