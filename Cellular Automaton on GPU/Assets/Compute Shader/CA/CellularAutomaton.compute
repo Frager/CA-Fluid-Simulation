@@ -157,7 +157,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		amount = (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i]);
-		bottom = min(1 - volume, min(Densities[i], 1) * amount);
+		bottom = min(1.0 - volume, min(Densities[i], 1.0) * amount);
 
 		difference = bottom - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i];
 
