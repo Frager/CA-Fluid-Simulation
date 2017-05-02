@@ -13,6 +13,7 @@
 		Pass
 		{
 			CGPROGRAM
+
 			#include "UnityLightingCommon.cginc"
 			#pragma target 5.0
 			#pragma vertex vert
@@ -22,6 +23,15 @@
 			struct Quad
 			{
 				float3 vertex[4];
+			};
+
+			static float4 Colors[5] =
+			{
+				float4(0,0,0,0),
+				float4(0,0,0,1),
+				float4(0,1,1,1),
+				float4(1,1,0,1),
+				float4(0.2,0.5,1,1)
 			};
 
 			StructuredBuffer<Quad> quads;
@@ -110,7 +120,7 @@
 
 			fixed4 frag(PS_INPUT input) : SV_Target
 			{
-				return tex3D(_MainTex, input.uv) * input.light;
+				return Colors[tex3D(_MainTex, input.uv).r] * input.light;
 			}
 			ENDCG
 		}

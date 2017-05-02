@@ -18,7 +18,7 @@ namespace GPUFLuid
 
         private void Start()
         {
-            ca.Heat(new int[] { 0, 0, 0, 0 });
+            ca.Heat(new int[] { 10, 1, 10, 120 });
         }
 
         void Update()

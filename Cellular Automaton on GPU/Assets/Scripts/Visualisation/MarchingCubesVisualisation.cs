@@ -19,11 +19,6 @@ namespace GPUFLuid
         //The size of the CellularAutomaton
         private int gridSize;
 
-        //A compute shader that generates a texture3D out of a cellular automaton
-        public ComputeShader texture3DCS;
-        private int texture3DCSKernel;
-        private RenderTexture texture3D;
-
         //A compute shader that executes the Marching Cubes algorithm
         public ComputeShader marchingCubesCS;
         private int marchingCubesCSKernel;
@@ -48,13 +43,6 @@ namespace GPUFLuid
         {
             this.gridSize = gridSize;
 
-            texture3D = new RenderTexture(gridSize, gridSize, 1);
-            texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            texture3D.volumeDepth = gridSize;
-            texture3D.enableRandomWrite = true;
-            texture3D.Create();
-            material.SetTexture("_MainTex", texture3D);
-
             InitializeComputeBuffer();
             InitializeShader();
         }
@@ -69,7 +57,7 @@ namespace GPUFLuid
             quads = new ComputeBuffer(gridSize * gridSize * gridSize, 4 * 3 * sizeof(float), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(quads, args, 0);
 #else
-            triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+            triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float) + 3 * 3 * sizeof(int), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(triangles, args, 0);
 #endif
         }
@@ -80,11 +68,10 @@ namespace GPUFLuid
             marchingCubesCS.SetInt("size", gridSize);
             marchingCubesCSKernel = marchingCubesCS.FindKernel("CSMain");
 
-            texture3DCS.SetInt("size", gridSize);
-            texture3DCSKernel = texture3DCS.FindKernel("CSMain");
-
             material.SetFloat("scale", scale);
             material.SetFloat("size", gridSize);
+
+            material.SetBuffer("triangles", triangles);
         }
 
         /// <summary>
@@ -104,21 +91,10 @@ namespace GPUFLuid
         }
 
         /// <summary>
-        /// Creates a 3D-Texture out of a cellular automaton. The different fluid-types are represented with different color.
+        /// Executes the marching cubes algorithm.
         /// </summary>
-        /// <param name="cells">The cells of a CellularAutomaton</param>
-        private void RenderTexture3D(ComputeBuffer cells)
-        {
-            texture3DCS.SetBuffer(texture3DCSKernel, "currentGeneration", cells);
-            texture3DCS.SetTexture(texture3DCSKernel, "Result", texture3D);
-            texture3DCS.Dispatch(texture3DCSKernel, gridSize / 16, gridSize / 8, gridSize / 8);
-        }
-
-        /// <summary>
-        /// Perfroms the Marching Cubes Algorithm and generates the mesh.
-        /// </summary>
-        /// <param name="cells">The cells of a CellularAutomaton</param>
-        public void Render(ComputeBuffer cells)
+        /// <param name="cells">The cells of the cellular automaton</param>
+        public void CreateMesh(ComputeBuffer cells)
         {
 #if CUBES
             quads.SetCounterValue(0);
@@ -127,16 +103,14 @@ namespace GPUFLuid
             triangles.SetCounterValue(0);
             marchingCubesCS.SetBuffer(marchingCubesCSKernel, "triangles", triangles);
 #endif
+
             marchingCubesCS.SetBuffer(marchingCubesCSKernel, "currentGeneration", cells);
             marchingCubesCS.Dispatch(marchingCubesCSKernel, gridSize / 16, gridSize / 8, gridSize / 8);
 
-            RenderTexture3D(cells);
-#if  !CUBES
-            RenderRealisticWater();
-#endif
+            material.SetBuffer("currentGeneration", cells);
         }
 
-        void OnPostRender()
+        public void Render()
         {
             material.SetPass(0);
 #if CUBES
@@ -144,8 +118,9 @@ namespace GPUFLuid
             material.SetBuffer("quads", quads);
             Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
 #else
-            ComputeBuffer.CopyCount(triangles, args, 0);
             material.SetBuffer("triangles", triangles);
+            RenderRealisticWater();
+            ComputeBuffer.CopyCount(triangles, args, 0);
             Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
 #endif
         }

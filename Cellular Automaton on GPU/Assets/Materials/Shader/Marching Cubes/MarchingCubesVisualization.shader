@@ -2,14 +2,11 @@
 {
 	Properties
 	{
-		//Part of the wtare-shader from the standard assets
 		_horizonColor("Horizon color", COLOR) = (.172 , .463 , .435 , 0)
 		_WaveScale("Wave scale", Range(0.02,0.15)) = .07
 		[NoScaleOffset] _ColorControl("Reflective color (RGB) fresnel (A) ", 2D) = "" { }
 		[NoScaleOffset] _BumpMap("Waves Normalmap ", 2D) = "" { }
 		WaveSpeed("Wave speed (map1 x,y; map2 x,y)", Vector) = (19,9,-16,-7)
-		///////
-		_MainTex("Texture", 3D) = "white" {}
 	}
 
 	SubShader
@@ -28,14 +25,34 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
+			#define NUMBER_OF_ELEMENTS 3
+			#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+			struct Cell
+			{
+				float content[NUMBER_OF_ELEMENTS];
+				float volume;
+				float temperature;
+			};
+
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
 			{
 				float3 vertex[3];
+				uint3 cell[3];
+			};
+
+			static float4 Colors[4] =
+			{
+				float4(1,0,0,1),
+				float4(0,1,1,1),
+				float4(1,1,0,1),
+				float4(0.2,0.5,1,1)
 			};
 
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
 			StructuredBuffer<Triangle> triangles;
+
+			StructuredBuffer<Cell> currentGeneration;
 
 			#include "UnityCG.cginc"
 
@@ -53,21 +70,19 @@
 			struct GS_INPUT
 			{
 				float4 positions[3] : POSITION;
+				uint3 cells[3] : BLENDINDICES;
 			};
 
 			struct PS_INPUT
 			{
 				float4 position : SV_POSITION;
-				float light : BLENDINDICES;
-				float3 uv : TEXCOORDS;
+				float4 color : COLOR;
 				float2 bumpuv[2] : TEXCOORD0;
 				float3 viewDir : TEXCOORD2;
 			};
 
 			sampler2D _BumpMap;
 			sampler2D _ColorControl;
-			sampler3D _MainTex;
-			float4 _MainTex_ST;
 
 			float scale;
 			int size;
@@ -78,7 +93,30 @@
 				o.positions[0] = float4(triangles[input.vertexid].vertex[0], 1);
 				o.positions[1] = float4(triangles[input.vertexid].vertex[1], 1);
 				o.positions[2] = float4(triangles[input.vertexid].vertex[2], 1);
+
+				o.cells[0] = triangles[input.vertexid].cell[0];
+				o.cells[1] = triangles[input.vertexid].cell[1];
+				o.cells[2] = triangles[input.vertexid].cell[2];
+
 				return o;
+			}
+
+			uint GetCellsElement(uint3 id)
+			{
+				Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
+
+				uint pos = 0;
+
+				[unroll(NUMBER_OF_ELEMENTS - 1)]
+				for (uint i = 1; i < NUMBER_OF_ELEMENTS; ++i)
+				{
+					if (cell.content[i] > cell.content[pos])
+					{
+						pos = i;
+					}
+				}
+
+				return (pos + 1) * (cell.volume > 0.01);
 			}
 
 			[maxvertexcount(3)]
@@ -95,8 +133,7 @@
 
 				//First point
 				pIn.position = UnityObjectToClipPos(p[0].positions[2]);
-				pIn.light = light;
-				pIn.uv = p[0].positions[2] / (size * scale);
+				pIn.color = float4(Colors[GetCellsElement(p[0].cells[2])].xyz * light, Colors[GetCellsElement(p[0].cells[2])].a);
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[2]);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
@@ -108,8 +145,7 @@
 
 				//Second point
 				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
-				pIn.light = light;
-				pIn.uv = p[0].positions[1] / (size * scale);
+				pIn.color = float4(Colors[GetCellsElement(p[0].cells[1])].xyz * light, Colors[GetCellsElement(p[0].cells[1])].a);
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[1]);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
@@ -119,10 +155,9 @@
 
 				triStream.Append(pIn);
 
-				//Thirs point
+				//Third point
 				pIn.position = UnityObjectToClipPos(p[0].positions[0]);
-				pIn.light = light;
-				pIn.uv = p[0].positions[0] / (size * scale);
+				pIn.color = float4(Colors[GetCellsElement(p[0].cells[0])].xyz * light, Colors[GetCellsElement(p[0].cells[0])].a);
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[0]);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
@@ -148,7 +183,7 @@
 				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 
-				return tex3D(_MainTex, input.uv) * col;
+				return input.color;
 			}
 			ENDCG
 		}
