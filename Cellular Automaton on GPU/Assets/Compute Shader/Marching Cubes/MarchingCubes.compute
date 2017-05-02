@@ -6,6 +6,26 @@
 //Algorithm based on:
 //http://paulbourke.net/geometry/polygonise/
 
+struct Cell
+{
+	float content[NUMBER_OF_ELEMENTS];
+	float volume;
+	float temperature;
+};
+
+struct Triangle
+{
+	float3 vertex[3];
+};
+
+struct GridCell
+{
+	float3 p[8];
+	float val[8];
+};
+
+uint size;
+
 const static int edgeTable[256] = {
 	0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 	0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
@@ -298,26 +318,6 @@ const static int triTable[256][16] =
 { 0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };
 
-struct Cell
-{
-	float content[NUMBER_OF_ELEMENTS];
-	float volume;
-	float temperature;
-};
-
-struct Triangle
-{
-	float3 vertex[3];
-	uint3 cell[3];
-};
-
-struct GridCell
-{
-	uint3 p[8];
-	float val[8];
-};
-
-uint size;
 
 StructuredBuffer<Cell> currentGeneration;
 
@@ -327,38 +327,37 @@ void Polygonise(GridCell grid)
 {
 	int cubeindex;
 	float3 vertlist[12];
-	uint3 cellList[12];
 
 	cubeindex = 0;
-	if (grid.val[0] > 0.01)
+	if (grid.val[0] > 0)
 	{
 		cubeindex |= 1;
 	}
-	if (grid.val[1] > 0.01)
+	if (grid.val[1] > 0)
 	{
 		cubeindex |= 2;
 	}
-	if (grid.val[2] > 0.01)
+	if (grid.val[2] > 0)
 	{
 		cubeindex |= 4;
 	}
-	if (grid.val[3] > 0.01)
+	if (grid.val[3] > 0)
 	{
 		cubeindex |= 8;
 	}
-	if (grid.val[4] > 0.01)
+	if (grid.val[4] > 0)
 	{
 		cubeindex |= 16;
 	}
-	if (grid.val[5] > 0.01)
+	if (grid.val[5] > 0)
 	{
 		cubeindex |= 32;
 	}
-	if (grid.val[6] > 0.01)
+	if (grid.val[6] > 0)
 	{
 		cubeindex |= 64;
 	}
-	if (grid.val[7] > 0.01)
+	if (grid.val[7] > 0)
 	{
 		cubeindex |= 128;
 	}
@@ -370,63 +369,51 @@ void Polygonise(GridCell grid)
 
 	if (edgeTable[cubeindex] & 1)
 	{
-		vertlist[0] = lerp(float3(grid.p[0]), float3(grid.p[1]), 0.5);
-		cellList[0] = (grid.val[0] >= grid.val[1]) ? grid.p[0] : grid.p[1];
+		vertlist[0] = lerp(grid.p[0], grid.p[1], 0.5);
 	}
 	if (edgeTable[cubeindex] & 2)
 	{
-		vertlist[1] = lerp(float3(grid.p[1]), float3(grid.p[2]), 0.5);
-		cellList[1] = (grid.val[1] >= grid.val[2]) ? grid.p[1] : grid.p[2];
+		vertlist[1] = lerp(grid.p[1], grid.p[2], 0.5);
 	}
 	if (edgeTable[cubeindex] & 4)
 	{
-		vertlist[2] = lerp(float3(grid.p[2]), float3(grid.p[3]), 0.5);
-		cellList[2] = (grid.val[2] >= grid.val[3]) ? grid.p[2] : grid.p[3];
+		vertlist[2] = lerp(grid.p[2], grid.p[3], 0.5);
 	}
 	if (edgeTable[cubeindex] & 8)
 	{
-		vertlist[3] = lerp(float3(grid.p[3]), float3(grid.p[0]), 0.5);
-		cellList[3] = (grid.val[3] >= grid.val[0]) ? grid.p[3] : grid.p[0];
+		vertlist[3] = lerp(grid.p[3], grid.p[0], 0.5);
 	}
 	if (edgeTable[cubeindex] & 16)
 	{
-		vertlist[4] = lerp(float3(grid.p[4]), float3(grid.p[5]), 0.5);
-		cellList[4] = (grid.val[4] >= grid.val[5]) ? grid.p[4] : grid.p[5];
+		vertlist[4] = lerp(grid.p[4], grid.p[5], 0.5);
 	}
 	if (edgeTable[cubeindex] & 32)
 	{
-		vertlist[5] = lerp(float3(grid.p[5]), float3(grid.p[6]), 0.5);
-		cellList[5] = (grid.val[5] >= grid.val[6]) ? grid.p[5] : grid.p[6];
+		vertlist[5] = lerp(grid.p[5], grid.p[6], 0.5);
 	}
 	if (edgeTable[cubeindex] & 64)
 	{
-		vertlist[6] = lerp(float3(grid.p[6]), float3(grid.p[7]), 0.5);
-		cellList[6] = (grid.val[6] >= grid.val[7]) ? grid.p[6] : grid.p[7];
+		vertlist[6] = lerp(grid.p[6], grid.p[7], 0.5);
 	}
 	if (edgeTable[cubeindex] & 128)
 	{
-		vertlist[7] = lerp(float3(grid.p[7]), float3(grid.p[4]), 0.5);
-		cellList[7] = (grid.val[7] >= grid.val[4]) ? grid.p[7] : grid.p[4];
+		vertlist[7] = lerp(grid.p[7], grid.p[4], 0.5);
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		vertlist[8] = lerp(float3(grid.p[0]), float3(grid.p[4]), grid.val[0]);
-		cellList[8] = (grid.val[0] >= grid.val[4]) ? grid.p[0] : grid.p[4];
+		vertlist[8] = lerp(grid.p[0], grid.p[4], grid.val[0]);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		vertlist[9] = lerp(float3(grid.p[1]), float3(grid.p[5]), grid.val[1]);
-		cellList[9] = (grid.val[1] >= grid.val[5]) ? grid.p[1] : grid.p[5];
+		vertlist[9] = lerp(grid.p[1], grid.p[5], grid.val[1]);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		vertlist[10] = lerp(float3(grid.p[2]), float3(grid.p[6]), grid.val[2]);
-		cellList[10] = (grid.val[2] >= grid.val[6]) ? grid.p[2] : grid.p[6];
+		vertlist[10] = lerp(grid.p[2], grid.p[6], grid.val[2]);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		vertlist[11] = lerp(float3(grid.p[3]), float3(grid.p[7]), grid.val[3]);
-		cellList[11] = (grid.val[3] >= grid.val[7]) ? grid.p[3] : grid.p[7];
+		vertlist[11] = lerp(grid.p[3], grid.p[7], grid.val[3]);
 	}
 
 	[unroll]
@@ -434,13 +421,8 @@ void Polygonise(GridCell grid)
 	{
 		Triangle tris;
 		tris.vertex[0] = vertlist[triTable[cubeindex][i]];
-		tris.cell[0] = cellList[triTable[cubeindex][i]];
-
 		tris.vertex[1] = vertlist[triTable[cubeindex][i + 1]];
-		tris.cell[1] = cellList[triTable[cubeindex][i + 1]];
-
 		tris.vertex[2] = vertlist[triTable[cubeindex][i + 2]];
-		tris.cell[2] = cellList[triTable[cubeindex][i + 2]];
 
 		triangles.Append(tris);
 	}
@@ -450,23 +432,37 @@ void Polygonise(GridCell grid)
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	GridCell cell;
-	cell.p[0] = uint3(id.x, id.y, id.z + 1);
-	cell.p[1] = uint3(id.x + 1, id.y, id.z + 1);
-	cell.p[2] = uint3(id.x + 1, id.y, id.z);
-	cell.p[3] = uint3(id.x, id.y, id.z);
-	cell.p[4] = uint3(id.x, id.y + 1, id.z + 1);
-	cell.p[5] = uint3(id.x + 1, id.y + 1, id.z + 1);
-	cell.p[6] = uint3(id.x + 1, id.y + 1, id.z);
-	cell.p[7] = uint3(id.x, id.y + 1, id.z);
+	cell.p[0] = float3(id.x, id.y, id.z + 1);
+	cell.p[1] = float3(id.x + 1, id.y, id.z + 1);
+	cell.p[2] = float3(id.x + 1, id.y, id.z);
+	cell.p[3] = float3(id.x, id.y, id.z);
+	cell.p[4] = float3(id.x, id.y + 1, id.z + 1);
+	cell.p[5] = float3(id.x + 1, id.y + 1, id.z + 1);
+	cell.p[6] = float3(id.x + 1, id.y + 1, id.z);
+	cell.p[7] = float3(id.x, id.y + 1, id.z);
 
-	cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
-	cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;
-	cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume;
-	cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume;
-	cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume;
-	cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume;
-	cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume;
-	cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume;
+	if (id.x > 0 || id.y > 0 || id.z > 0 || id.x < size - 1 || id.y < size - 1 || id.z < size - 1)
+	{
+		cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
+		cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;
+		cell.val[2] = currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume;
+		cell.val[3] = currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume;
+		cell.val[4] = currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[5] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume;
+		cell.val[6] = currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume;
+		cell.val[7] = currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume;
+	}
+	else
+	{
+		cell.val[0] = 0;
+		cell.val[1] = 0;
+		cell.val[2] = 0;
+		cell.val[3] = 0;
+		cell.val[4] = 0;
+		cell.val[5] = 0;
+		cell.val[6] = 0;
+		cell.val[7] = 0;
+	}
 
 	Polygonise(cell);
 }

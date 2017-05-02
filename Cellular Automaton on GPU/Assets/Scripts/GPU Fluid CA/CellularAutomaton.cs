@@ -86,13 +86,9 @@ namespace GPUFLuid
             cs.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
             cs.SetInts("offset", offset[updateCycle]);
             cs.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
-            visualization.CreateMesh(buffer[updateCycle % 2]);
             updateCycle = (updateCycle + 1) % 8;
-        }
 
-        private void OnPostRender()
-        {
-            visualization.Render();
+            visualization.Render(buffer[updateCycle % 2]);
         }
 
         /// <summary>
