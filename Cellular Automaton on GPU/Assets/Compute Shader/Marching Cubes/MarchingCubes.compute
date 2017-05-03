@@ -395,19 +395,19 @@ void Polygonise(GridCell grid)
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		vertlist[8] = grid.p[0] + grid.val[0];
+		vertlist[8] = grid.p[0] + float3(0, grid.val[0], 0);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		vertlist[9] = grid.p[1] + grid.val[1];
+		vertlist[9] = grid.p[1] + float3(0, grid.val[1], 0);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		vertlist[10] = grid.p[2] + grid.val[2];
+		vertlist[10] = grid.p[2] + float3(0, grid.val[2], 0);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		vertlist[11] = grid.p[3] + grid.val[3];
+		vertlist[11] = grid.p[3] + float3(0, grid.val[3], 0);
 	}
 
 	[unroll]
