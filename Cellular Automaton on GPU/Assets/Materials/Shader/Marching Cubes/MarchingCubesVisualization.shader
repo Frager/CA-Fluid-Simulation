@@ -67,7 +67,6 @@
 			sampler2D _BumpMap;
 			sampler2D _ColorControl;
 			sampler3D _MainTex;
-			float4 _MainTex_ST;
 
 			float scale;
 			int size;

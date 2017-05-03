@@ -27,29 +27,20 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
 
-	float4 color = float4(1, 1, 1, 0.1);
+	if (cell.volume <= 0 || cell.volume > 1)
+	{
+		Result[id] = float4(0, 0, 0, 1);
+		return;
+	}
 
-	if (cell.volume <= 0)
+	uint pos = 0;
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = 1; i < NUMBER_OF_ELEMENTS; ++i)
 	{
-		color = float4(0, 0, 0, 1);
-	}
-	else if (cell.volume > 1)
-	{
-		color = float4(0, 0, 0, 1);
-	}
-	else
-	{
-		int pos = 0;
-		[unroll(NUMBER_OF_ELEMENTS)]
-		for (int i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+		if (cell.content[i] >= cell.content[pos])
 		{
-			if (cell.content[i] >= cell.content[pos])
-			{
-				pos = i;
-			}
+			pos = i;
 		}
-		color = Colors[pos];
 	}
-
-	Result[id] = color;
+	Result[id] = Colors[pos];
 }
