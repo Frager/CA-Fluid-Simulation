@@ -17,29 +17,18 @@ public class ObsticleContainer : MonoBehaviour {
             Vector3 position = child.position;
             
             position -= gridPosition;
-            float corner = position.x - scale.x / 2f;
-            int xStart = Mathf.RoundToInt(corner / cellSize.x);
 
-            corner = position.x + scale.x / 2f;
-            int xEnd = Mathf.RoundToInt(corner / cellSize.x);
+            CornerCoords coords = getCornerCoords(position, scale);
 
-            corner = position.y - scale.y / 2f;
-            int yStart = Mathf.RoundToInt(corner / cellSize.y);
-
-            corner = position.y + scale.y / 2f;
-            int yEnd = Mathf.RoundToInt(corner / cellSize.y);
-
-            corner = position.z - scale.z / 2f;
-            int zStart = Mathf.RoundToInt(corner / cellSize.z);
-
-            corner = position.z + scale.z / 2f;
-            int zEnd = Mathf.RoundToInt(corner / cellSize.z);
-
-            print(xStart);
             GameObject colider = GameObject.CreatePrimitive(PrimitiveType.Cube);
             colider.name = "Colider";
-            colider.transform.position = position;
-            colider.transform.localScale = scale;
+
+            colider.transform.position = new Vector3((coords.xStart + coords.xEnd) / 2f,
+                (coords.yStart + coords.yEnd) / 2f,
+                (coords.zStart + coords.zEnd) / 2f);
+            colider.transform.localScale = new Vector3(coords.xEnd - coords.xStart,
+                coords.yEnd - coords.yStart,
+                coords.zEnd - coords.zStart);
 
             child.gameObject.SetActive(false);
         }
@@ -48,16 +37,35 @@ public class ObsticleContainer : MonoBehaviour {
     private CornerCoords getCornerCoords(Vector3 position, Vector3 scale)
     {
         CornerCoords coords = new CornerCoords();
+
+        float corner = position.x - scale.x / 2f;
+        coords.xStart = Mathf.RoundToInt(corner / cellSize.x);
+
+        corner = position.x + scale.x / 2f;
+        coords.xEnd = Mathf.RoundToInt(corner / cellSize.x);
+
+        corner = position.y - scale.y / 2f;
+        coords.yStart = Mathf.RoundToInt(corner / cellSize.y);
+
+        corner = position.y + scale.y / 2f;
+        coords.yEnd = Mathf.RoundToInt(corner / cellSize.y);
+
+        corner = position.z - scale.z / 2f;
+        coords.zStart = Mathf.RoundToInt(corner / cellSize.z);
+
+        corner = position.z + scale.z / 2f;
+        coords.zEnd = Mathf.RoundToInt(corner / cellSize.z);
+
         return coords;
     }
 
 	public struct CornerCoords
     {
-        int xStart;
-        int xEnd;
-        int yStart;
-        int yEnd;
-        int zStart;
-        int zEnd;
+        public int xStart;
+        public int xEnd;
+        public int yStart;
+        public int yEnd;
+        public int zStart;
+        public int zEnd;
     }
 }
