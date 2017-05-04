@@ -67,6 +67,7 @@ namespace GPUFLuid
             cs.SetInts("obstacleEnd", obstacleEnd);
 
             cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+            print(obstacleEnd[1]);
         }
 
         /// <summary>

@@ -70,7 +70,7 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 [numthreads(16, 8, 8)]
 void SetObstacle(uint3 id : SV_DispatchThreadID)
 {
-	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x >= obstacleStart.x || id.y >= obstacleStart.y || id.z >= obstacleStart.z || id.x <= obstacleEnd.x || id.y <= obstacleEnd.y || id.z <= obstacleEnd.z );
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x >= obstacleStart.x && id.x <= obstacleEnd.x && id.y >= obstacleStart.y && id.y <= obstacleEnd.y && id.z >= obstacleStart.z && id.z <= obstacleEnd.z );
 }
 
 [numthreads(8, 16, 8)]
