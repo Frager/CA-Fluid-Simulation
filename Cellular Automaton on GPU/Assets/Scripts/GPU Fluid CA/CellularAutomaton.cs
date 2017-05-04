@@ -59,6 +59,16 @@ namespace GPUFLuid
             cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
         }
 
+        public void SetObstiacle(int[] obstacleStart, int[] obstacleEnd)
+        {
+            int kernelHandle = cs.FindKernel("SetObstacle");
+
+            cs.SetInts("obstacleStart", obstacleStart);
+            cs.SetInts("obstacleEnd", obstacleEnd);
+
+            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+        }
+
         /// <summary>
         /// This function determines where and whether fluid will be filled in the cellular automaton.
         /// </summary>

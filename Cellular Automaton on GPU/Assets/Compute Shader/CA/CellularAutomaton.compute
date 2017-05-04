@@ -1,4 +1,5 @@
 ﻿#pragma kernel Initialize
+#pragma kernel SetObstacle
 #pragma kernel UpdateX
 #pragma kernel UpdateY
 #pragma kernel UpdateZ
@@ -51,16 +52,25 @@ uint3 offset;
 uint4 fill;
 uint4 heat;
 
+uint3 obstacleStart;
+uint3 obstacleEnd;
+
 [numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20;
-	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1 || (id.z == 20 && id.y < 3));
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1 );
 
 	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = 0.0;
 	}
+}
+
+[numthreads(16, 8, 8)]
+void SetObstacle(uint3 id : SV_DispatchThreadID)
+{
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x >= obstacleStart.x || id.y >= obstacleStart.y || id.z >= obstacleStart.z || id.x <= obstacleEnd.x || id.y <= obstacleEnd.y || id.z <= obstacleEnd.z );
 }
 
 [numthreads(8, 16, 8)]
