@@ -59,15 +59,22 @@ namespace GPUFLuid
             cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
         }
 
-        public void SetObstiacle(int[] obstacleStart, int[] obstacleEnd)
+        public void SetObstacle(int[] obstacleStart, int[] obstacleEnd)
         {
             int kernelHandle = cs.FindKernel("SetObstacle");
 
             cs.SetInts("obstacleStart", obstacleStart);
             cs.SetInts("obstacleEnd", obstacleEnd);
-
+            
+            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
             cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
-            print(obstacleEnd[1]);
+
+            cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+
+            //print("x: " +  obstacleStart[0] + "-" + obstacleEnd[0]);
+            //print("y: " + obstacleStart[1] + "-" + obstacleEnd[1]);
+            //print("z: " + obstacleStart[2] + "-" + obstacleEnd[2]);
         }
 
         /// <summary>

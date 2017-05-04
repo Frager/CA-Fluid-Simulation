@@ -24,35 +24,13 @@ public class ObstacleContainer : ObstacleInterface
             //snaps Obstacle position and scale to grid
             child.position = Vector3.Scale(new Vector3((coords.xStart + coords.xEnd) / 2f,
                 (coords.yStart + coords.yEnd) / 2f,
-                (coords.zStart + coords.zEnd) / 2f), cellSize);
+                (coords.zStart + coords.zEnd) / 2f), cellSize) + gridPosition;
             child.localScale = Vector3.Scale(new Vector3(coords.xEnd - coords.xStart,
                 coords.yEnd - coords.yStart,
                 coords.zEnd - coords.zStart), cellSize);
         }
         return cornerCoordList;
     }
-
- //   void Start () {
- //       //get the transforms of all child objects
-	//	foreach (Transform child in transform)
- //       {
- //           Vector3 scale = child.localScale;
- //           Vector3 position = child.position;
-            
- //           position -= gridPosition;
-
- //           CornerCoords coords = getCornerCoords(position, scale);
- //           cornerCoordList.Add(coords);
-
- //           //snaps Obstacle position and scale to grid
- //           child.position = Vector3.Scale(new Vector3((coords.xStart + coords.xEnd) / 2f,
- //               (coords.yStart + coords.yEnd) / 2f,
- //               (coords.zStart + coords.zEnd) / 2f), cellSize);
- //           child.localScale = Vector3.Scale(new Vector3(coords.xEnd - coords.xStart,
- //               coords.yEnd - coords.yStart,
- //               coords.zEnd - coords.zStart), cellSize);
- //       }
-	//}
 
     private CornerCoords getCornerCoords(Vector3 position, Vector3 scale)
     {

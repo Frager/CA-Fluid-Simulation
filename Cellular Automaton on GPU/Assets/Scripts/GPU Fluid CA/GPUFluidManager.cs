@@ -30,7 +30,7 @@ namespace GPUFLuid
                     {
                         int[] start = { coords.xStart, coords.yStart, coords.zStart };
                         int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
-                        ca.SetObstiacle(start, end);
+                        ca.SetObstacle(start, end);
                     }
             }
         }
