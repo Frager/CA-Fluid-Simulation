@@ -185,11 +185,9 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 		difference = bottom - content1[i];
 
-		if (amount < 0.01)
+		if (abs(difference) < 0.01)
 		{
 			difference = 0.00;
-			bottom = 0.00;
-			amount = 0.00;
 		}
 
 		if (difference > 0)
@@ -203,7 +201,12 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 		vol += bottom;
 
-		difference = amount - bottom - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[i];
+		difference = amount - bottom - content2[i];
+
+		if (abs(difference) < 0.01)
+		{
+			difference = 0.00;
+		}
 
 		if (difference < 0)
 		{
@@ -219,7 +222,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	}
 
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume = volume.x;
-	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = volume.y;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = (volume.y < 0.01) ? 0 : volume.y;
 
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = temperature.x;
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = temperature.y;
