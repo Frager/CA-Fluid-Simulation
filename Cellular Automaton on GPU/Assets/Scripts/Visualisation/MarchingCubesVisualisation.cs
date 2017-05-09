@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace GPUFLuid
+namespace GPUFluid
 {
     /// <summary>
     /// This class executes a marching cubes algorithm on the data of a CellularAutomaton.

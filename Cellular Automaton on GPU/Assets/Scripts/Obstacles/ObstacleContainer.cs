@@ -4,10 +4,12 @@ using UnityEngine;
 public class ObstacleContainer : ObstacleInterface
 {
     public Vector3 gridPosition;
-    public Vector3 cellSize;
+    private Vector3 cellSize;
 
-    public override List<CornerCoords> getObstacleCorners()
+    public override List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, float _scale)
     {
+        cellSize = new Vector3(_scale / (dimensions.x * 16.0f), _scale / (dimensions.y * 16.0f), _scale / (dimensions.z * 16.0f));
+
         foreach (Transform child in transform)
         {
             Vector3 scale = child.localScale;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace GPUFLuid
+namespace GPUFluid
 {
     public class GPUFluidManager : MonoBehaviour
     {
@@ -25,7 +25,7 @@ namespace GPUFLuid
             ca.Heat(new int[] { 0, 0, 0, 0 });
             if (obstacles != null)
             {
-                List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners();
+                List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, GetComponent<MarchingCubesVisualisation>().scale);
                 if (cornerList != null)
                     foreach (ObstacleInterface.CornerCoords coords in cornerList)
                     {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace GPUFLuid
+namespace GPUFluid
 {
     //The size of the cellular automaton
     [System.Serializable]
