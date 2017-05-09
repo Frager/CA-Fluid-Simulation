@@ -51,7 +51,7 @@
 			float4 _MainTex_ST;
 
 			float scale;
-			int size;
+			uint3 size;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -73,36 +73,36 @@
 				float NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
 				float light = _LightColor0 * NdotL;
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[0]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[0] / (size * scale);
+				pIn.uv = p[0].positions[0];
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[3]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[3] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[3] / (size * scale);
+				pIn.uv = p[0].positions[3];
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[1] / (size * scale);
+				pIn.uv = p[0].positions[1];
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[3]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[3] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[3] / (size * scale);
+				pIn.uv = p[0].positions[3];
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[2]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[2] / (size * scale);
+				pIn.uv = p[0].positions[2];
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[1] / (size * scale);
+				pIn.uv = p[0].positions[1];
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();

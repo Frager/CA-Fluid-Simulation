@@ -1,13 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class ObstacleContainer : ObstacleInterface
 {
-
     public Vector3 gridPosition;
     public Vector3 cellSize;
-    public int gridSize;
 
     public override List<CornerCoords> getObstacleCorners()
     {

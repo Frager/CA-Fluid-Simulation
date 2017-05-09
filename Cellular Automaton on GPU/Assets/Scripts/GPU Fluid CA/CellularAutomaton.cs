@@ -2,13 +2,20 @@
 
 namespace GPUFLuid
 {
+    //The size of the cellular automaton
+    [System.Serializable]
+    public struct GridDimensions
+    {
+        [Dimension()]
+        public int x, y, z;
+    }
+
     public class CellularAutomaton : MonoBehaviour
     {
         //Compute Shader with update rules
         public ComputeShader cs;
 
-        //The size of the cellular automaton (width = height = depth)
-        public int gridSize;
+        public GridDimensions dimensions;
 
         //The number of different elements in the simulation
         //Warning: This value must be identical to that in the shaders
@@ -36,13 +43,13 @@ namespace GPUFLuid
                 KernelOrder[i] = cs.FindKernel(FunctionOrder[i]);
             }
 
-            threadGroups = new int[][] { new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 }, new int[] { gridSize / 16, gridSize / 16, gridSize / 8 } };
+            threadGroups = new int[][] { new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2}, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 } };
 
-            buffer = new ComputeBuffer[] { new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer(gridSize * gridSize * gridSize, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory) };
+            buffer = new ComputeBuffer[] { new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory) };
 
             InitializeComputeShader();
 
-            visualization.Initialize(gridSize);
+            visualization.Initialize(dimensions);
         }
 
 
@@ -50,13 +57,13 @@ namespace GPUFLuid
         {
             int kernelHandle = cs.FindKernel("Initialize");
 
-            cs.SetInt("size", gridSize);
+            cs.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
         }
 
         public void SetObstacle(int[] obstacleStart, int[] obstacleEnd)
@@ -67,10 +74,10 @@ namespace GPUFLuid
             cs.SetInts("obstacleEnd", obstacleEnd);
             
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            cs.Dispatch(kernelHandle, gridSize / 16, gridSize / 8, gridSize / 8);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
             //print("x: " +  obstacleStart[0] + "-" + obstacleEnd[0]);
             //print("y: " + obstacleStart[1] + "-" + obstacleEnd[1]);
@@ -81,9 +88,9 @@ namespace GPUFLuid
         /// This function determines where and whether fluid will be filled in the cellular automaton.
         /// </summary>
         /// <param name="fill">An array of size 4. The first three values determine the position, where fluid will be filled in (a coordinate outside the borders will stop filling). The last value determines the element-type.</param>
-        public void Fill(int[] fill)
+        public void Fill(float[] fill, int element)
         {
-            cs.SetInts("fill", fill);
+            cs.SetInts("fill", new int[] { (int)(fill[0] * dimensions.x * 16.0), (int)(fill[1] * dimensions.y * 16.0), (int)(fill[2] * dimensions.z * 16.0), element });
         }
 
         /// <summary>

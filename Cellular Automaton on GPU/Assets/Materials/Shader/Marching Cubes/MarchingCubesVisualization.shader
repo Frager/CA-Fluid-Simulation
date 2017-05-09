@@ -69,7 +69,6 @@
 			sampler3D _MainTex;
 
 			float scale;
-			int size;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -93,41 +92,41 @@
 				float4 temp, wpos;
 
 				//First point
-				pIn.position = UnityObjectToClipPos(p[0].positions[2]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[2] / (size * scale);
+				pIn.uv = p[0].positions[2];
 
-				wpos = mul(unity_ObjectToWorld, p[0].positions[2]);
+				wpos = mul(unity_ObjectToWorld, p[0].positions[2] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
 				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[2]));
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[2] * scale));
 
 				triStream.Append(pIn);
 
 				//Second point
-				pIn.position = UnityObjectToClipPos(p[0].positions[1]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[1] / (size * scale);
+				pIn.uv = p[0].positions[1];
 
-				wpos = mul(unity_ObjectToWorld, p[0].positions[1]);
+				wpos = mul(unity_ObjectToWorld, p[0].positions[1] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
 				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[1]));
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[1] * scale));
 
 				triStream.Append(pIn);
 
 				//Thirs point
-				pIn.position = UnityObjectToClipPos(p[0].positions[0]);
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
 				pIn.light = light;
-				pIn.uv = p[0].positions[0] / (size * scale);
+				pIn.uv = p[0].positions[0];
 
-				wpos = mul(unity_ObjectToWorld, p[0].positions[0]);
+				wpos = mul(unity_ObjectToWorld, p[0].positions[0] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
 				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[0]));
+				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[0] * scale));
 
 				triStream.Append(pIn);
 
@@ -147,7 +146,7 @@
 				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 
-				return tex3D(_MainTex, input.uv) * col;
+				return /*tex3D(_MainTex, input.uv) * */col;
 			}
 			ENDCG
 		}

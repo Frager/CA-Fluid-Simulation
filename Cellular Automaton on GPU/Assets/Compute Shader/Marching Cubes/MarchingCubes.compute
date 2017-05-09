@@ -1,7 +1,7 @@
 ﻿#pragma kernel CSMain
 
 #define NUMBER_OF_ELEMENTS 3
-#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
 //Algorithm based on:
 //http://paulbourke.net/geometry/polygonise/
@@ -24,7 +24,7 @@ struct GridCell
 	float val[8];
 };
 
-uint size;
+uint3 size;
 
 const static int edgeTable[256] = {
 	0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -361,53 +361,55 @@ void Polygonise(GridCell grid)
 		return;
 	}
 
+	float3 _scale = float3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
+
 	if (edgeTable[cubeindex] & 1)
 	{
-		vertlist[0] = grid.p[0] + float3(0.5, 0, 0);
+		vertlist[0] = grid.p[0] + float3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 2)
 	{
-		vertlist[1] = grid.p[1] - float3(0, 0, 0.5);
+		vertlist[1] = grid.p[1] - float3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 4)
 	{
-		vertlist[2] = grid.p[2] - float3(0.5, 0, 0);
+		vertlist[2] = grid.p[2] - float3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 8)
 	{
-		vertlist[3] = grid.p[3] + float3(0, 0, 0.5);
+		vertlist[3] = grid.p[3] + float3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 16)
 	{
-		vertlist[4] = grid.p[4] + float3(0.5, 0, 0);
+		vertlist[4] = grid.p[4] + float3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 32)
 	{
-		vertlist[5] = grid.p[5] - float3(0, 0, 0.5);
+		vertlist[5] = grid.p[5] - float3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 64)
 	{
-		vertlist[6] = grid.p[6] - float3(0.5, 0, 0);
+		vertlist[6] = grid.p[6] - float3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 128)
 	{
-		vertlist[7] = grid.p[7] + float3(0, 0, 0.5);
+		vertlist[7] = grid.p[7] + float3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		vertlist[8] = grid.p[0] + float3(0, grid.val[0], 0);
+		vertlist[8] = grid.p[0] + float3(0, grid.val[0] * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		vertlist[9] = grid.p[1] + float3(0, grid.val[1], 0);
+		vertlist[9] = grid.p[1] + float3(0, grid.val[1] * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		vertlist[10] = grid.p[2] + float3(0, grid.val[2], 0);
+		vertlist[10] = grid.p[2] + float3(0, grid.val[2] * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		vertlist[11] = grid.p[3] + float3(0, grid.val[3], 0);
+		vertlist[11] = grid.p[3] + float3(0, grid.val[3] * _scale.y, 0);
 	}
 
 	[unroll]
@@ -426,14 +428,16 @@ void Polygonise(GridCell grid)
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	GridCell cell;
-	cell.p[0] = float3(id.x, id.y, id.z + 1);
-	cell.p[1] = float3(id.x + 1, id.y, id.z + 1);
-	cell.p[2] = float3(id.x + 1, id.y, id.z);
-	cell.p[3] = float3(id.x, id.y, id.z);
-	cell.p[4] = float3(id.x, id.y + 1, id.z + 1);
-	cell.p[5] = float3(id.x + 1, id.y + 1, id.z + 1);
-	cell.p[6] = float3(id.x + 1, id.y + 1, id.z);
-	cell.p[7] = float3(id.x, id.y + 1, id.z);
+	float3 _scale = float3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
+
+	cell.p[0] = float3(id.x * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[1] = float3((id.x + 1) * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[2] = float3((id.x + 1) * _scale.x, id.y * _scale.y, id.z * _scale.z);
+	cell.p[3] = float3(id.x * _scale.x, id.y * _scale.y, id.z * _scale.z);
+	cell.p[4] = float3(id.x * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[5] = float3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[6] = float3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
+	cell.p[7] = float3(id.x * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
 
 	cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
 	cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;

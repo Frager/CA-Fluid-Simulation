@@ -1,7 +1,7 @@
 ﻿#pragma kernel CSMain
 
 #define NUMBER_OF_ELEMENTS 3
-#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
 struct Cell
 {
@@ -15,8 +15,7 @@ struct Quad
 	float3 vertex[4];
 };
 
-float scale;
-uint size;
+uint3 size;
 
 StructuredBuffer<Cell> currentGeneration;
 AppendStructuredBuffer<Quad> quads;
@@ -32,63 +31,65 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	Cell front = currentGeneration[ADDRESS(id.x, id.y, (id.z - 1), size)];
 	Cell back = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)];
 
+	float3 _scale = float3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
+
 	if (down.volume > 0 && (down.volume > current.volume || down.volume < 1) && id.y > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale - scale + down.volume * scale, id.z * scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale - scale + down.volume * scale, id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale - scale + down.volume * scale, id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale - scale + down.volume * scale, id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * _scale.x,			id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
+		quad.vertex[3] = float3(id.x * _scale.x,			id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
 		quads.Append(quad);
 	}
 
-	if (up.volume > 0 && (up.volume > current.volume || current.volume < 1) && id.y < size - 1)
+	if (up.volume > 0 && (up.volume > current.volume || current.volume < 1) && id.y < size.y - 1)
 	{
 		Quad quad;
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale + scale, id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + scale, id.z * scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + scale, id.z * scale + scale);
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale + scale, id.z * scale + scale);
+		quad.vertex[3] = float3(id.x * _scale.x,			id.y * _scale.y + _scale.y, id.z * _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
+		quad.vertex[0] = float3(id.x * _scale.x,			id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
 		quads.Append(quad);
 	}
 	
 	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale, id.y * scale,							id.z * scale);
-		quad.vertex[1] = float3(id.x * scale, id.y * scale,							id.z * scale + scale);
-		quad.vertex[2] = float3(id.x * scale, id.y * scale + left.volume * scale,	id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale, id.y * scale + left.volume * scale,	id.z * scale);
+		quad.vertex[0] = float3(id.x * _scale.x, id.y * _scale.y,							id.z * _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x, id.y * _scale.y + left.volume * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[3] = float3(id.x * _scale.x, id.y * _scale.y + left.volume * _scale.y,	id.z * _scale.z);
 		quads.Append(quad);
 	}
 	
-	if (right.volume > 0 && right.volume > current.volume && id.x < size - 1)
+	if (right.volume > 0 && right.volume > current.volume && id.x < size.x - 1)
 	{
 		Quad quad;
-		quad.vertex[3] = float3(id.x * scale + scale, id.y * scale,							id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale, id.y * scale,							id.z * scale + scale);
-		quad.vertex[1] = float3(id.x * scale + scale, id.y * scale + right.volume * scale,	id.z * scale + scale);
-		quad.vertex[0] = float3(id.x * scale + scale, id.y * scale + right.volume * scale,	id.z * scale);
+		quad.vertex[3] = float3(id.x * _scale.x + _scale.x, id.y * _scale.y,							id.z * _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x + _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x + _scale.x, id.y * _scale.y + right.volume * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[0] = float3(id.x * _scale.x + _scale.x, id.y * _scale.y + right.volume * _scale.y,	id.z * _scale.z);
 		quads.Append(quad);
 	}
 
 	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
 	{
 		Quad quad;
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale,							id.z * scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale,							id.z * scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale + front.volume * scale,	id.z * scale);
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale + front.volume * scale,	id.z * scale);
+		quad.vertex[3] = float3(id.x * _scale.x,			id.y * _scale.y,							id.z * _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y + front.volume * _scale.y,	id.z * _scale.z);
+		quad.vertex[0] = float3(id.x * _scale.x,			id.y * _scale.y + front.volume * _scale.y,	id.z * _scale.z);
 		quads.Append(quad);
 	}
 
-	if (back.volume > 0 && back.volume > current.volume && id.z < size - 1)
+	if (back.volume > 0 && back.volume > current.volume && id.z < size.z - 1)
 	{
 		Quad quad;
-		quad.vertex[0] = float3(id.x * scale,			id.y * scale,						id.z * scale + scale);
-		quad.vertex[1] = float3(id.x * scale + scale,	id.y * scale,						id.z * scale + scale);
-		quad.vertex[2] = float3(id.x * scale + scale,	id.y * scale + back.volume * scale,	id.z * scale + scale);
-		quad.vertex[3] = float3(id.x * scale,			id.y * scale + back.volume * scale,	id.z * scale + scale);
+		quad.vertex[0] = float3(id.x * _scale.x,			id.y * _scale.y,							id.z * _scale.z + _scale.z);
+		quad.vertex[1] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z + _scale.z);
+		quad.vertex[2] = float3(id.x * _scale.x + _scale.x,	id.y * _scale.y + back.volume * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[3] = float3(id.x * _scale.x,			id.y * _scale.y + back.volume * _scale.y,	id.z * _scale.z + _scale.z);
 		quads.Append(quad);
 	}
 }

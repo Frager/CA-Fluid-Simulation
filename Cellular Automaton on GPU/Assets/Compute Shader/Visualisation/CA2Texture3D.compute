@@ -1,7 +1,7 @@
 ﻿#pragma kernel CSMain
 
 #define NUMBER_OF_ELEMENTS 3
-#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
 static float4 Colors[] =
 {
@@ -20,7 +20,7 @@ struct Cell
 StructuredBuffer<Cell> currentGeneration;
 RWTexture3D<float4> Result;
 
-uint size;
+uint3 size;
 
 [numthreads(16,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)

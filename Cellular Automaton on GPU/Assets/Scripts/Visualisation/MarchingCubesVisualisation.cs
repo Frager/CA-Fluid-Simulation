@@ -17,7 +17,7 @@ namespace GPUFLuid
         public float scale;
 
         //The size of the CellularAutomaton
-        private int gridSize;
+        private GridDimensions dimensions;
 
         //A compute shader that generates a texture3D out of a cellular automaton
         public ComputeShader texture3DCS;
@@ -44,14 +44,14 @@ namespace GPUFLuid
         private ComputeBuffer args;
         private int[] data;
 
-        public void Initialize(int gridSize)
+        public void Initialize(GridDimensions dimensions)
         {
-            this.gridSize = gridSize;
+            this.dimensions = dimensions;
 
-            texture3D = new RenderTexture(gridSize, gridSize, 1);
+            texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1);
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.filterMode = FilterMode.Bilinear;
-            texture3D.volumeDepth = gridSize;
+            texture3D.volumeDepth = dimensions.z * 16;
             texture3D.enableRandomWrite = true;
             texture3D.Create();
             material.SetTexture("_MainTex", texture3D);
@@ -67,25 +67,23 @@ namespace GPUFLuid
             args.SetData(data);
 
 #if CUBES
-            quads = new ComputeBuffer(gridSize * gridSize * gridSize, 4 * 3 * sizeof(float), ComputeBufferType.Append);
+            quads = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 4 * 3 * sizeof(float), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(quads, args, 0);
 #else
-            triangles = new ComputeBuffer(gridSize * gridSize * gridSize, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+            triangles = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 3 * 3 * sizeof(float), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(triangles, args, 0);
 #endif
         }
 
         private void InitializeShader()
         {
-            marchingCubesCS.SetFloat("scale", scale);
-            marchingCubesCS.SetInt("size", gridSize);
+            marchingCubesCS.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
             marchingCubesCSKernel = marchingCubesCS.FindKernel("CSMain");
 
-            texture3DCS.SetInt("size", gridSize);
+            texture3DCS.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
             texture3DCSKernel = texture3DCS.FindKernel("CSMain");
 
             material.SetFloat("scale", scale);
-            material.SetFloat("size", gridSize);
         }
 
         /// <summary>
@@ -112,7 +110,7 @@ namespace GPUFLuid
         {
             texture3DCS.SetBuffer(texture3DCSKernel, "currentGeneration", cells);
             texture3DCS.SetTexture(texture3DCSKernel, "Result", texture3D);
-            texture3DCS.Dispatch(texture3DCSKernel, gridSize / 16, gridSize / 8, gridSize / 8);
+            texture3DCS.Dispatch(texture3DCSKernel, dimensions.x, dimensions.y * 2, dimensions.z * 2);
         }
 
         /// <summary>
@@ -129,7 +127,7 @@ namespace GPUFLuid
             marchingCubesCS.SetBuffer(marchingCubesCSKernel, "triangles", triangles);
 #endif
             marchingCubesCS.SetBuffer(marchingCubesCSKernel, "currentGeneration", cells);
-            marchingCubesCS.Dispatch(marchingCubesCSKernel, gridSize / 16, gridSize / 8, gridSize / 8);
+            marchingCubesCS.Dispatch(marchingCubesCSKernel, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
             RenderTexture3D(cells);
 #if  !CUBES

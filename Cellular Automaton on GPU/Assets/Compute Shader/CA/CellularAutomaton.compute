@@ -8,7 +8,7 @@
 #define MAX_TEMPERATURE 1000000
 
 #define NUMBER_OF_ELEMENTS 3
-#define ADDRESS(x,y,z,size) x + y * size + z * size * size
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
 struct Cell
 {
@@ -46,7 +46,7 @@ static float temperatureSpread = 32;
 StructuredBuffer<Cell> currentGeneration;
 RWStructuredBuffer<Cell> newGeneration;
 
-uint size;
+uint3 size;
 uint3 offset;
 
 uint4 fill;
@@ -59,7 +59,7 @@ uint3 obstacleEnd;
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
 	newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20;
-	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x == 0 || id.y == 0 || id.z == 0 || id.x == size - 1 || id.y == size - 1 || id.z == size - 1 );
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x == 0 || id.y == 0 || id.z == 0 || id.x == size.x - 1 || id.y == size.y - 1 || id.z == size.z - 1 );
 
 	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
@@ -70,11 +70,6 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 [numthreads(16, 8, 8)]
 void SetObstacle(uint3 id : SV_DispatchThreadID)
 {
-	//newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(
-	//id.x >= obstacleStart.x && id.x <= obstacleEnd.x && 
-	//id.y >= obstacleStart.y && id.y <= obstacleEnd.y && 
-	//id.z >= obstacleStart.z && id.z <= obstacleEnd.z );
-
 	if (
 	id.x >= obstacleStart.x && id.x < obstacleEnd.x && 
 	id.y >= obstacleStart.y && id.y < obstacleEnd.y && 
