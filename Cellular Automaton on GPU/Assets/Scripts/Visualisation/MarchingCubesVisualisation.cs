@@ -14,7 +14,7 @@ namespace GPUFluid
     public class MarchingCubesVisualisation : MonoBehaviour
     {
         //The scale of the visualisation
-        public float scale;
+        public Vector3 scale;
 
         //The size of the CellularAutomaton
         private GridDimensions dimensions;
@@ -83,7 +83,7 @@ namespace GPUFluid
             texture3DCS.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
             texture3DCSKernel = texture3DCS.FindKernel("CSMain");
 
-            material.SetFloat("scale", scale);
+            material.SetVector("scale", new Vector4(scale.x, scale.y, scale.z, 1));
         }
 
         /// <summary>

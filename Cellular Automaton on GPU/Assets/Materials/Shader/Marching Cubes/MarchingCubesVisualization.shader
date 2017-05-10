@@ -68,7 +68,7 @@
 			sampler2D _ColorControl;
 			sampler3D _MainTex;
 
-			float scale;
+			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -146,7 +146,7 @@
 				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 
-				return /*tex3D(_MainTex, input.uv) * */col;
+				return tex3D(_MainTex, input.uv) * col;
 			}
 			ENDCG
 		}

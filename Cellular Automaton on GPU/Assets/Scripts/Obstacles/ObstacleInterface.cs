@@ -6,7 +6,7 @@ public class ObstacleInterface : MonoBehaviour {
 
     protected List<CornerCoords> cornerCoordList = new List<CornerCoords>();
 
-    public virtual List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, float _scale) { return cornerCoordList; }
+    public virtual List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, Vector3 _scale) { return cornerCoordList; }
 
 
     public struct CornerCoords

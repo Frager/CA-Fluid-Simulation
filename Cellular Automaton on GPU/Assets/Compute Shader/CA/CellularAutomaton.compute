@@ -101,6 +101,8 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 	float content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].content;
 	float content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].content;
 
+	float meanVolume = max((currentGeneration[ADDRESS((id.x * 2 + offset.x), id.y, id.z, size)].volume + currentGeneration[ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size)].volume) / 2.0, 1);
+
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
@@ -108,11 +110,11 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 
 		difference = (mean - content1[i]) * Viscosities[i];
 
-		difference *= (abs(difference) > 0.01);
+		difference *= (abs(difference) > 0.001);
 
-		difference -= ((volume.x + content1[i] + difference) > 1) * (volume.x + content1[i] + difference - 1);
+		difference -= ((volume.x + content1[i] + difference) > meanVolume) * (volume.x + content1[i] + difference - meanVolume);
 
-		difference += ((volume.y + content2[i] - difference) > 1) * (volume.y + content2[i] - difference - 1);
+		difference += ((volume.y + content2[i] - difference) > meanVolume) * (volume.y + content2[i] - difference - meanVolume);
 
 		if (difference > 0)
 		{
@@ -124,7 +126,7 @@ void UpdateX(uint3 id : SV_DispatchThreadID)
 			float sumWeightedTemps = temperature.y * volume.x - temperature.x * difference;
 			temperature.y = sumWeightedTemps / (volume.y - difference);
 		}
-		else if (abs(difference) < 0.001)
+		else if (abs(difference) < 0.01)
 		{
 			float diff = (temperature.x - temperature.y) / temperatureSpread;
 			temperature += float2(-(diff / (volume.x + 1)), diff / (volume.y + 1));
@@ -163,8 +165,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	float amount, bottom, difference,
-		vol = 0;
+	float amount, bottom, difference, vol = 0;
 
 	float2 temperature = float2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature);
 	float2 volume = float2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume);
@@ -172,11 +173,18 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	float content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content;
 	float content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content;
 
+	float maxVol = 1;
+
+	if ((volume.x + volume.y) / 2 >= 1)
+	{
+		maxVol = (volume.x + volume.y) / 2 * 1.1;
+	}
+
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
 		amount = (content1[i] + content2[i]);
-		bottom = min(1.0 - vol, min(Densities[i], 1.0) * amount);
+		bottom = min(maxVol - vol, min(Densities[i], 1.0) * amount);
 
 		difference = bottom - content1[i];
 
@@ -284,6 +292,8 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 	float content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].content;
 	float content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].content;
 
+	float meanVolume = max((currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size)].volume + currentGeneration[ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size)].volume) / 2.0, 1);
+
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
 	{
@@ -293,9 +303,9 @@ void UpdateZ(uint3 id : SV_DispatchThreadID)
 
 		difference *= (abs(difference) > 0.01);
 
-		difference -= ((volume.x + content1[i] + difference) > 1) * (volume.x + content1[i] + difference - 1);
+		difference -= ((volume.x + content1[i] + difference) > meanVolume) * (volume.x + content1[i] + difference - meanVolume);
 
-		difference += ((volume.y + content2[i] - difference) > 1) * (volume.y + content2[i] - difference - 1);
+		difference += ((volume.y + content2[i] - difference) > meanVolume) * (volume.y + content2[i] - difference - meanVolume);
 
 		if (difference > 0)
 		{

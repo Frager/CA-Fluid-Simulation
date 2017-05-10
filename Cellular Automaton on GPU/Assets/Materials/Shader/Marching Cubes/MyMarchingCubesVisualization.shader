@@ -50,8 +50,7 @@
 			sampler3D _MainTex;
 			float4 _MainTex_ST;
 
-			float scale;
-			uint3 size;
+			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
 			{

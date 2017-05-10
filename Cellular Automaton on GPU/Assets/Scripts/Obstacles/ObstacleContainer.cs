@@ -6,9 +6,9 @@ public class ObstacleContainer : ObstacleInterface
     public Vector3 gridPosition;
     private Vector3 cellSize;
 
-    public override List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, float _scale)
+    public override List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, Vector3 _scale)
     {
-        cellSize = new Vector3(_scale / (dimensions.x * 16.0f), _scale / (dimensions.y * 16.0f), _scale / (dimensions.z * 16.0f));
+        cellSize = new Vector3(_scale.x / (dimensions.x * 16.0f), _scale.y / (dimensions.y * 16.0f), _scale.z / (dimensions.z * 16.0f));
 
         foreach (Transform child in transform)
         {
