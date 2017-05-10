@@ -84,6 +84,20 @@ namespace GPUFluid
             //print("z: " + obstacleStart[2] + "-" + obstacleEnd[2]);
         }
 
+        public void RemoveObstacle(int[] obstacleStart, int[] obstacleEnd)
+        {
+            int kernelHandle = cs.FindKernel("RemoveObstacle");
+
+            cs.SetInts("obstacleStart", obstacleStart);
+            cs.SetInts("obstacleEnd", obstacleEnd);
+
+            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+
+            cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+        }
+
         /// <summary>
         /// This function determines where and whether fluid will be filled in the cellular automaton.
         /// </summary>

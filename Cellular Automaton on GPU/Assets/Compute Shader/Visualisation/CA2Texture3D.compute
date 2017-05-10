@@ -29,7 +29,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (cell.volume <= 0 || cell.volume > 1)
 	{
-		Result[id] = float4(0, 0, 0, 0);
+		Result[id] = float4(0, 0, 0, 1);
 		return;
 	}
 

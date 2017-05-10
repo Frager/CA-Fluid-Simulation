@@ -7,6 +7,7 @@ namespace GPUFluid
     {
         public CellularAutomaton ca;
         public ObstacleInterface obstacles;
+        public ObstacleInterface removeObstacles;
 
         [Range(0.01f, 1f)]
         public float timeframe = 0.01f;
@@ -46,6 +47,18 @@ namespace GPUFluid
 
                 timer -= timeframe;
             }
+        }
+
+        public void RemoveObstacles()
+        {
+            List<ObstacleInterface.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, GetComponent<MarchingCubesVisualisation>().scale);
+            if (cornerList != null)
+                foreach (ObstacleInterface.CornerCoords coords in cornerList)
+                {
+                    int[] start = { coords.xStart, coords.yStart, coords.zStart };
+                    int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
+                    ca.RemoveObstacle(start, end);
+                }
         }
     }
 }

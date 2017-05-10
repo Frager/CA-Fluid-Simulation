@@ -144,7 +144,7 @@
 
 				half4 col;
 				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
-				col.a = _horizonColor.a;
+				col.a = 1;// _horizonColor.a;
 
 				return tex3D(_MainTex, input.uv) * col;
 			}
