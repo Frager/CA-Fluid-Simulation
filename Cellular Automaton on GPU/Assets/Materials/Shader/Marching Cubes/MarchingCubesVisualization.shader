@@ -143,10 +143,10 @@
 				half4 water = tex2D(_ColorControl, float2(fresnel,fresnel));
 
 				half4 col;
-				col.rgb = lerp(water.rgb, _horizonColor.rgb, water.a);
-				col.a = 1;// _horizonColor.a;
+				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
+				col.a = _horizonColor.a;
 
-				return tex3D(_MainTex, input.uv) * col;
+				return col;
 			}
 			ENDCG
 		}

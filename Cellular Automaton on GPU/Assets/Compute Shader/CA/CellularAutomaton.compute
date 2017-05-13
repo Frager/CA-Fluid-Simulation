@@ -187,12 +187,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	float content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content;
 	float content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content;
 
-	float maxVol = 1;
-
-	if ((volume.x + volume.y) / 2 >= 1)
-	{
-		maxVol = (volume.x + volume.y) / 2 * 1.1;
-	}
+	float maxVol = max((volume.x + volume.y) / 2 * 1.2, 1);
 
 	[unroll(NUMBER_OF_ELEMENTS)]
 	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
@@ -267,16 +262,16 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	if (id.x == fill.x && id.y * 2 + offset.y == fill.y && id.z == fill.z && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.8)
+	if (id.x == fill.x && id.y * 2 + offset.y == fill.y && id.z == fill.z && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.5)
 	{
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.2;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.2;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.5;
 	}
 
-	if (id.x == fill.x && id.y * 2 + offset.y + 1 == fill.y && id.z == fill.z && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.8)
+	if (id.x == fill.x && id.y * 2 + offset.y + 1 == fill.y && id.z == fill.z && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.5)
 	{
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.2;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += 0.2;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += 0.5;
 	}
 
 	if (id.x == heat.x && id.y * 2 + offset.y == heat.y && id.z == heat.z)

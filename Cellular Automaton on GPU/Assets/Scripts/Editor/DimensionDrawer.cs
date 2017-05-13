@@ -13,7 +13,7 @@ namespace UnityEditor
             if (property.propertyType == SerializedPropertyType.Integer)
             {
                 label.text = property.name + ": " + property.intValue * 16;
-                EditorGUI.IntSlider(position, property, 1, 8, label);
+                EditorGUI.IntSlider(position, property, 1, 20, label);
             }
         }
     }

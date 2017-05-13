@@ -12,21 +12,24 @@ public class ObstacleContainer : ObstacleInterface
 
         foreach (Transform child in transform)
         {
-            Vector3 scale = child.localScale;
-            Vector3 position = child.position;
+            if (child.gameObject.activeSelf)
+            {
+                Vector3 scale = child.localScale;
+                Vector3 position = child.position;
 
-            position -= gridPosition;
+                position -= gridPosition;
 
-            CornerCoords coords = getCornerCoords(position, scale);
-            cornerCoordList.Add(coords);
+                CornerCoords coords = getCornerCoords(position, scale);
+                cornerCoordList.Add(coords);
 
-            //snaps Obstacle position and scale to grid
-            child.position = Vector3.Scale(new Vector3((coords.xStart + coords.xEnd) / 2f,
-                (coords.yStart + coords.yEnd) / 2f,
-                (coords.zStart + coords.zEnd) / 2f), cellSize) + gridPosition;
-            child.localScale = Vector3.Scale(new Vector3(coords.xEnd - coords.xStart,
-                coords.yEnd - coords.yStart,
-                coords.zEnd - coords.zStart), cellSize);
+                //snaps Obstacle position and scale to grid
+                child.position = Vector3.Scale(new Vector3((coords.xStart + coords.xEnd) / 2f,
+                    (coords.yStart + coords.yEnd) / 2f,
+                    (coords.zStart + coords.zEnd) / 2f), cellSize) + gridPosition;
+                child.localScale = Vector3.Scale(new Vector3(coords.xEnd - coords.xStart,
+                    coords.yEnd - coords.yStart,
+                    coords.zEnd - coords.zStart), cellSize);
+            }
         }
         return cornerCoordList;
     }

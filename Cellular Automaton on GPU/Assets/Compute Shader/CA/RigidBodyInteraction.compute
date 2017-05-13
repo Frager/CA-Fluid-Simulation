@@ -1,0 +1,49 @@
+﻿#pragma kernel CSMain
+
+#define NUMBER_OF_ELEMENTS 3
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
+
+struct Cell
+{
+	float content[NUMBER_OF_ELEMENTS];
+	float volume;
+	float temperature;
+};
+
+RWStructuredBuffer<float3> newPositions;
+
+uint3 size;
+StructuredBuffer<Cell> currentGeneration;
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	float3 pos = newPositions[id.x];
+
+	uint3 cellPos = uint3(pos);
+
+	float volume = currentGeneration[ADDRESS(cellPos.x, cellPos.y, cellPos.z, size)].volume;
+	
+	if (volume > 0.01)
+	{
+		pos.y = cellPos.y + volume;
+	}
+	else if(volume < 0.01 && currentGeneration[ADDRESS(cellPos.x, (cellPos.y - 1), cellPos.z, size)].volume > -0.5)
+	{
+		pos.y -= (1 - currentGeneration[ADDRESS(cellPos.x, (cellPos.y - 1), cellPos.z, size)].volume);
+	}
+
+	if(currentGeneration[ADDRESS((cellPos.x + 1), cellPos.y, cellPos.z, size)].volume > -0.1)
+		pos.x += clamp(volume - currentGeneration[ADDRESS(cellPos.x + 1, cellPos.y, cellPos.z, size)].volume, 0, 1);
+
+	if (currentGeneration[ADDRESS((cellPos.x - 1), cellPos.y, cellPos.z, size)].volume > -0.1)
+		pos.x -= clamp(volume - currentGeneration[ADDRESS(cellPos.x - 1, cellPos.y, cellPos.z, size)].volume, 0, 1);
+
+	if (currentGeneration[ADDRESS(cellPos.x, cellPos.y, (cellPos.z + 1), size)].volume > -0.1)
+		pos.z += clamp(volume - currentGeneration[ADDRESS(cellPos.x, cellPos.y, cellPos.z + 1, size)].volume, 0, 1);
+
+	if (currentGeneration[ADDRESS(cellPos.x, cellPos.y, (cellPos.z - 1), size)].volume > -0.1)
+		pos.z -= clamp(volume - currentGeneration[ADDRESS(cellPos.x, cellPos.y, cellPos.z - 1, size)].volume, 0, 1);
+
+	newPositions[id.x] = pos;
+}

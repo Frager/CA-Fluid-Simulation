@@ -15,6 +15,10 @@ namespace GPUFluid
         //Compute Shader with update rules
         public ComputeShader cs;
 
+        public ComputeShader rbInteraction;
+        public Material rbMaterial;
+        private ComputeBuffer position;
+
         public GridDimensions dimensions;
 
         //The number of different elements in the simulation
@@ -50,6 +54,10 @@ namespace GPUFluid
             InitializeComputeShader();
 
             visualization.Initialize(dimensions);
+
+            position = new ComputeBuffer(1, sizeof(float) * 3);
+            position.SetData(new float[] { 12, 1, 20 });
+            rbInteraction.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
         }
 
 
@@ -78,10 +86,6 @@ namespace GPUFluid
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
             cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
-
-            //print("x: " +  obstacleStart[0] + "-" + obstacleEnd[0]);
-            //print("y: " + obstacleStart[1] + "-" + obstacleEnd[1]);
-            //print("z: " + obstacleStart[2] + "-" + obstacleEnd[2]);
         }
 
         public void RemoveObstacle(int[] obstacleStart, int[] obstacleEnd)
@@ -96,6 +100,21 @@ namespace GPUFluid
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
             cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+        }
+
+        public void RigidBodyInteraction()
+        {
+            int kernelHandle = rbInteraction.FindKernel("CSMain");
+
+            rbInteraction.SetBuffer(kernelHandle, "newPositions", position);
+            rbInteraction.SetBuffer(kernelHandle, "currentGeneration", buffer[updateCycle % 2]);
+
+            rbInteraction.Dispatch(kernelHandle, 1, 1, 1);
+
+            float[] data = new float[3];
+            position.GetData(data);
+
+            rbMaterial.SetBuffer("newPositions", position);
         }
 
         /// <summary>
@@ -139,6 +158,8 @@ namespace GPUFluid
             {
                 buffer[i].Release();
             }
+
+            position.Release();
         }
     }
 }

@@ -50,7 +50,7 @@ namespace GPUFluid
 
             texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1);
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-            texture3D.filterMode = FilterMode.Bilinear;
+            texture3D.filterMode = FilterMode.Trilinear;
             texture3D.volumeDepth = dimensions.z * 16;
             texture3D.enableRandomWrite = true;
             texture3D.Create();
