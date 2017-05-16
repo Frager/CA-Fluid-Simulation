@@ -32,17 +32,29 @@
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
 
+			struct RigidBody
+			{
+				float2 size;
+				float3 position;
+				float3x3 rotation;
+			};
+
+			StructuredBuffer<RigidBody> newPositions2;
+
 			StructuredBuffer<float3> newPositions;
 			
 			v2f vert (appdata v)
 			{
 				v2f o;
-				float4x4 transform = {	1,0,0,newPositions[0].x,
-										0,1,0,newPositions[0].y,
-										0,0,1,newPositions[0].z,
+				float4x4 transform = {	1,0,0,newPositions2[0].position.x,
+										0,1,0,newPositions2[0].position.y,
+										0,0,1,newPositions2[0].position.z,
 										0,0,0,1 };
 
 				float4 pos = v.vertex;
+				pos.xz *= 10;
+	
+				pos.xyz = mul(newPositions2[0].rotation, pos.xyz);
 
 				// Transform the position from object space to homogeneous projection space
 				pos = mul(transform, pos);
