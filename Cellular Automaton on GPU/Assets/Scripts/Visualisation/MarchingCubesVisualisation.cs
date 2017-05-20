@@ -22,7 +22,7 @@ namespace GPUFluid
         //A compute shader that generates a texture3D out of a cellular automaton
         public ComputeShader texture3DCS;
         private int texture3DCSKernel;
-        private RenderTexture texture3D;
+        public RenderTexture texture3D;
 
         //A compute shader that executes the Marching Cubes algorithm
         public ComputeShader marchingCubesCS;
@@ -48,7 +48,7 @@ namespace GPUFluid
         {
             this.dimensions = dimensions;
 
-            texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1);
+            texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1, RenderTextureFormat.ARGB4444);
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.filterMode = FilterMode.Trilinear;
             texture3D.volumeDepth = dimensions.z * 16;

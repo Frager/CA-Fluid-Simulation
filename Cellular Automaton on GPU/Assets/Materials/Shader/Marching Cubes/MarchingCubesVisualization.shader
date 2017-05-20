@@ -31,7 +31,7 @@
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
 			{
-				float3 vertex[3];
+				half3 vertex[3];
 			};
 
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
@@ -84,12 +84,12 @@
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				float3 normal = cross(p[0].positions[2] - p[0].positions[1], p[0].positions[0] - p[0].positions[1]);
+				fixed3 normal = cross(p[0].positions[2] - p[0].positions[1], p[0].positions[0] - p[0].positions[1]);
 				normal = UnityObjectToWorldNormal(-normal);
-				float NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
-				float light = _LightColor0 * NdotL;
+				fixed NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
+				fixed light = _LightColor0 * NdotL;
 
-				float4 temp, wpos;
+				fixed4 temp, wpos;
 
 				//First point
 				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
@@ -98,7 +98,7 @@
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[2] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
 				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[2] * scale));
 
@@ -111,7 +111,7 @@
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[1] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
 				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[1] * scale));
 
@@ -124,7 +124,7 @@
 
 				wpos = mul(unity_ObjectToWorld, p[0].positions[0] * scale);
 				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * float2(.4, .45);
+				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
 				pIn.bumpuv[1] = temp.wz;
 				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[0] * scale));
 
@@ -135,14 +135,14 @@
 
 			fixed4 frag(PS_INPUT input) : SV_Target
 			{
-				half3 bump1 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[0])).rgb;
-				half3 bump2 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[1])).rgb;
-				half3 bump = (bump1 + bump2) * 0.5;
+				fixed3 bump1 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[0])).rgb;
+				fixed3 bump2 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[1])).rgb;
+				fixed3 bump = (bump1 + bump2) * 0.5;
 
-				half fresnel = dot(input.viewDir, bump);
-				half4 water = tex2D(_ColorControl, float2(fresnel,fresnel));
+				fixed fresnel = dot(input.viewDir, bump);
+				fixed4 water = tex2D(_ColorControl, fixed2(fresnel,fresnel));
 
-				half4 col;
+				fixed4 col;
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 

@@ -30,7 +30,7 @@
 
 			struct RigidBody
 			{
-				//float2 size;
+				float3 scale;
 				float3 position;
 				//float2 rotation;
 			};
@@ -42,13 +42,12 @@
 			v2f vert (appdata_base v)
 			{
 				v2f o;
-				float4x4 transform = {	1,0,0,newPositions2[0].position.x,
-										0,1,0,newPositions2[0].position.y,
-										0,0,1,newPositions2[0].position.z,
+				float4x4 transform = { newPositions2[0].scale.x,0,0,newPositions2[0].position.x,
+										0,newPositions2[0].scale.y,0,newPositions2[0].position.y,
+										0,0,newPositions2[0].scale.z,newPositions2[0].position.z,
 										0,0,0,1 };
 
 				float4 pos = v.vertex;
-				//Scale for test
 
 				//float2 rot = float2(radians(newPositions2[0].rotation.x), radians(newPositions2[0].rotation.y));
 

@@ -3,22 +3,22 @@
 #define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
-static float4 Colors[] =
+static half4 Colors[] =
 {
-	float4(0,1,1,1),
-	float4(1,1,0,1),
-	float4(0.2,0.5,1,1)
+	half4(0,1,1,1),
+	half4(1,1,0,1),
+	half4(0.2,0.5,1,1)
 };
 
 struct Cell
 {
-	float content[NUMBER_OF_ELEMENTS];
-	float volume;
-	float temperature;
+	half content[NUMBER_OF_ELEMENTS];
+	half volume;
+	half temperature;
 };
 
 StructuredBuffer<Cell> currentGeneration;
-RWTexture3D<float4> Result;
+RWTexture3D<half4> Result;
 
 uint3 size;
 
@@ -29,7 +29,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (cell.volume <= 0 || cell.volume > 1)
 	{
-		Result[id] = float4(0, 0, 0.2, 1);
+		Result[id] = half4(0, 0, 0.2, 1);
 		return;
 	}
 

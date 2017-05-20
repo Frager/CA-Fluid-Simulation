@@ -17,7 +17,6 @@ namespace GPUFluid
 
         public ComputeShader rbInteraction;
         public Material rbMaterial;
-        private ComputeBuffer position;
         private ComputeBuffer rigidBodies;
 
         public GridDimensions dimensions;
@@ -56,13 +55,10 @@ namespace GPUFluid
 
             visualization.Initialize(dimensions);
 
-            position = new ComputeBuffer(1, sizeof(float) * 3);
-            position.SetData(new float[] { 12, 10, 20 });
-
             rbInteraction.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
 
-            rigidBodies = new ComputeBuffer(1, sizeof(float) * 3);
-            rigidBodies.SetData(new float[] { 14, 5, 24 });
+            rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
+            rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
         }
 
 
@@ -164,7 +160,6 @@ namespace GPUFluid
                 buffer[i].Release();
             }
 
-            position.Release();
             rigidBodies.Release();
         }
     }

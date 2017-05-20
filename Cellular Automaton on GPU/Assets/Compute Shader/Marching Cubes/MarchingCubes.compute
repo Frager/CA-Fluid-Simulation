@@ -8,20 +8,20 @@
 
 struct Cell
 {
-	float content[NUMBER_OF_ELEMENTS];
-	float volume;
-	float temperature;
+	half content[NUMBER_OF_ELEMENTS];
+	half volume;
+	half temperature;
 };
 
 struct Triangle
 {
-	float3 vertex[3];
+	half3 vertex[3];
 };
 
 struct GridCell
 {
-	float3 p[8];
-	float val[8];
+	half3 p[8];
+	half val[8];
 };
 
 uint3 size;
@@ -326,7 +326,7 @@ AppendStructuredBuffer<Triangle> triangles;
 void Polygonise(GridCell grid)
 {
 	int cubeindex;
-	float3 vertlist[12];
+	half3 vertlist[12];
 
 	cubeindex = 0;
 
@@ -361,55 +361,55 @@ void Polygonise(GridCell grid)
 		return;
 	}
 
-	float3 _scale = float3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
+	half3 _scale = half3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
 
 	if (edgeTable[cubeindex] & 1)
 	{
-		vertlist[0] = grid.p[0] + float3(_scale.x / 2.0, 0, 0);
+		vertlist[0] = grid.p[0] + half3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 2)
 	{
-		vertlist[1] = grid.p[1] - float3(0, 0, _scale.z / 2.0);
+		vertlist[1] = grid.p[1] - half3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 4)
 	{
-		vertlist[2] = grid.p[2] - float3(_scale.x / 2.0, 0, 0);
+		vertlist[2] = grid.p[2] - half3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 8)
 	{
-		vertlist[3] = grid.p[3] + float3(0, 0, _scale.z / 2.0);
+		vertlist[3] = grid.p[3] + half3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 16)
 	{
-		vertlist[4] = grid.p[4] + float3(_scale.x / 2.0, 0, 0);
+		vertlist[4] = grid.p[4] + half3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 32)
 	{
-		vertlist[5] = grid.p[5] - float3(0, 0, _scale.z / 2.0);
+		vertlist[5] = grid.p[5] - half3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 64)
 	{
-		vertlist[6] = grid.p[6] - float3(_scale.x / 2.0, 0, 0);
+		vertlist[6] = grid.p[6] - half3(_scale.x / 2.0, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 128)
 	{
-		vertlist[7] = grid.p[7] + float3(0, 0, _scale.z / 2.0);
+		vertlist[7] = grid.p[7] + half3(0, 0, _scale.z / 2.0);
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		vertlist[8] = grid.p[0] + float3(0, clamp(grid.val[0], 0, 1) * _scale.y, 0);
+		vertlist[8] = grid.p[0] + half3(0, clamp(grid.val[0], 0, 1) * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		vertlist[9] = grid.p[1] + float3(0, clamp(grid.val[1], 0, 1) * _scale.y, 0);
+		vertlist[9] = grid.p[1] + half3(0, clamp(grid.val[1], 0, 1) * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		vertlist[10] = grid.p[2] + float3(0, clamp(grid.val[2], 0, 1) * _scale.y, 0);
+		vertlist[10] = grid.p[2] + half3(0, clamp(grid.val[2], 0, 1) * _scale.y, 0);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		vertlist[11] = grid.p[3] + float3(0, clamp(grid.val[3], 0, 1) * _scale.y, 0);
+		vertlist[11] = grid.p[3] + half3(0, clamp(grid.val[3], 0, 1) * _scale.y, 0);
 	}
 
 	[unroll]
@@ -428,16 +428,16 @@ void Polygonise(GridCell grid)
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	GridCell cell;
-	float3 _scale = float3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
+	half3 _scale = half3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
 
-	cell.p[0] = float3(id.x * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
-	cell.p[1] = float3((id.x + 1) * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
-	cell.p[2] = float3((id.x + 1) * _scale.x, id.y * _scale.y, id.z * _scale.z);
-	cell.p[3] = float3(id.x * _scale.x, id.y * _scale.y, id.z * _scale.z);
-	cell.p[4] = float3(id.x * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
-	cell.p[5] = float3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
-	cell.p[6] = float3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
-	cell.p[7] = float3(id.x * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
+	cell.p[0] = half3(id.x * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[1] = half3((id.x + 1) * _scale.x, id.y * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[2] = half3((id.x + 1) * _scale.x, id.y * _scale.y, id.z * _scale.z);
+	cell.p[3] = half3(id.x * _scale.x, id.y * _scale.y, id.z * _scale.z);
+	cell.p[4] = half3(id.x * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[5] = half3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, (id.z + 1) * _scale.z);
+	cell.p[6] = half3((id.x + 1) * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
+	cell.p[7] = half3(id.x * _scale.x, (id.y + 1) * _scale.y, id.z * _scale.z);
 
 	cell.val[0] = currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume;
 	cell.val[1] = currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume;

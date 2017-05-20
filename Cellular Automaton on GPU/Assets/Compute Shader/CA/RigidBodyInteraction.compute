@@ -13,7 +13,7 @@ struct Cell
 
 struct RigidBody
 {
-	//float2 size;
+	float3 scale;
 	float3 position;
 	//float2 rotation;
 };
