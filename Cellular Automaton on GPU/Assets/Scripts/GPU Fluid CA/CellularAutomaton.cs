@@ -61,8 +61,8 @@ namespace GPUFluid
 
             rbInteraction.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
 
-            rigidBodies = new ComputeBuffer(1, sizeof(float) * 14);
-            rigidBodies.SetData(new float[] { 2, 2, 14, 5, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            rigidBodies = new ComputeBuffer(1, sizeof(float) * 3);
+            rigidBodies.SetData(new float[] { 14, 5, 24 });
         }
 
 

@@ -13,9 +13,9 @@ struct Cell
 
 struct RigidBody
 {
-	float2 size;
+	//float2 size;
 	float3 position;
-	float3x3 rotation;
+	//float2 rotation;
 };
 
 static float3x3 I =
@@ -98,44 +98,27 @@ void CSMain2(uint3 id : SV_DispatchThreadID)
 
 	newPositions2[id.x].position = pos;
 
-	float3 oldPos[3] = { newPositions2[id.x].position + float3(-newPositions2[id.x].size.x / 2.0, 0, 0), newPositions2[id.x].position + float3(newPositions2[id.x].size.x / 2.0, 0, newPositions2[id.x].size.y / 2.0), newPositions2[id.x].position + float3(newPositions2[id.x].size.x / 2.0, 0, -newPositions2[id.x].size.x / 2.0) };
-	float3 newPos[3];
+	//float3 oldPos[3] = { newPositions2[id.x].position + float3(-newPositions2[id.x].size.x / 2.0, 0, 0), newPositions2[id.x].position + float3(newPositions2[id.x].size.x / 2.0, 0, newPositions2[id.x].size.y / 2.0), newPositions2[id.x].position + float3(newPositions2[id.x].size.x / 2.0, 0, -newPositions2[id.x].size.x / 2.0) };
+	//float3 newPos[3];
 
-	[unroll(3)]
-	for (int i = 0; i < 3; ++i)
-	{
-		pos = oldPos[i];
+	//[unroll(3)]
+	//for (int i = 0; i < 3; ++i)
+	//{
+	//	pos = oldPos[i];
 
-		cellPos = uint3(pos);
+	//	cellPos = uint3(pos);
 
-		volume = currentGeneration[ADDRESS(cellPos.x, cellPos.y, cellPos.z, size)].volume;
+	//	volume = currentGeneration[ADDRESS(cellPos.x, cellPos.y, cellPos.z, size)].volume;
 
-		pos.y = cellPos.y + clamp(volume, 0, 1);
+	//	pos.y = cellPos.y + clamp(volume, 0, 1);
 
-		newPos[i] = pos;
-	}
+	//	newPos[i] = pos;
+	//}
 
-	float3 n = cross(newPos[2] - newPos[0], newPos[1] - newPos[0]);
-	float3 up = float3(0, 1, 0);
+	//float3 n = cross(newPos[2] - newPos[0], newPos[1] - newPos[0]);
 
-	float3 x = normalize(cross(up, n));
-	
-	float theta = acos(dot(up, n) / (length(n)));
+	//float yAngle = acos(dot(float3(0, 1, 0), normalize(n)));
+	//float zAngle = acos(dot(float3(0, 0, 1), float3(n.x, 0, n.z)));
 
-	float3x3 A;
-	A._11 = 0;
-	A._12 = -x.z;
-	A._13 = x.y;
-
-	A._21 = x.z;
-	A._22 = 0;
-	A._23 = -x.x;
-
-	A._31 = -x.y;
-	A._32 = x.x;
-	A._33 = 0;
-
-	float3x3 R = I + sin(theta) * A + (1 - cos(theta)) * A * A;
-
-	newPositions2[id.x].rotation = I;
+	//newPositions2[id.x].rotation = float2(180+degrees(yAngle), degrees(zAngle));
 }
