@@ -117,7 +117,7 @@
 
 				triStream.Append(pIn);
 
-				//Thirs point
+				//Third point
 				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
 				pIn.light = light;
 				pIn.uv = p[0].positions[0];
