@@ -18,6 +18,7 @@ namespace GPUFluid
         public ComputeShader rbInteraction;
         public Material rbMaterial;
         private ComputeBuffer rigidBodies;
+        private ComputeBuffer queryResult;
 
         public GridDimensions dimensions;
 
@@ -60,6 +61,9 @@ namespace GPUFluid
 
             rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
             rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
+
+            queryResult = new ComputeBuffer(1, sizeof(float));
+            queryResult.SetData(new float[] { 0f });
         }
 
 
@@ -153,10 +157,22 @@ namespace GPUFluid
         }
 
         //Floatables
-        public float getFluidHeightAtCoordinate(Vector3 coordinate, float density)
+        public float getFluidHeightAtCoordinate(int[] coordinate, float density)
         {
             //ask compute shader
-            return 0f;
+            if (coordinate.Length != 3)
+            {
+                print("Coordinate length != 3");
+                return float.MinValue;
+            }
+            int kernelHandle = cs.FindKernel("GetHeight");
+            cs.SetBuffer(kernelHandle, "queryResult", queryResult);
+            cs.SetInts("queryCellCoord", coordinate);
+            cs.SetFloat("queryDensity", density);
+            cs.Dispatch(kernelHandle, 1, 1, 1);
+            float[] result = new float[1];
+            queryResult.GetData(result);
+            return result[0];
         }
 
         /// <summary>

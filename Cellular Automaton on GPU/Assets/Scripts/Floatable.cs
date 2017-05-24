@@ -28,12 +28,15 @@ public class Floatable : MonoBehaviour {
     Vector3 upLift;
     // Update is called once per frame
     void Update () {
-        actionPoint = transform.position + transform.TransformDirection(buoyancyCentreOffset);
-        forcefactor = 1f - ((actionPoint.y - waterLevel) / floatHeight);
-        if(forcefactor > 0f)
+        if (floatHeight > 0)
         {
-            upLift = -Physics.gravity * (forcefactor - rb.velocity.y * bounceDamp);
-            rb.AddForceAtPosition(upLift, actionPoint);
+            actionPoint = transform.position + transform.TransformDirection(buoyancyCentreOffset);
+            forcefactor = 1f - ((actionPoint.y - waterLevel) / floatHeight);
+            if (forcefactor > 0f)
+            {
+                upLift = -Physics.gravity * (forcefactor - rb.velocity.y * bounceDamp);
+                rb.AddForceAtPosition(upLift, actionPoint);
+            }
         }
 	}
 }

@@ -6,6 +6,8 @@ using GPUFluid;
 public class FloatableManager : MonoBehaviour {
 
     public CellularAutomaton ca;
+    public Vector3 gridPosition;
+    private Vector3 cellSize;
 
     GameObject[] floatableObjects;
     Floatable[] floatableComponents;
@@ -20,16 +22,25 @@ public class FloatableManager : MonoBehaviour {
         }
 	}
 
-    // Update is called once per frame
+    int timer = 100;
+    int timerCount = 0;
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.S))
+        if (timerCount++ > timer)
         {
-            ca.getFluidHeightAtCoordinate(Vector3.one, 0f);
+            for (int i = 0; i < floatableComponents.Length; i++)
+            {
+                int[] coord = new int[3];
+                Vector3 position = floatableObjects[i].transform.position - gridPosition;
+                coord[0] = (int)position.x;
+                coord[1] = (int)position.y;
+                coord[2] = (int)position.z;
+                float floatHeight = ca.getFluidHeightAtCoordinate(coord, floatableComponents[i].Density);
+                floatableComponents[i].floatHeight = floatHeight;
+                print("Coord: "+ coord[0] + ", " + coord[1] + ", " + coord[2] + " floatHeight: " + floatHeight);
+            }
+            timerCount -= timer;
         }
-        for (int i = 0; i < floatableComponents.Length; i++)
-        {
-
-        }
+        
     }
 }
