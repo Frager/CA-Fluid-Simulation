@@ -17,6 +17,8 @@ struct Cell
 	half temperature;
 };
 
+typedef vector <half, NUMBER_OF_ELEMENTS> cellType;
+
 StructuredBuffer<Cell> currentGeneration;
 RWTexture3D<half4> Result;
 

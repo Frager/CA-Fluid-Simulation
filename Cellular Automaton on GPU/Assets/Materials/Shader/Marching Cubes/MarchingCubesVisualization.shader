@@ -28,10 +28,12 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
+
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
 			{
 				half3 vertex[3];
+				half3 normal[3];
 			};
 
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
@@ -53,15 +55,19 @@
 			struct GS_INPUT
 			{
 				float4 positions[3] : POSITION;
+				float3 normals[3] : NORMAL;
 			};
 
 			struct PS_INPUT
 			{
 				float4 position : SV_POSITION;
-				float light : BLENDINDICES;
 				float3 uv : TEXCOORDS;
+#ifdef REALISTIC
 				float2 bumpuv[2] : TEXCOORD0;
 				float3 viewDir : TEXCOORD2;
+#else
+				float light : BLENDINDICES;
+#endif
 			};
 
 			sampler2D _BumpMap;
@@ -76,6 +82,10 @@
 				o.positions[0] = float4(triangles[input.vertexid].vertex[0], 1);
 				o.positions[1] = float4(triangles[input.vertexid].vertex[1], 1);
 				o.positions[2] = float4(triangles[input.vertexid].vertex[2], 1);
+
+				o.normals[0] = float4(triangles[input.vertexid].normal[0], 1);
+				o.normals[1] = float4(triangles[input.vertexid].normal[1], 1);
+				o.normals[2] = float4(triangles[input.vertexid].normal[2], 1);
 				return o;
 			}
 
@@ -84,67 +94,53 @@
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				fixed3 normal = cross(p[0].positions[2] - p[0].positions[1], p[0].positions[0] - p[0].positions[1]);
-				normal = UnityObjectToWorldNormal(-normal);
-				fixed NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
-				fixed light = _LightColor0 * NdotL;
-
+#ifdef REALISTIC
 				fixed4 temp, wpos;
+#else
+				//fixed3 normal = cross(p[0].positions[2] - p[0].positions[1], p[0].positions[1] - p[0].positions[0]);
+				//normal = UnityObjectToWorldNormal(normal);
+				//fixed NdotL = max(0, dot(normal, _WorldSpaceLightPos0.xyz));
+				//fixed light = _LightColor0 * NdotL;
+#endif
 
-				//First point
-				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
-				pIn.light = light;
-				pIn.uv = p[0].positions[2];
-
-				wpos = mul(unity_ObjectToWorld, p[0].positions[2] * scale);
-				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
-				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[2] * scale));
-
-				triStream.Append(pIn);
-
-				//Second point
-				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
-				pIn.light = light;
-				pIn.uv = p[0].positions[1];
-
-				wpos = mul(unity_ObjectToWorld, p[0].positions[1] * scale);
-				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
-				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[1] * scale));
-
-				triStream.Append(pIn);
-
-				//Third point
-				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
-				pIn.light = light;
-				pIn.uv = p[0].positions[0];
-
-				wpos = mul(unity_ObjectToWorld, p[0].positions[0] * scale);
-				temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
-				pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
-				pIn.bumpuv[1] = temp.wz;
-				pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[0] * scale));
-
-				triStream.Append(pIn);
+				[unroll(3)]
+				for (int i = 2; i >= 0; --i)
+				{
+					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
+					pIn.uv = p[0].positions[i];
+#ifdef REALISTIC
+					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale);
+					temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
+					pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
+					pIn.bumpuv[1] = temp.wz;
+					pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[i] * scale));
+#else
+					pIn.light = _LightColor0 * max(0, dot(UnityObjectToWorldNormal(p[0].normals[i]), _WorldSpaceLightPos0.xyz));
+#endif
+					triStream.Append(pIn);
+				}
 
 				triStream.RestartStrip();
 			}
 
 			fixed4 frag(PS_INPUT input) : SV_Target
 			{
+				fixed4 col;
+
+#ifdef REALISTIC
 				fixed3 bump1 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[0])).rgb;
 				fixed3 bump2 = UnpackNormal(tex2D(_BumpMap, input.bumpuv[1])).rgb;
 				fixed3 bump = (bump1 + bump2) * 0.5;
 
 				fixed fresnel = dot(input.viewDir, bump);
-				fixed4 water = tex2D(_ColorControl, fixed2(fresnel,fresnel));
+				fixed4 water = tex2D(_ColorControl, fixed2(fresnel, fresnel));
 
-				fixed4 col;
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
+#else
+				col.rgb = tex3D(_MainTex, input.uv).xyz * input.light;
+				col.a = tex3D(_MainTex, input.uv).a;
+#endif
 
 				return col;
 			}
