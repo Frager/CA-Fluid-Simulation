@@ -35,7 +35,7 @@ public class FloatableManager : MonoBehaviour {
                 coord[0] = (int)position.x;
                 coord[1] = (int)position.y;
                 coord[2] = (int)position.z;
-                float floatHeight = ca.getFluidHeightAtCoordinate(coord, floatableComponents[i].Density);
+                float floatHeight = ca.getFluidHeightAtCoordinate(coord, floatableComponents[i].density);
                 floatableComponents[i].floatHeight = floatHeight;
                 print("Coord: "+ coord[0] + ", " + coord[1] + ", " + coord[2] + " floatHeight: " + floatHeight);
             }

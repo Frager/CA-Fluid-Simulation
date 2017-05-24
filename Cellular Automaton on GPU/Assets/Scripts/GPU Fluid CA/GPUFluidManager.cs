@@ -15,7 +15,7 @@ namespace GPUFluid
         [Range(0f, 1f)]
         public float x, y, z;
 
-        [Range(-1,2)]
+        [Range(-1, 2)]
         public int elementID = 2;
 
         private float timer = 0;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Floatable : MonoBehaviour {
 
-    public float Density;
+    public float density;
 
     public float floatHeight = 2;
     public float bounceDamp = 0.05f;
@@ -26,7 +26,7 @@ public class Floatable : MonoBehaviour {
     float forcefactor;
     Vector3 actionPoint;
     Vector3 upLift;
-    // Update is called once per frame
+
     void Update () {
         if (floatHeight > 0)
         {

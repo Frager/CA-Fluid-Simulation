@@ -66,15 +66,22 @@ uint3 queryCellCoord;
 
 [numthreads(1, 1, 1)]
 void GetHeight(uint3 id : SV_DispatchThreadID){
-	if (id.x == queryCellCoord.x && id.y == queryCellCoord.y && id.z == queryCellCoord.z){
-		for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+
+	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 		{
 			if(Densities[i] >= queryDensity) {
-				queryResult[0] = newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i];
+				queryResult[0] = newGeneration[ADDRESS(queryCellCoord.x, queryCellCoord.y, queryCellCoord.z, size)].content[i];
 			}
 		}
-	}
-			queryResult[0] = 1;
+
+	//if (id.x == queryCellCoord.x && id.y == queryCellCoord.y && id.z == queryCellCoord.z){
+	//	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	//	{
+	//		if(Densities[i] >= queryDensity) {
+	//			queryResult[0] = newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i];
+	//		}
+	//	}
+	//}
 }
 
 void HorizontalUpdate(uint cell_1, uint cell_2)

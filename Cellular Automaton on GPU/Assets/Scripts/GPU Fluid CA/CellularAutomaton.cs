@@ -49,7 +49,7 @@ namespace GPUFluid
                 KernelOrder[i] = cs.FindKernel(FunctionOrder[i]);
             }
 
-            threadGroups = new int[][] { new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2}, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 } };
+            threadGroups = new int[][] { new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 } };
 
             buffer = new ComputeBuffer[] { new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory) };
 
@@ -86,7 +86,7 @@ namespace GPUFluid
 
             cs.SetInts("obstacleStart", obstacleStart);
             cs.SetInts("obstacleEnd", obstacleEnd);
-            
+
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
             cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
@@ -153,7 +153,7 @@ namespace GPUFluid
             updateCycle = (updateCycle + 1) % 8;
 
             visualization.Render(buffer[updateCycle % 2]);
-            
+
         }
 
         //Floatables
