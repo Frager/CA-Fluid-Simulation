@@ -330,28 +330,28 @@ void Polygonise(GridCell grid)
 
 	cubeindex = 0;
 
-	if((grid.val[0] > 0.01))
+	if((grid.val[0] > 0.02))
 		cubeindex |=  1;
 
-	if ((grid.val[1] > 0.01))
+	if ((grid.val[1] > 0.02))
 		cubeindex |= 2;
 
-	if ((grid.val[2] > 0.01))
+	if ((grid.val[2] > 0.02))
 		cubeindex |= 4;
 
-	if ((grid.val[3] > 0.01))
+	if ((grid.val[3] > 0.02))
 		cubeindex |= 8;
 
-	if ((grid.val[4] > 0.01))
+	if ((grid.val[4] > 0.02))
 		cubeindex |= 16;
 
-	if ((grid.val[5] > 0.01))
+	if ((grid.val[5] > 0.02))
 		cubeindex |= 32;
 
-	if ((grid.val[6] > 0.01))
+	if ((grid.val[6] > 0.02))
 		cubeindex |= 64;
 
-	if ((grid.val[7] > 0.01))
+	if ((grid.val[7] > 0.02))
 		cubeindex |= 128;
 
 
