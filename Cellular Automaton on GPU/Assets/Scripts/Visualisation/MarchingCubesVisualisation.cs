@@ -70,7 +70,7 @@ namespace GPUFluid
             quads = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 4 * 3 * sizeof(float), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(quads, args, 0);
 #else
-            triangles = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 3 * 3 * sizeof(float), ComputeBufferType.Append);
+            triangles = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 6 * 3 * sizeof(float), ComputeBufferType.Append);
             ComputeBuffer.CopyCount(triangles, args, 0);
 #endif
         }

@@ -9,13 +9,13 @@ namespace GPUFluid
         public ObstacleInterface obstacles;
         public ObstacleInterface removeObstacles;
 
-        [Range(0.01f, 1f)]
+        [Range(0.01f, 100f)]
         public float timeframe = 0.01f;
 
         [Range(0f, 1f)]
         public float x, y, z;
 
-        [Range(0,2)]
+        [Range(-1,2)]
         public int elementID = 2;
 
         private float timer = 0;
