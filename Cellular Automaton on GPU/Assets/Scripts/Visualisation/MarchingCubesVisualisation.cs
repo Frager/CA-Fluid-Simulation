@@ -47,8 +47,10 @@ namespace GPUFluid
         public void Initialize(GridDimensions dimensions)
         {
             this.dimensions = dimensions;
-
-            texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1, RenderTextureFormat.ARGB4444);
+            if(SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGB4444))
+                texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1, RenderTextureFormat.ARGB4444);
+            else 
+                texture3D = new RenderTexture(dimensions.x * 16, dimensions.y * 16, 1);
             texture3D.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
             texture3D.filterMode = FilterMode.Trilinear;
             texture3D.volumeDepth = dimensions.z * 16;
