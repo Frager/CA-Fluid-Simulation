@@ -40,16 +40,9 @@ namespace GPUFluid
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
         private int[][] threadGroups;
 
-        //Floatables
-        float[] data;
-
 
         void Start()
         {
-
-            //Floatables
-            data = new float[dimensions.x * 16 * dimensions.y * 16 * dimensions.z * 16];
-
             for (int i = 0; i < 8; ++i)
             {
                 KernelOrder[i] = cs.FindKernel(FunctionOrder[i]);
@@ -156,15 +149,13 @@ namespace GPUFluid
             updateCycle = (updateCycle + 1) % 8;
 
             visualization.Render(buffer[updateCycle % 2]);
-
-            //Floatables
-            buffer[(updateCycle) % 2].GetData(data);
+            
         }
 
         //Floatables
         public float getFluidHeightAtCoordinate(Vector3 coordinate, float density)
         {
-            print("Cell: " + data[110000]);
+            //ask compute shader
             return 0f;
         }
 
