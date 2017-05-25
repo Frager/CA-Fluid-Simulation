@@ -18,7 +18,7 @@ struct Quad
 uint3 size;
 
 StructuredBuffer<Cell> currentGeneration;
-AppendStructuredBuffer<Quad> quads;
+AppendStructuredBuffer<Quad> mesh;
 
 [numthreads(16, 8, 8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -40,7 +40,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z);
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
 		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 
 	if (up.volume > 0 && (up.volume > current.volume || current.volume < 1) && id.y < size.y - 1)
@@ -50,7 +50,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z);
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
 		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 	
 	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
@@ -60,7 +60,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[1] = half3(id.x * _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
 		quad.vertex[2] = half3(id.x * _scale.x, id.y * _scale.y + clamp(left.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
 		quad.vertex[3] = half3(id.x * _scale.x, id.y * _scale.y + clamp(left.volume, 0, 1) * _scale.y,	id.z * _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 	
 	if (right.volume > 0 && right.volume > current.volume && id.x < size.x - 1)
@@ -70,7 +70,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + clamp(right.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
 		quad.vertex[0] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + clamp(right.volume, 0, 1) * _scale.y,	id.z * _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 
 	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
@@ -80,7 +80,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z);
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + clamp(front.volume, 0, 1) * _scale.y,	id.z * _scale.z);
 		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y + clamp(front.volume, 0, 1) * _scale.y,	id.z * _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 
 	if (back.volume > 0 && back.volume > current.volume && id.z < size.z - 1)
@@ -90,6 +90,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z + _scale.z);
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + clamp(back.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
 		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y + clamp(back.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
-		quads.Append(quad);
+		mesh.Append(quad);
 	}
 }

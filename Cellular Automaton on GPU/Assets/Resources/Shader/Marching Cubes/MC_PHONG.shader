@@ -37,7 +37,7 @@
 			};
 
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
-			StructuredBuffer<Triangle> triangles;
+			StructuredBuffer<Triangle> mesh;
 
 			#include "UnityCG.cginc"
 
@@ -62,11 +62,10 @@
 			{
 				float4 position : SV_POSITION;
 				float3 uv : TEXCOORDS;
+				float3 normal : NORMAL;
 #ifdef REALISTIC
 				float2 bumpuv[2] : TEXCOORD0;
 				float3 viewDir : TEXCOORD2;
-#else
-				float light : BLENDINDICES;
 #endif
 			};
 
@@ -79,13 +78,13 @@
 			GS_INPUT vert(VS_INPUT input)
 			{
 				GS_INPUT o;
-				o.positions[0] = float4(triangles[input.vertexid].vertex[0], 1);
-				o.positions[1] = float4(triangles[input.vertexid].vertex[1], 1);
-				o.positions[2] = float4(triangles[input.vertexid].vertex[2], 1);
+				o.positions[0] = float4(mesh[input.vertexid].vertex[0], 1);
+				o.positions[1] = float4(mesh[input.vertexid].vertex[1], 1);
+				o.positions[2] = float4(mesh[input.vertexid].vertex[2], 1);
 
-				o.normals[0] = float4(triangles[input.vertexid].normal[0], 1);
-				o.normals[1] = float4(triangles[input.vertexid].normal[1], 1);
-				o.normals[2] = float4(triangles[input.vertexid].normal[2], 1);
+				o.normals[0] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[0]);
+				o.normals[1] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[1]);
+				o.normals[2] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[2]);
 				return o;
 			}
 
@@ -115,12 +114,54 @@
 					pIn.bumpuv[1] = temp.wz;
 					pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[i] * scale));
 #else
-					pIn.light = _LightColor0 * max(0, dot(UnityObjectToWorldNormal(p[0].normals[i]), _WorldSpaceLightPos0.xyz));
+					pIn.normal = p[0].normals[i];
 #endif
 					triStream.Append(pIn);
 				}
 
 				triStream.RestartStrip();
+			}
+
+			fixed4 BlinnPhong(float4 position, float3 normal)
+			{
+				fixed3 normalDirection = normalize(normal);
+
+				fixed3 viewDirection = normalize(
+					_WorldSpaceCameraPos - position.xyz);
+				fixed3 lightDirection;
+				fixed attenuation;
+
+				if (0.0 == _WorldSpaceLightPos0.w) 
+				{
+					attenuation = 1.0;
+					lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+				}
+				else
+				{
+					fixed3 vertexToLightSource =
+						_WorldSpaceLightPos0.xyz - position.xyz;
+					fixed distance = length(vertexToLightSource);
+					attenuation = 1.0 / distance; 
+					lightDirection = normalize(vertexToLightSource);
+				}
+
+				fixed3 ambientLighting = UNITY_LIGHTMODEL_AMBIENT.rgb;
+
+				fixed3 diffuseReflection = attenuation * _LightColor0.rgb * max(0.0, dot(normalDirection, lightDirection));
+
+				fixed3 specularReflection;
+				if (dot(normalDirection, lightDirection) < 0.0)
+				{
+					specularReflection = fixed3(0.0, 0.0, 0.0);
+				}
+				else
+				{
+					specularReflection = attenuation * _LightColor0.rgb * pow(max(0.0, dot(
+						reflect(-lightDirection, normalDirection),
+						viewDirection)), 48);
+				}
+
+				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);
 			}
 
 			fixed4 frag(PS_INPUT input) : SV_Target
@@ -137,11 +178,9 @@
 
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
-#else
-				col.rgb = tex3D(_MainTex, input.uv).xyz * input.light;
-				col.a = tex3D(_MainTex, input.uv).a;
+#else			
+				col = tex3D(_MainTex, input.uv) * BlinnPhong(input.position, input.normal);
 #endif
-
 				return col;
 			}
 			ENDCG

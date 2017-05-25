@@ -24,7 +24,7 @@
 				float3 vertex[4];
 			};
 
-			StructuredBuffer<Quad> quads;
+			StructuredBuffer<Quad> mesh;
 
 			#include "UnityCG.cginc"
 
@@ -55,10 +55,10 @@
 			GS_INPUT vert(VS_INPUT input)
 			{
 				GS_INPUT o;
-				o.positions[0] = float4(quads[input.vertexid].vertex[0], 1);
-				o.positions[1] = float4(quads[input.vertexid].vertex[1], 1);
-				o.positions[2] = float4(quads[input.vertexid].vertex[2], 1);
-				o.positions[3] = float4(quads[input.vertexid].vertex[3], 1);
+				o.positions[0] = float4(mesh[input.vertexid].vertex[0], 1);
+				o.positions[1] = float4(mesh[input.vertexid].vertex[1], 1);
+				o.positions[2] = float4(mesh[input.vertexid].vertex[2], 1);
+				o.positions[3] = float4(mesh[input.vertexid].vertex[3], 1);
 				return o;
 			}
 

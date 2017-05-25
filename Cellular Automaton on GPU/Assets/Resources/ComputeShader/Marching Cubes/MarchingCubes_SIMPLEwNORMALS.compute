@@ -322,7 +322,7 @@ const static int triTable[256][16] =
 
 StructuredBuffer<Cell> currentGeneration;
 
-AppendStructuredBuffer<Triangle> triangles;
+AppendStructuredBuffer<Triangle> mesh;
 
 void Polygonise(GridCell grid)
 {
@@ -332,28 +332,28 @@ void Polygonise(GridCell grid)
 
 	cubeindex = 0;
 
-	if(grid.val[0] > 0.05)
-		cubeindex |=  1;
+	if (grid.val[0] > 0.001)
+		cubeindex |= 1;
 
-	if (grid.val[1] > 0.05)
+	if (grid.val[1] > 0.001)
 		cubeindex |= 2;
 
-	if (grid.val[2] > 0.05)
+	if (grid.val[2] > 0.001)
 		cubeindex |= 4;
 
-	if (grid.val[3] > 0.05)
+	if (grid.val[3] > 0.001)
 		cubeindex |= 8;
 
-	if (grid.val[4] > 0.05)
+	if (grid.val[4] > 0.001)
 		cubeindex |= 16;
 
-	if (grid.val[5] > 0.05)
+	if (grid.val[5] > 0.001)
 		cubeindex |= 32;
 
-	if (grid.val[6] > 0.05)
+	if (grid.val[6] > 0.001)
 		cubeindex |= 64;
 
-	if (grid.val[7] > 0.05)
+	if (grid.val[7] > 0.001)
 		cubeindex |= 128;
 
 
@@ -367,74 +367,62 @@ void Polygonise(GridCell grid)
 
 	if (edgeTable[cubeindex] & 1)
 	{
-		//vertlist[0] = grid.p[0] + half3(_scale.x / 2.0, 0, 0);
-		vertlist[0] = (grid.val[0] > grid.val[1]) ? lerp(grid.p[0], grid.p[1], grid.val[0]) : lerp(grid.p[1], grid.p[0], grid.val[1]);
+		vertlist[0] = grid.p[0] + half3(_scale.x / 2.0, 0, 0);
 		normlist[0] = (grid.val[0] > grid.val[1]) ? half3(1, 0, 0) : half3(-1, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 2)
 	{
-		//vertlist[1] = grid.p[1] - half3(0, 0, _scale.z / 2.0);
-		vertlist[1] = (grid.val[1] > grid.val[2]) ? lerp(grid.p[1], grid.p[2], grid.val[1]) : lerp(grid.p[2], grid.p[1], grid.val[2]);
+		vertlist[1] = grid.p[1] - half3(0, 0, _scale.z / 2.0);
 		normlist[1] = (grid.val[1] > grid.val[2]) ? half3(0, 0, -1) : half3(0, 0, 1);
 	}
 	if (edgeTable[cubeindex] & 4)
 	{
-		//vertlist[2] = grid.p[2] - half3(_scale.x / 2.0, 0, 0);
-		vertlist[2] = (grid.val[2] > grid.val[3]) ? lerp(grid.p[2], grid.p[3], grid.val[2]) : lerp(grid.p[3], grid.p[2], grid.val[3]);
+		vertlist[2] = grid.p[2] - half3(_scale.x / 2.0, 0, 0);
 		normlist[2] = (grid.val[2] > grid.val[3]) ? half3(-1, 0, 0) : half3(1, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 8)
 	{
-		//vertlist[3] = grid.p[3] + half3(0, 0, _scale.z / 2.0);
-		vertlist[3] = (grid.val[3] > grid.val[0]) ? lerp(grid.p[3], grid.p[0], grid.val[3]) : lerp(grid.p[0], grid.p[3], grid.val[0]);
+		vertlist[3] = grid.p[3] + half3(0, 0, _scale.z / 2.0);
 		normlist[3] = (grid.val[3] > grid.val[0]) ? half3(0, 0, 1) : half3(0, 0, -1);
 	}
 	if (edgeTable[cubeindex] & 16)
 	{
-		//vertlist[4] = grid.p[4] + half3(_scale.x / 2.0, 0, 0);
-		vertlist[4] = (grid.val[4] > grid.val[5]) ? lerp(grid.p[4], grid.p[5], grid.val[4]) : lerp(grid.p[5], grid.p[4], grid.val[5]);
+		vertlist[4] = grid.p[4] + half3(_scale.x / 2.0, 0, 0);
 		normlist[4] = (grid.val[4] > grid.val[5]) ? half3(1, 0, 0) : half3(-1, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 32)
 	{
-		//vertlist[5] = grid.p[5] - half3(0, 0, _scale.z / 2.0);
-		vertlist[5] = (grid.val[5] > grid.val[6]) ? lerp(grid.p[5], grid.p[6], grid.val[5]) : lerp(grid.p[6], grid.p[5], grid.val[6]);
+		vertlist[5] = grid.p[5] - half3(0, 0, _scale.z / 2.0);
 		normlist[5] = (grid.val[5] > grid.val[6]) ? half3(0, 0, -1) : half3(0, 0, 1);
 	}
 	if (edgeTable[cubeindex] & 64)
 	{
-		//vertlist[6] = grid.p[6] - half3(_scale.x / 2.0, 0, 0);
-		vertlist[6] = (grid.val[6] > grid.val[7]) ? lerp(grid.p[6], grid.p[7], grid.val[6]) : lerp(grid.p[7], grid.p[6], grid.val[7]);
+		vertlist[6] = grid.p[6] - half3(_scale.x / 2.0, 0, 0);
 		normlist[6] = (grid.val[6] > grid.val[7]) ? half3(-1, 0, 0) : half3(1, 0, 0);
 	}
 	if (edgeTable[cubeindex] & 128)
 	{
-		//vertlist[7] = grid.p[7] + half3(0, 0, _scale.z / 2.0);
-		vertlist[7] = (grid.val[7] > grid.val[0]) ? lerp(grid.p[7], grid.p[0], grid.val[7]) : lerp(grid.p[0], grid.p[7], grid.val[0]);
-		normlist[7] = (grid.val[7] > grid.val[0]) ? half3(0, 0, 1) : half3(0, 0, -1);
+		vertlist[7] = grid.p[7] + half3(0, 0, _scale.z / 2.0);
+		normlist[7] = (grid.val[7] > grid.val[4]) ? half3(0, 0, 1) : half3(0, 0, -1);
 	}
 	if (edgeTable[cubeindex] & 256)
 	{
-		//vertlist[8] = grid.p[0] + half3(0, clamp(grid.val[0], 0, 1) * _scale.y, 0);
-		vertlist[8] = (grid.val[0] > grid.val[4]) ? lerp(grid.p[0], grid.p[4], grid.val[0]) : lerp(grid.p[4], grid.p[0], grid.val[4]);
+		vertlist[8] = grid.p[0] + half3(0, clamp(grid.val[0], 0, 1) * _scale.y, 0);
 		normlist[8] = half3(0, 1, 0);
 	}
 	if (edgeTable[cubeindex] & 512)
 	{
-		//vertlist[9] = grid.p[1] + half3(0, clamp(grid.val[1], 0, 1) * _scale.y, 0);
-		vertlist[9] = (grid.val[1] > grid.val[5]) ? lerp(grid.p[1], grid.p[5], grid.val[1]) : lerp(grid.p[5], grid.p[1], grid.val[5]);
+		vertlist[9] = grid.p[1] + half3(0, clamp(grid.val[1], 0, 1) * _scale.y, 0);
 		normlist[9] = half3(0, 1, 0);
 	}
 	if (edgeTable[cubeindex] & 1024)
 	{
-		//vertlist[10] = grid.p[2] + half3(0, clamp(grid.val[2], 0, 1) * _scale.y, 0);
-		vertlist[10] = (grid.val[2] > grid.val[6]) ? lerp(grid.p[2], grid.p[6], grid.val[2]) : lerp(grid.p[6], grid.p[2], grid.val[6]);
+		vertlist[10] = grid.p[2] + half3(0, clamp(grid.val[2], 0, 1) * _scale.y, 0);
 		normlist[10] = half3(0, 1, 0);
 	}
 	if (edgeTable[cubeindex] & 2048)
 	{
-		//vertlist[11] = grid.p[3] + half3(0, clamp(grid.val[3], 0, 1) * _scale.y, 0);
-		vertlist[11] = (grid.val[3] > grid.val[7]) ? lerp(grid.p[3], grid.p[7], grid.val[3]) : lerp(grid.p[7], grid.p[3], grid.val[7]);
+		vertlist[11] = grid.p[3] + half3(0, clamp(grid.val[3], 0, 1) * _scale.y, 0);
 		normlist[11] = half3(0, 1, 0);
 	}
 
@@ -450,7 +438,7 @@ void Polygonise(GridCell grid)
 		tris.normal[1] = normlist[triTable[cubeindex][i + 1]];
 		tris.normal[2] = normlist[triTable[cubeindex][i + 2]];
 
-		triangles.Append(tris);
+		mesh.Append(tris);
 	}
 }
 
@@ -469,14 +457,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	cell.p[6] = half3(id.x + 1, id.y + 1, id.z) * _scale;
 	cell.p[7] = half3(id.x, id.y + 1, id.z) * _scale;
 
-	cell.val[0] = saturate(currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume);
-	cell.val[1] = saturate(currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume);
-	cell.val[2] = saturate(currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume);
-	cell.val[3] = saturate(currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume);
-	cell.val[4] = saturate(currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume);
-	cell.val[5] = saturate(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume);
-	cell.val[6] = saturate(currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume);
-	cell.val[7] = saturate(currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume);
+	cell.val[0] = (currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume);
+	cell.val[1] = (currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume);
+	cell.val[2] = (currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume);
+	cell.val[3] = (currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume);
+	cell.val[4] = (currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume);
+	cell.val[5] = (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume);
+	cell.val[6] = (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume);
+	cell.val[7] = (currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume);
 
 	Polygonise(cell);
 }

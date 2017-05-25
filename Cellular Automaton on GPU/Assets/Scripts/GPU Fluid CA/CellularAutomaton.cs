@@ -150,10 +150,11 @@ namespace GPUFluid
             cs.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
             cs.SetInts("offset", offset[updateCycle]);
             cs.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
+
+            if (updateCycle % 2 == 0)
+                visualization.Render(buffer[updateCycle % 2]);
+
             updateCycle = (updateCycle + 1) % 8;
-
-            visualization.Render(buffer[updateCycle % 2]);
-
         }
 
         //Floatables
@@ -184,7 +185,7 @@ namespace GPUFluid
             {
                 buffer[i].Release();
             }
-
+            queryResult.Release();
             rigidBodies.Release();
         }
     }

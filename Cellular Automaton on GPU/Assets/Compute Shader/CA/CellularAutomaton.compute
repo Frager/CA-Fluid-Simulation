@@ -290,15 +290,15 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	if (distance(uint3(id.x, (id.y * 2 + offset.y), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.5)
+	if (distance(uint3(id.x, (id.y * 2 + offset.y), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.8)
 	{
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.5;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.2;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.2;
 	}
-	if (distance(uint3(id.x, (id.y * 2 + offset.y + 1), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.5)
+	if (distance(uint3(id.x, (id.y * 2 + offset.y + 1), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.8)
 	{
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.5;
-		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.2;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += 0.2;
 	}
 
 	if (id.x == heat.x && id.y * 2 + offset.y == heat.y && id.z == heat.z)
