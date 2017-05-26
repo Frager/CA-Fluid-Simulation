@@ -1,4 +1,4 @@
-﻿Shader "MarchingCubes/Gouraud"
+﻿Shader "MarchingCubes/Tesselation"
 {
 	Properties
 	{
@@ -15,29 +15,22 @@
 		Pass
 		{
 			CGPROGRAM
-			#include "UnityLightingCommon.cginc"
-			#include "UnityCG.cginc"
-			#pragma target 5.0
-			#pragma vertex vert
-			#pragma geometry geom
-			#pragma fragment frag
+#include "UnityLightingCommon.cginc"
+#include "UnityCG.cginc"
+#pragma target 5.0
+#pragma vertex vert
+#pragma geometry geom
+#pragma fragment frag
 
 
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
 			{
 				half3 vertex[3];
-				half3 normal[3];
 			};
 
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
 			StructuredBuffer<Triangle> mesh;
-
-			uniform float4 _horizonColor;
-
-			uniform float4 WaveSpeed;
-			uniform float _WaveScale;
-			uniform float4 _WaveOffset;
 
 			struct VS_INPUT
 			{
@@ -47,7 +40,6 @@
 			struct GS_INPUT
 			{
 				float4 positions[3] : POSITION;
-				float3 normals[3] : NORMAL;
 			};
 
 			struct PS_INPUT
@@ -55,8 +47,6 @@
 				float4 position : SV_POSITION;
 				float3 uv : TEXCOORDS;
 				float4 light : COLOR;
-				half3 worldRefl : TEXCOORD0;
-				half3 worldRefr : TEXCOORD1;
 			};
 
 			sampler3D _MainTex;
@@ -69,10 +59,6 @@
 				o.positions[0] = float4(mesh[input.vertexid].vertex[0], 1);
 				o.positions[1] = float4(mesh[input.vertexid].vertex[1], 1);
 				o.positions[2] = float4(mesh[input.vertexid].vertex[2], 1);
-
-				o.normals[0] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[0]);
-				o.normals[1] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[1]);
-				o.normals[2] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[2]);
 				return o;
 			}
 
@@ -118,21 +104,78 @@
 				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);
 			}
 
-			[maxvertexcount(3)]
+			[maxvertexcount(9)]
 			void geom(point GS_INPUT p[1], inout TriangleStream<PS_INPUT> triStream)
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				float3 worldViewDir, worldNormal;
-				[unroll(3)]
-				for (int i = 2; i >= 0; --i)
-				{
-					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
-					pIn.uv = p[0].positions[i];
-					pIn.light = BlinnPhong(pIn.position, p[0].normals[i]);
+				fixed3 normal = normalize(cross(p[0].positions[2] - p[0].positions[1], p[0].positions[1] - p[0].positions[0]));
+				fixed4 mean = (p[0].positions[2] + p[0].positions[1] + p[0].positions[0]) / 3.0;
 
-					triStream.Append(pIn);
-				}
+				fixed4 pointZero = mean + fixed4(0.003 * normal, 1);
+				fixed4 light;
+
+				normal = normalize(cross(p[0].positions[2] - p[0].positions[1], p[0].positions[1] - pointZero));
+				light = BlinnPhong((p[0].positions[2] + p[0].positions[1] + pointZero) / 3.0, normal);
+	
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
+				pIn.uv = p[0].positions[2];
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
+				pIn.uv = p[0].positions[1];
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.uv = pointZero;
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				triStream.RestartStrip();
+
+
+
+				normal = normalize(cross(p[0].positions[1] - p[0].positions[0], p[0].positions[1] - pointZero));
+				light = BlinnPhong((p[0].positions[0] + p[0].positions[1] + pointZero) / 3.0, normal);
+
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
+				pIn.uv = p[0].positions[1];
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
+				pIn.uv = p[0].positions[0];
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.uv = pointZero;
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				triStream.RestartStrip();
+
+
+
+				normal = normalize(cross(p[0].positions[0] - p[0].positions[2], p[0].positions[2] - pointZero));
+				light = BlinnPhong((p[0].positions[0] + p[0].positions[2] + pointZero) / 3.0, normal);
+
+				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.uv = pointZero;
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
+				pIn.uv = p[0].positions[0];
+				pIn.light = light;
+				triStream.Append(pIn);
+
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
+				pIn.uv = p[0].positions[2];
+				pIn.light = light;
+				triStream.Append(pIn);
 
 				triStream.RestartStrip();
 			}

@@ -6,7 +6,7 @@ namespace GPUFluid
 {
     public enum Type
     {
-        CUBES, SIMPLE, ADVANCED
+        CUBES, SIMPLE, TESSELATION
     }
 
     public enum Shading
@@ -64,13 +64,13 @@ namespace GPUFluid
             texture3D.enableRandomWrite = true;
             texture3D.Create();
 
-            string path = "MC_";
+            string path = "MC";
 
             switch (type)
             {
-                case Type.ADVANCED: path += ""; break;
-                case Type.CUBES: path += "CUBES"; break;
-                case Type.SIMPLE: path += ""; break;
+                case Type.CUBES: path += "_CUBES"; break;
+                case Type.SIMPLE: path += "_"; break;
+                case Type.TESSELATION: path += "_TESSELATION_"; break;
             }
 
             if (!type.Equals(Type.CUBES))
@@ -82,6 +82,7 @@ namespace GPUFluid
                     case Shading.PHONG: path += "PHONG"; break;
                 }
             }
+
             material = new Material(Resources.Load<Shader>("Shader/Marching Cubes/" + path));
 
             material.SetTexture("_MainTex", texture3D);
@@ -117,14 +118,14 @@ namespace GPUFluid
 
             switch(type)
             {
-                case Type.ADVANCED: path += "ADVANCED"; break;
                 case Type.CUBES: path += "CUBES"; break;
                 case Type.SIMPLE: path += "SIMPLE"; break;
+                case Type.TESSELATION: path += "SIMPLE"; break;
             }
 
             if(!type.Equals(Type.CUBES))
             {
-                if(!shading.Equals(Shading.FLAT))
+                if(shading.Equals(Shading.GOURAUD) || shading.Equals(Shading.PHONG))
                 {
                     path += "wNORMALS";
                 }

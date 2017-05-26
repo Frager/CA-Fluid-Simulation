@@ -1,4 +1,4 @@
-﻿Shader "Unlit/MarchingCubesVisualization"
+﻿Shader "MarchingCubes/Flat"
 {
 	Properties
 	{

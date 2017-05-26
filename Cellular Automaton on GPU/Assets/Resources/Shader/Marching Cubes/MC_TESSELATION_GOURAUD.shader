@@ -1,11 +1,11 @@
-﻿Shader "MarchingCubes/Gouraud"
+﻿Shader "MarchingCubes/Tesselation"
 {
 	Properties
 	{
 		_MainTex("Texture", 3D) = "white" {}
 	}
 
-	SubShader
+		SubShader
 	{
 		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
@@ -33,12 +33,6 @@
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
 			StructuredBuffer<Triangle> mesh;
 
-			uniform float4 _horizonColor;
-
-			uniform float4 WaveSpeed;
-			uniform float _WaveScale;
-			uniform float4 _WaveOffset;
-
 			struct VS_INPUT
 			{
 				uint vertexid : SV_VertexID;
@@ -55,8 +49,6 @@
 				float4 position : SV_POSITION;
 				float3 uv : TEXCOORDS;
 				float4 light : COLOR;
-				half3 worldRefl : TEXCOORD0;
-				half3 worldRefr : TEXCOORD1;
 			};
 
 			sampler3D _MainTex;
@@ -118,21 +110,77 @@
 				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);
 			}
 
-			[maxvertexcount(3)]
+			[maxvertexcount(9)]
 			void geom(point GS_INPUT p[1], inout TriangleStream<PS_INPUT> triStream)
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				float3 worldViewDir, worldNormal;
-				[unroll(3)]
-				for (int i = 2; i >= 0; --i)
-				{
-					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
-					pIn.uv = p[0].positions[i];
-					pIn.light = BlinnPhong(pIn.position, p[0].normals[i]);
+		
+				fixed4 mean = (p[0].positions[2] + p[0].positions[1] + p[0].positions[0]) / 3.0;
+				fixed3 normal = (p[0].normals[2] + p[0].normals[1] + p[0].normals[0]) / 3.0;
+				fixed4 pointZero = mean + fixed4(0.006 * normal * acos(dot(fixed3(0,1,0), normal)), 1);
 
-					triStream.Append(pIn);
-				}
+				fixed4 position_0 = UnityObjectToClipPos(p[0].positions[0] * scale);
+				fixed4 position_1 = UnityObjectToClipPos(p[0].positions[1] * scale);
+				fixed4 position_2 = UnityObjectToClipPos(p[0].positions[2] * scale);
+				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale);
+
+				fixed4 light_0 = BlinnPhong(position_0, p[0].normals[0]);
+				fixed4 light_1 = BlinnPhong(position_1, p[0].normals[1]);
+				fixed4 light_2 = BlinnPhong(position_2, p[0].normals[2]);
+				fixed4 light_3 = BlinnPhong(position_3, normal);
+
+				pIn.position = position_2;
+				pIn.uv = p[0].positions[2];
+				pIn.light = light_2;
+				triStream.Append(pIn);
+
+				pIn.position = position_1;
+				pIn.uv = p[0].positions[1];
+				pIn.light = light_1;
+				triStream.Append(pIn);
+
+				pIn.position = position_3;
+				pIn.uv = pointZero;
+				pIn.light = light_3;
+				triStream.Append(pIn);
+
+				triStream.RestartStrip();
+
+
+				pIn.position = position_1;
+				pIn.uv = p[0].positions[1];
+				pIn.light = light_1;
+				triStream.Append(pIn);
+
+				pIn.position = position_0;
+				pIn.uv = p[0].positions[0];
+				pIn.light = light_0;
+				triStream.Append(pIn);
+
+				pIn.position = position_3;
+				pIn.uv = pointZero;
+				pIn.light = light_3;
+				triStream.Append(pIn);
+
+				triStream.RestartStrip();
+
+
+
+				pIn.position = position_3;
+				pIn.uv = pointZero;
+				pIn.light = light_3;
+				triStream.Append(pIn);
+
+				pIn.position = position_0;
+				pIn.uv = p[0].positions[0];
+				pIn.light = light_0;
+				triStream.Append(pIn);
+
+				pIn.position = position_2;
+				pIn.uv = p[0].positions[2];
+				pIn.light = light_2;
+				triStream.Append(pIn);
 
 				triStream.RestartStrip();
 			}

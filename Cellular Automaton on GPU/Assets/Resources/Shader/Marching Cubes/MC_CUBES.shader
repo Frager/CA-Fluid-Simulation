@@ -1,4 +1,4 @@
-﻿Shader "Unlit/MyMarchingCubesVisualization"
+﻿Shader "MarchingCubes/Cubes"
 {
 	Properties
 	{
