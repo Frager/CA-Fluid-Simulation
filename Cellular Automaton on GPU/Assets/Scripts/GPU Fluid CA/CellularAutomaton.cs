@@ -62,7 +62,7 @@ namespace GPUFluid
             rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
             rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
 
-            queryResult = new ComputeBuffer(1, sizeof(float));
+            queryResult = new ComputeBuffer(40, sizeof(float));
             queryResult.SetData(new float[] { 0f });
         }
 
@@ -157,23 +157,46 @@ namespace GPUFluid
             updateCycle = (updateCycle + 1) % 8;
         }
 
-        //Floatables
-        public float getFluidHeightAtCoordinate(int[] coordinate, float density)
+        /// <summary>
+        /// returns the liquid height for each grid coordinate in coordinates list.
+        /// </summary>
+        /// <param name="coordinates">List of coordinates. one Coordinate consists of three subsequent int values</param>
+        /// <param name="density"> maximum densities of fluids. Fluids with lower densities will be ignored for height calculation</param>
+        /// <returns></returns>
+        public float[] getFluidHeightsAtCoordinates(int[] coordinates, float [] densities)
         {
-            //ask compute shader
-            if (coordinate.Length != 3)
+            if (coordinates.Length % 3 != 0)
             {
-                print("Coordinate length != 3");
-                return float.MinValue;
+                if(coordinates.Length / 3 != densities.Length)
+                {
+                    print("Coordinates / 3 != densities");
+                    return null;
+                }
+                print("Coordinates % 3 != 0");
+                return null;
             }
+
+            //querry format: [grid x, grid y, grid z, density]*
+            float[] querry = new float[coordinates.Length + densities.Length];
+
+            for(int i = 0; i < coordinates.Length / 3; i++)
+            {
+                querry[i * 4] = coordinates[i * 3];
+                querry[i * 4 +1] = coordinates[i * 3 +1];
+                querry[i * 4 +2] = coordinates[i * 3 +2];
+                querry[i * 4 +3] = densities[i];
+            }
+            
+            queryResult.SetData(querry);
             int kernelHandle = cs.FindKernel("GetHeight");
             cs.SetBuffer(kernelHandle, "queryResult", queryResult);
-            cs.SetInts("queryCellCoord", coordinate);
-            cs.SetFloat("queryDensity", density);
-            cs.Dispatch(kernelHandle, 1, 1, 1);
-            float[] result = new float[1];
-            queryResult.GetData(result);
-            return result[0];
+            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            //cs.SetInts("queryCellCoord", coordinates);
+            //cs.SetFloat("queryDensity", density);
+            cs.Dispatch(kernelHandle, coordinates.Length / 3, 1, 1);
+            //float[] result = new float[1];
+            queryResult.GetData(querry);
+            return querry;
         }
 
         /// <summary>

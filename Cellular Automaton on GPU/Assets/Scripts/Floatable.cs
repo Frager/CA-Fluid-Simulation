@@ -6,7 +6,7 @@ public class Floatable : MonoBehaviour {
 
     public float density;
 
-    public float floatHeight = 2;
+    public float floatHeight = 0;
     public float bounceDamp = 0.05f;
     public Vector3 buoyancyCentreOffset;
 

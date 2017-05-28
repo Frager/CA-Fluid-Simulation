@@ -204,5 +204,11 @@ namespace GPUFluid
             mesh.Release();
             args.Release();
         }
+
+        public Vector3 getCellSize()
+        {
+            return new Vector3(scale.x/(dimensions.x * 16), scale.y / (dimensions.y * 16), scale.z / (dimensions.z * 16));
+            //return new Vector3((dimensions.x * 16) / scale.x, (dimensions.y * 16) / scale.y, (dimensions.z * 16) / scale.z);
+        }
     }
 }

@@ -9,6 +9,7 @@ public class FloatableManager : MonoBehaviour {
     public Vector3 gridPosition;
     private Vector3 cellSize;
 
+
     GameObject[] floatableObjects;
     Floatable[] floatableComponents;
 
@@ -20,24 +21,31 @@ public class FloatableManager : MonoBehaviour {
         {
             floatableObjects[i] = floatableComponents[i].gameObject;
         }
-	}
+        cellSize = GetComponent<MarchingCubesVisualisation>().getCellSize();
+    }
 
-    int timer = 100;
+    int timer = 30;
     int timerCount = 0;
     void Update()
     {
         if (timerCount++ > timer)
         {
+            int[] coords = new int[floatableComponents.Length * 3];
+            float[] densities = new float[floatableComponents.Length];
             for (int i = 0; i < floatableComponents.Length; i++)
             {
-                int[] coord = new int[3];
                 Vector3 position = floatableObjects[i].transform.position - gridPosition;
-                coord[0] = (int)position.x;
-                coord[1] = (int)position.y;
-                coord[2] = (int)position.z;
-                float floatHeight = ca.getFluidHeightAtCoordinate(coord, floatableComponents[i].density);
-                floatableComponents[i].floatHeight = floatHeight;
-                print("Coord: "+ coord[0] + ", " + coord[1] + ", " + coord[2] + " floatHeight: " + floatHeight);
+                coords[i * 3] = (int)(position.x / cellSize.x);
+                coords[i * 3 + 1] = (int)(position.y / cellSize.y);
+                coords[i * 3 + 2] = (int)(position.z / cellSize.z);
+                densities[i] = floatableComponents[i].density;
+            }
+
+            //ca.getFluidHeightsAtCoordinates(coords, densities); returns [forece x, force y, force z,floatHeight*]
+            float[] floatHeights = ca.getFluidHeightsAtCoordinates(coords, densities);
+            for (int i = 0; i < floatableComponents.Length; i++)
+            {
+                floatableComponents[i].floatHeight = floatHeights[i *4 + 3] * cellSize.y;
             }
             timerCount -= timer;
         }
