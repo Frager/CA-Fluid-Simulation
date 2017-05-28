@@ -33,63 +33,63 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	half3 _scale = half3(1.0 / size.x, 1.0 / size.y, 1.0 / size.z);
 
-	if (down.volume > 0 && (down.volume > current.volume || down.volume < 1) && id.y > 0)
+	if (down.volume > 0.001 && (down.volume > current.volume || down.volume < 1) && id.y > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z);
-		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z);
-		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
-		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y - _scale.y + down.volume * _scale.y, id.z * _scale.z + _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x,				id.y * _scale.y - _scale.y + saturate(down.volume) * _scale.y, id.z * _scale.z);
+		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + saturate(down.volume) * _scale.y, id.z * _scale.z);
+		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y - _scale.y + saturate(down.volume) * _scale.y, id.z * _scale.z + _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x,				id.y * _scale.y - _scale.y + saturate(down.volume) * _scale.y, id.z * _scale.z + _scale.z);
 		mesh.Append(quad);
 	}
 
-	if (up.volume > 0 && (up.volume > current.volume || current.volume < 1) && id.y < size.y - 1)
+	if (up.volume > 0.001 && (up.volume > current.volume || current.volume < 1) && id.y < size.y - 1)
 	{
 		Quad quad;
-		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y + _scale.y, id.z * _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x,				id.y * _scale.y + _scale.y, id.z * _scale.z);
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z);
 		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
-		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x,				id.y * _scale.y + _scale.y, id.z * _scale.z + _scale.z);
 		mesh.Append(quad);
 	}
 	
-	if (left.volume > 0 && left.volume > current.volume && id.x > 0)
+	if (left.volume > 0.001 && left.volume > current.volume && id.x > 0)
 	{
 		Quad quad;
-		quad.vertex[0] = half3(id.x * _scale.x, id.y * _scale.y,							id.z * _scale.z);
-		quad.vertex[1] = half3(id.x * _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
-		quad.vertex[2] = half3(id.x * _scale.x, id.y * _scale.y + clamp(left.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
-		quad.vertex[3] = half3(id.x * _scale.x, id.y * _scale.y + clamp(left.volume, 0, 1) * _scale.y,	id.z * _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x, id.y * _scale.y,									id.z * _scale.z);
+		quad.vertex[1] = half3(id.x * _scale.x, id.y * _scale.y,									id.z * _scale.z + _scale.z);
+		quad.vertex[2] = half3(id.x * _scale.x, id.y * _scale.y + saturate(left.volume) * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x, id.y * _scale.y + saturate(left.volume) * _scale.y,	id.z * _scale.z);
 		mesh.Append(quad);
 	}
 	
-	if (right.volume > 0 && right.volume > current.volume && id.x < size.x - 1)
+	if (right.volume > 0.001 && right.volume > current.volume && id.x < size.x - 1)
 	{
 		Quad quad;
-		quad.vertex[3] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y,							id.z * _scale.z);
-		quad.vertex[2] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y,							id.z * _scale.z + _scale.z);
-		quad.vertex[1] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + clamp(right.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
-		quad.vertex[0] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + clamp(right.volume, 0, 1) * _scale.y,	id.z * _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y,										id.z * _scale.z);
+		quad.vertex[2] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y,										id.z * _scale.z + _scale.z);
+		quad.vertex[1] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + saturate(right.volume) * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x + _scale.x, id.y * _scale.y + saturate(right.volume) * _scale.y,	id.z * _scale.z);
 		mesh.Append(quad);
 	}
 
-	if (front.volume > 0 && front.volume > current.volume && id.z > 0)
+	if (front.volume > 0.001 && front.volume > current.volume && id.z > 0)
 	{
 		Quad quad;
-		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y,							id.z * _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x,				id.y * _scale.y,							id.z * _scale.z);
 		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z);
-		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + clamp(front.volume, 0, 1) * _scale.y,	id.z * _scale.z);
-		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y + clamp(front.volume, 0, 1) * _scale.y,	id.z * _scale.z);
+		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + saturate(front.volume) * _scale.y,	id.z * _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x,				id.y * _scale.y + saturate(front.volume) * _scale.y,	id.z * _scale.z);
 		mesh.Append(quad);
 	}
 
-	if (back.volume > 0 && back.volume > current.volume && id.z < size.z - 1)
+	if (back.volume > 0.001 && back.volume > current.volume && id.z < size.z - 1)
 	{
 		Quad quad;
-		quad.vertex[0] = half3(id.x * _scale.x,			id.y * _scale.y,							id.z * _scale.z + _scale.z);
-		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y,							id.z * _scale.z + _scale.z);
-		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + clamp(back.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
-		quad.vertex[3] = half3(id.x * _scale.x,			id.y * _scale.y + clamp(back.volume, 0, 1) * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[0] = half3(id.x * _scale.x,				id.y * _scale.y,									id.z * _scale.z + _scale.z);
+		quad.vertex[1] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y,									id.z * _scale.z + _scale.z);
+		quad.vertex[2] = half3(id.x * _scale.x + _scale.x,	id.y * _scale.y + saturate(back.volume) * _scale.y,	id.z * _scale.z + _scale.z);
+		quad.vertex[3] = half3(id.x * _scale.x,				id.y * _scale.y + saturate(back.volume) * _scale.y,	id.z * _scale.z + _scale.z);
 		mesh.Append(quad);
 	}
 }
