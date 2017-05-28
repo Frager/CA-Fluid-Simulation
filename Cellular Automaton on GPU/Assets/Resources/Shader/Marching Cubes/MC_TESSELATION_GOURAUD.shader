@@ -125,10 +125,10 @@
 				fixed4 position_2 = UnityObjectToClipPos(p[0].positions[2] * scale);
 				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale);
 
-				fixed4 light_0 = BlinnPhong(position_0, p[0].normals[0]);
-				fixed4 light_1 = BlinnPhong(position_1, p[0].normals[1]);
-				fixed4 light_2 = BlinnPhong(position_2, p[0].normals[2]);
-				fixed4 light_3 = BlinnPhong(position_3, normal);
+				fixed4 light_0 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[0] * scale), p[0].normals[0]);
+				fixed4 light_1 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[1] * scale), p[0].normals[1]);
+				fixed4 light_2 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[2] * scale), p[0].normals[2]);
+				fixed4 light_3 = BlinnPhong(mul(unity_ObjectToWorld, pointZero * scale), normal);
 
 				pIn.position = position_2;
 				pIn.uv = p[0].positions[2];

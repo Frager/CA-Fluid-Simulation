@@ -31,7 +31,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (cell.volume <= 0 || cell.volume > 1)
 	{
-		Result[id] = half4(0, 0, 0.2, 1);
+		Result[id] = half4(0.2, 0.5, 1, 0.9);
 		return;
 	}
 

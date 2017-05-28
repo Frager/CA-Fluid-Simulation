@@ -61,6 +61,7 @@
 			struct PS_INPUT
 			{
 				float4 position : SV_POSITION;
+				float4 wpos : POSITION2;
 				float3 uv : TEXCOORDS;
 				float3 normal : NORMAL;
 #ifdef REALISTIC
@@ -107,6 +108,7 @@
 				{
 					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
 					pIn.uv = p[0].positions[i];
+					pIn.wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale);
 #ifdef REALISTIC
 					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale);
 					temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
@@ -179,7 +181,7 @@
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 #else			
-				col = tex3D(_MainTex, input.uv) * BlinnPhong(input.position, input.normal);
+				col = tex3D(_MainTex, input.uv) * BlinnPhong(input.wpos, input.normal);
 #endif
 				return col;
 			}

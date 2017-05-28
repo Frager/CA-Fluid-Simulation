@@ -1,4 +1,6 @@
-﻿Shader "MarchingCubes/Gouraud"
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "MarchingCubes/Gouraud"
 {
 	Properties
 	{
@@ -80,8 +82,7 @@
 			{
 				fixed3 normalDirection = normalize(normal);
 
-				fixed3 viewDirection = normalize(
-					_WorldSpaceCameraPos - position.xyz);
+				fixed3 viewDirection = normalize(UnityWorldSpaceViewDir(position));
 				fixed3 lightDirection;
 				fixed attenuation;
 
@@ -92,8 +93,7 @@
 				}
 				else
 				{
-					fixed3 vertexToLightSource =
-						_WorldSpaceLightPos0.xyz - position.xyz;
+					fixed3 vertexToLightSource =_WorldSpaceLightPos0.xyz - position.xyz;
 					fixed distance = length(vertexToLightSource);
 					attenuation = 1.0 / distance;
 					lightDirection = normalize(vertexToLightSource);
@@ -129,7 +129,7 @@
 				{
 					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
 					pIn.uv = p[0].positions[i];
-					pIn.light = BlinnPhong(pIn.position, p[0].normals[i]);
+					pIn.light = BlinnPhong(mul(p[0].positions[i] * scale, unity_ObjectToWorld), p[0].normals[i]);
 
 					triStream.Append(pIn);
 				}
