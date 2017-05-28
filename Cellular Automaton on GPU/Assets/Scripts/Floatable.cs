@@ -10,7 +10,7 @@ public class Floatable : MonoBehaviour {
     public float bounceDamp = 0.05f;
     public Vector3 buoyancyCentreOffset;
 
-    private float waterLevel = 1;
+    public float waterLevel = 0;
     private Rigidbody rb;
 
 	// Use this for initialization

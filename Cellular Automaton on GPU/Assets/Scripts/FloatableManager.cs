@@ -42,10 +42,10 @@ public class FloatableManager : MonoBehaviour {
             }
 
             //ca.getFluidHeightsAtCoordinates(coords, densities); returns [forece x, force y, force z,floatHeight*]
-            float[] floatHeights = ca.getFluidHeightsAtCoordinates(coords, densities);
+            float[] waterlevels = ca.getFluidHeightsAtCoordinates(coords, densities);
             for (int i = 0; i < floatableComponents.Length; i++)
             {
-                floatableComponents[i].floatHeight = floatHeights[i *4 + 3] * cellSize.y;
+                floatableComponents[i].waterLevel = waterlevels[i *4 + 3] * cellSize.y;
             }
             timerCount -= timer;
         }
