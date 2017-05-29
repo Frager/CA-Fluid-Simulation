@@ -139,23 +139,6 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 	}
 }
 
-[numthreads(1, 1, 1)]
-void GetHeight(uint3 id : SV_DispatchThreadID) {
-
-	//queryResult[id.x * 4] x
-	//queryResult[id.x * 4 + 1] y
-	//queryResult[id.x * 4 + 2] z
-	//queryResult[id.x * 4 + 3] density
-
-	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
-	{
-		//if(Densities[i] >= queryDensity) {
-		queryResult[id.x * 4 + 3] = newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1], queryResult[id.x * 4 + 2], size)].content[2];
-		queryResult[id.x * 4 + 3] += (queryResult[id.x * 4 + 3] == 0) ? -5000 : queryResult[id.x * 4 + 1];
-		//}
-	}
-}
-
 [numthreads(16, 8, 8)]
 void Initialize(uint3 id : SV_DispatchThreadID)
 {
@@ -165,6 +148,35 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = 0.0;
+	}
+}
+
+[numthreads(1, 1, 1)]
+void GetHeight(uint3 id : SV_DispatchThreadID) {
+
+	//queryResult[id.x * 4] x
+	//queryResult[id.x * 4 + 1] y
+	//queryResult[id.x * 4 + 2] z
+	//queryResult[id.x * 4 + 3] density
+
+
+	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		//if(Densities[i] >= queryDensity) {
+		queryResult[id.x * 4 + 3] = newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1], queryResult[id.x * 4 + 2], size)].content[2];
+		//} add all contents with heigher density to result
+
+		//if current cell empty, look at bottom cell and store in queryResult. 
+		if(queryResult[id.x * 4 + 3] == 0){
+			//bottom cell content
+			queryResult[id.x * 4 + 3] = newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] - 1, queryResult[id.x * 4 + 2], size)].content[2];
+			// if bottom cell is empty too, set height to low number. else add y coordinate - 1 for total height
+			queryResult[id.x * 4 + 3] = (queryResult[id.x * 4 + 3] == 0) ? -5000 : queryResult[id.x * 4 + 3] + queryResult[id.x * 4 + 1] - 1;
+		}
+		//if current cell not empty, add y coordinate to result for total height
+		else {
+			queryResult[id.x * 4 + 3] += queryResult[id.x * 4 + 1]; 
+		}
 	}
 }
 

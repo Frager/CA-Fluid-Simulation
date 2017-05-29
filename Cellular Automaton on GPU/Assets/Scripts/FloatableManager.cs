@@ -21,6 +21,7 @@ public class FloatableManager : MonoBehaviour {
         {
             floatableObjects[i] = floatableComponents[i].gameObject;
         }
+        ca.initializeFloatableBuffer(floatableComponents.Length);
         cellSize = GetComponent<MarchingCubesVisualisation>().getCellSize();
     }
 
@@ -45,7 +46,12 @@ public class FloatableManager : MonoBehaviour {
             float[] waterlevels = ca.getFluidHeightsAtCoordinates(coords, densities);
             for (int i = 0; i < floatableComponents.Length; i++)
             {
-                floatableComponents[i].waterLevel = waterlevels[i *4 + 3] * cellSize.y;
+                //mix waterLevel with old value for damping effect
+                if(floatableComponents[i].waterLevel > 0)
+                {
+                    floatableComponents[i].waterLevel = (waterlevels[i * 4 + 3] * cellSize.y + floatableComponents[i].waterLevel) / 2;
+                }
+                else floatableComponents[i].waterLevel = waterlevels[i * 4 + 3] * cellSize.y;
             }
             timerCount -= timer;
         }

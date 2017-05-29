@@ -62,8 +62,6 @@ namespace GPUFluid
             rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
             rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
 
-            queryResult = new ComputeBuffer(40, sizeof(float));
-            queryResult.SetData(new float[] { 0f });
         }
 
 
@@ -155,6 +153,15 @@ namespace GPUFluid
                 visualization.Render(buffer[updateCycle % 2]);
 
             updateCycle = (updateCycle + 1) % 8;
+        }
+
+        /// <summary>
+        /// Initializes ComputeBuffer for floatable calculation
+        /// </summary>
+        /// <param name="numFloatables">Number of total Floatables in szene</param>
+        public void initializeFloatableBuffer(int numFloatables)
+        {
+            queryResult = new ComputeBuffer(numFloatables * 4, sizeof(float));
         }
 
         /// <summary>
