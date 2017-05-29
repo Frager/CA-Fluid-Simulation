@@ -5,6 +5,7 @@ Shader "MarchingCubes/Gouraud"
 	Properties
 	{
 		_MainTex("Texture", 3D) = "white" {}
+		_Shininess("Shininess", Float) = 50
 	}
 
 	SubShader
@@ -41,6 +42,12 @@ Shader "MarchingCubes/Gouraud"
 			uniform float _WaveScale;
 			uniform float4 _WaveOffset;
 
+			sampler3D _MainTex;
+
+			float _Shininess;
+
+			float4 scale;
+
 			struct VS_INPUT
 			{
 				uint vertexid : SV_VertexID;
@@ -61,9 +68,6 @@ Shader "MarchingCubes/Gouraud"
 				half3 worldRefr : TEXCOORD1;
 			};
 
-			sampler3D _MainTex;
-
-			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -112,7 +116,7 @@ Shader "MarchingCubes/Gouraud"
 				{
 					specularReflection = attenuation * _LightColor0.rgb * pow(max(0.0, dot(
 						reflect(-lightDirection, normalDirection),
-						viewDirection)), 48);
+						viewDirection)), _Shininess);
 				}
 
 				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);

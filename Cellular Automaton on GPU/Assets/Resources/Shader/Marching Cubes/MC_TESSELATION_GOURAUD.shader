@@ -3,9 +3,10 @@
 	Properties
 	{
 		_MainTex("Texture", 3D) = "white" {}
+		_Shininess("Shininess", Float) = 50
 	}
 
-		SubShader
+	SubShader
 	{
 		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
@@ -54,6 +55,8 @@
 			sampler3D _MainTex;
 
 			float4 scale;
+
+			float _Shininess;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -104,7 +107,7 @@
 				{
 					specularReflection = attenuation * _LightColor0.rgb * pow(max(0.0, dot(
 						reflect(-lightDirection, normalDirection),
-						viewDirection)), 48);
+						viewDirection)), _Shininess);
 				}
 
 				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);

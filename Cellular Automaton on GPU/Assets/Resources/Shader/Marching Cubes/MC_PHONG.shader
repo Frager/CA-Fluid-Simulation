@@ -10,6 +10,7 @@
 		WaveSpeed("Wave speed (map1 x,y; map2 x,y)", Vector) = (19,9,-16,-7)
 		///////
 		_MainTex("Texture", 3D) = "white" {}
+		_Shininess("Shininess", Float) = 50
 	}
 
 	SubShader
@@ -23,6 +24,7 @@
 		{
 			CGPROGRAM
 			#include "UnityLightingCommon.cginc"
+			#include "UnityCG.cginc"
 			#pragma target 5.0
 			#pragma vertex vert
 			#pragma geometry geom
@@ -39,13 +41,19 @@
 			//Thats the ouput of the Marching Cubes-algorithm Compute Shader
 			StructuredBuffer<Triangle> mesh;
 
-			#include "UnityCG.cginc"
-
 			uniform float4 _horizonColor;
 
 			uniform float4 WaveSpeed;
 			uniform float _WaveScale;
 			uniform float4 _WaveOffset;
+
+			sampler2D _BumpMap;
+			sampler2D _ColorControl;
+			sampler3D _MainTex;
+
+			float _Shininess;
+
+			float4 scale;
 
 			struct VS_INPUT
 			{
@@ -69,12 +77,6 @@
 				float3 viewDir : TEXCOORD2;
 #endif
 			};
-
-			sampler2D _BumpMap;
-			sampler2D _ColorControl;
-			sampler3D _MainTex;
-
-			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -160,7 +162,7 @@
 				{
 					specularReflection = attenuation * _LightColor0.rgb * pow(max(0.0, dot(
 						reflect(-lightDirection, normalDirection),
-						viewDirection)), 48);
+						viewDirection)), _Shininess);
 				}
 
 				return fixed4(ambientLighting + diffuseReflection + specularReflection, 1.0);

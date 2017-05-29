@@ -15,12 +15,12 @@
 		Pass
 		{
 			CGPROGRAM
-#include "UnityLightingCommon.cginc"
-#include "UnityCG.cginc"
-#pragma target 5.0
-#pragma vertex vert
-#pragma geometry geom
-#pragma fragment frag
+			#include "UnityLightingCommon.cginc"
+			#include "UnityCG.cginc"
+			#pragma target 5.0
+			#pragma vertex vert
+			#pragma geometry geom
+			#pragma fragment frag
 
 
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
