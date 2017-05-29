@@ -159,24 +159,36 @@ void GetHeight(uint3 id : SV_DispatchThreadID) {
 	//queryResult[id.x * 4 + 2] z
 	//queryResult[id.x * 4 + 3] density
 
+	half result = 0;
+	half resultTop = 0;
+	half resultBottom = 0;
 
 	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
 	{
-		//if(Densities[i] >= queryDensity) {
-		queryResult[id.x * 4 + 3] = newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1], queryResult[id.x * 4 + 2], size)].content[2];
-		//} add all contents with heigher density to result
-
-		//if current cell empty, look at bottom cell and store in queryResult. 
-		if(queryResult[id.x * 4 + 3] == 0){
-			//bottom cell content
-			queryResult[id.x * 4 + 3] = newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] - 1, queryResult[id.x * 4 + 2], size)].content[2];
-			// if bottom cell is empty too, set height to low number. else add y coordinate - 1 for total height
-			queryResult[id.x * 4 + 3] = (queryResult[id.x * 4 + 3] == 0) ? -5000 : queryResult[id.x * 4 + 3] + queryResult[id.x * 4 + 1] - 1;
+		//add all contents with heigher density to result
+		if(Densities[i] >= queryResult[id.x * 4 + 3]) {
+			result += newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1], queryResult[id.x * 4 + 2], size)].content[i];
+			if(newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] - 1, queryResult[id.x * 4 + 2], size)].volume != -1){
+				resultBottom += newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] - 1, queryResult[id.x * 4 + 2], size)].content[i];
+			}
+			if(newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] + 1, queryResult[id.x * 4 + 2], size)].volume != -1){
+				resultTop += newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] + 1, queryResult[id.x * 4 + 2], size)].content[i];
+			}
+		} 
+	}
+	result += resultBottom;
+	if (result == 0){
+		queryResult[id.x * 4 + 3] = -5000;
+	}
+	else {
+		result += resultTop;
+		if(newGeneration[ADDRESS(queryResult[id.x * 4], queryResult[id.x * 4 + 1] - 1, queryResult[id.x * 4 + 2], size)].volume != -1){
+			result += queryResult[id.x * 4 + 1];
 		}
-		//if current cell not empty, add y coordinate to result for total height
 		else {
-			queryResult[id.x * 4 + 3] += queryResult[id.x * 4 + 1]; 
+			result += queryResult[id.x * 4 + 1] - 1;
 		}
+		queryResult[id.x * 4 + 3] = result;
 	}
 }
 
