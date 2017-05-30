@@ -26,7 +26,7 @@ static half Viscosities[] =
 
 static half Densities[] =
 {
-	0.5, 1, 2
+	0.45, 1, 2
 };
 
 static half2 AggregationChangeTemperatures[] =
@@ -127,8 +127,8 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 	newGeneration[cell_1].volume = volume.x;
 	newGeneration[cell_2].volume = volume.y;
 
-	//newGeneration[cell_1].temperature = temperature.x;
-	//newGeneration[cell_2].temperature = temperature.y;
+	newGeneration[cell_1].temperature = temperature.x;
+	newGeneration[cell_2].temperature = temperature.y;
 
 	newGeneration[cell_1].content = content1;
 	newGeneration[cell_2].content = content2;
@@ -270,21 +270,21 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		if (difference < 0)
 		{
 			half sumWeightedTemps = temperature.y * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
-			temperature.y = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + difference);
+			temperature.y = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume - difference);
 		}
 
 		content2[i] += difference;
 		volume.y += difference;
 
 		half tempDifference = (temperature.y - temperature.x) / temperatureSpread;
-		temperature += half2(-(tempDifference / (volume.x + 1)), tempDifference / (volume.y + 1));
+		temperature += half2(tempDifference / (volume.x + 1), -tempDifference / (volume.y + 1));
 	}
 
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume = (volume.x < 0.01) ? 0 : volume.x;
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = (volume.y < 0.01) ? 0 : volume.y;
 
-	//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = temperature.x;
-	//newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = temperature.y;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = temperature.x;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = temperature.y;
 
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content = content1;
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content = content2;
