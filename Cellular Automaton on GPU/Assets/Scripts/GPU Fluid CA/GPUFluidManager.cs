@@ -23,7 +23,7 @@ namespace GPUFluid
 
         private void Start()
         {
-            ca.Heat(new int[] { 0, 0, 0, 0 });
+            ca.Heat(new int[] { 1, 1, 1, 120 });
             if (obstacles != null)
             {
                 List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, GetComponent<MarchingCubesVisualisation>().scale);

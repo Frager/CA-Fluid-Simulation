@@ -215,7 +215,8 @@ namespace GPUFluid
             {
                 buffer[i].Release();
             }
-            queryResult.Release();
+            if(queryResult != null)
+                queryResult.Release();
             rigidBodies.Release();
         }
     }
