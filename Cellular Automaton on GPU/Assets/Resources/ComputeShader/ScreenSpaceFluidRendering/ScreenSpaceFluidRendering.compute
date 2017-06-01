@@ -5,6 +5,7 @@
 
 #define PI 3.14159265358979323846
 #define EULER 2.71828182845904523536
+#define DIMENSIONS 2
 #define NUMBER_OF_ELEMENTS 3
 #define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
 
@@ -15,8 +16,10 @@ struct Cell
 	half temperature;
 };
 
-Texture2D<float> Input;
-RWTexture2D<float4> Output;
+RWTexture2D<float> DepthTex;
+RWTexture2D<float> BlurTex;
+RWTexture2D<float4> NormalTex;
+RWTexture2D<float4> ShadedTex;
 
 float3 lightDirection;
 
@@ -27,7 +30,6 @@ float4x4 viewMatrixInv;
 
 int2 blurDir;
 
-static int2 dimensions = int2(25, 25);
 static int stdDev = 5;
 
 const int filterRadius = 10;
@@ -49,23 +51,26 @@ void CA2Mesh (uint3 id : SV_DispatchThreadID)
 }
 
 
-[numthreads(16, 16, 1)]
+[numthreads(32, 32, 1)]
 void Blur(uint3 id : SV_DispatchThreadID)
 {
 	int2 index;
 	float result = 0;
-	for (int x = -dimensions.x; x < dimensions.x; ++x)
+
+	[unroll(2 * DIMENSIONS)]
+	for (int x = -DIMENSIONS; x < DIMENSIONS; ++x)
 	{
-		for (int y = -dimensions.y; y < dimensions.y; ++y)
+		[unroll(2 * DIMENSIONS)]
+		for (int y = -DIMENSIONS; y < DIMENSIONS; ++y)
 		{
 			index = int2(id.xy) + int2(x, y);
 			if (index.x >= 0 && index.y >= 0 && index.x < 256 && index.y < 256)
 			{
-				result += (1 / (2.0*PI*stdDev*stdDev)) * pow(EULER, -((x*x + y*y) / (2.0*stdDev*stdDev))) * Input[index];
+				result += (1 / (2.0*PI*stdDev*stdDev)) * pow(EULER, -((x*x + y*y) / (2.0*stdDev*stdDev))) * DepthTex[index];
 			}
 		}
 	}
-	Output[id.xy] = result;
+	BlurTex[id.xy] = result;
 
 	//float depth = Input[id.xy];
 
@@ -119,14 +124,14 @@ float3 uvToEye(uint2 id, float depth)
 	return worldSpacePosition.xyz;
 }
 
-[numthreads(16, 16, 1)]
+[numthreads(32, 32, 1)]
 void ComputeNormals(uint3 id : SV_DispatchThreadID)
 {
 	// read eye-space depth from texture
-	float depth = Input[id.xy].x;
+	float depth = BlurTex[id.xy].x;
 	if (depth < 0.0001)
 	{
-		Output[id.xy] = 0;
+		NormalTex[id.xy] = 0;
 		return;
 	}
 
@@ -134,16 +139,16 @@ void ComputeNormals(uint3 id : SV_DispatchThreadID)
 	float3 posEye = uvToEye(id.xy, depth);
 
 	// calculate differences
-	float3 ddx = uvToEye(id.xy + uint2(1, 0), Input[id.xy + uint2(1, 0)].x) - posEye;
-	float3 ddx2 = posEye - uvToEye(id.xy - uint2(1, 0), Input[id.xy - uint2(1, 0)].x);
+	float3 ddx = uvToEye(id.xy + uint2(1, 0), BlurTex[id.xy + uint2(1, 0)].x) - posEye;
+	float3 ddx2 = posEye - uvToEye(id.xy - uint2(1, 0), BlurTex[id.xy - uint2(1, 0)].x);
 
 	if (abs(ddx.z) > abs(ddx2.z))
 	{
 		ddx = ddx2;
 	}
 
-	float3 ddy = uvToEye(id.xy + uint2(0, 1), Input[id.xy + uint2(0, 1)].x) - posEye;
-	float3 ddy2 = posEye - uvToEye(id.xy - uint2(0, 1), Input[id.xy - uint2(0, 1)].x);
+	float3 ddy = uvToEye(id.xy + uint2(0, 1), BlurTex[id.xy + uint2(0, 1)].x) - posEye;
+	float3 ddy2 = posEye - uvToEye(id.xy - uint2(0, 1), BlurTex[id.xy - uint2(0, 1)].x);
 
 	if (abs(ddy2.z) < abs(ddy.z))
 	{
@@ -154,17 +159,19 @@ void ComputeNormals(uint3 id : SV_DispatchThreadID)
 	float3 n = cross(ddx, ddy);
 	n = (normalize(n) + 1) / 2.0;
 
-	Output[id.xy] = float4(n, 1);
+	NormalTex[id.xy] = float4(n, 1);
 }
 
 
-[numthreads(16, 16, 1)]
+[numthreads(32, 32, 1)]
 void Shading(uint3 id : SV_DispatchThreadID)
 {
-	if (length(Input[id.xy]) > 0.1)
+	if (length(NormalTex[id.xy]) > 0.1)
 	{
-		Output[id.xy] = max(0.0, dot(Input[id.xy], lightDirection));
+		ShadedTex[id.xy] = max(0.0, dot(NormalTex[id.xy].xyz, lightDirection));
 	}
 	else
-		Output[id.xy] = 0;
+	{
+		ShadedTex[id.xy] = 0;
+	}
 }

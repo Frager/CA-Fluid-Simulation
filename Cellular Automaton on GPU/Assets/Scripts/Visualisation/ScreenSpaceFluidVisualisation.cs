@@ -35,24 +35,26 @@ namespace GPUFluid
         private ComputeBuffer args;
         private int[] data;
 
+        private int[] renderTextureSize = new int[] { 256, 256 };
+
         public void Initialize(GridDimensions dimensions)
         {
             this.dimensions = dimensions;
 
-            depthTex = new RenderTexture(256, 256, 0, RenderTextureFormat.RFloat);
+            depthTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0, RenderTextureFormat.RFloat);
             depthTex.enableRandomWrite = true;
             depthTex.Create();
             GetComponent<Camera>().targetTexture = depthTex;
 
-            blurTex = new RenderTexture(256, 256, 0);
+            blurTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0, RenderTextureFormat.RFloat);
             blurTex.enableRandomWrite = true;
             blurTex.Create();
 
-            normalTex = new RenderTexture(256, 256, 0);
+            normalTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0);
             normalTex.enableRandomWrite = true;
             normalTex.Create();
 
-            shadedTex = new RenderTexture(256, 256, 0);
+            shadedTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0);
             shadedTex.enableRandomWrite = true;
             shadedTex.Create();
 
@@ -84,14 +86,34 @@ namespace GPUFluid
             shading = cs.FindKernel("Shading");
 
             material.SetVector("scale", new Vector4(scale.x, scale.y, scale.z, 1));
+
+            cs.SetInts("blurDir", new int[] { 1, 0 });
+            cs.SetFloats("projMatrixInv", Matrix2FloatArray(GetComponent<Camera>().projectionMatrix.inverse));
+
+            cs.SetBuffer(cs2Mesh, "mesh", mesh);
+
+            cs.SetTexture(blur, "DepthTex", depthTex);
+            cs.SetTexture(blur, "BlurTex", blurTex);
+            cs.SetTexture(normalGeneration, "BlurTex", blurTex);
+            cs.SetTexture(normalGeneration, "NormalTex", normalTex);
+            cs.SetTexture(shading, "NormalTex", normalTex);
+            cs.SetTexture(shading, "ShadedTex", shadedTex);
         }
 
         public void Render(ComputeBuffer cells)
         {
             mesh.SetCounterValue(0);
-            cs.SetBuffer(cs2Mesh, "mesh", mesh);
             cs.SetBuffer(cs2Mesh, "currentGeneration", cells);
             cs.Dispatch(cs2Mesh, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+
+            cs.Dispatch(blur, renderTextureSize[0] / 32, renderTextureSize[1] / 32, 1);
+
+            cs.SetFloats("viewMatrixInv", Matrix2FloatArray(GetComponent<Camera>().worldToCameraMatrix.inverse));
+            cs.Dispatch(normalGeneration, renderTextureSize[0] / 32, renderTextureSize[1] / 32, 1);
+
+            Quaternion lightDirection = Quaternion.LookRotation(Light.GetLights(LightType.Directional, lightLayer.value)[0].transform.localEulerAngles);
+            cs.SetFloats("lightDirection", new float[] { lightDirection.x, lightDirection.y, lightDirection.z });
+            cs.Dispatch(shading, renderTextureSize[0] / 32, renderTextureSize[1] / 32, 1);
         }
 
         void OnPostRender()
@@ -101,28 +123,6 @@ namespace GPUFluid
             ComputeBuffer.CopyCount(mesh, args, 0);
             material.SetBuffer("mesh", mesh);
             Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
-
-            cs.SetInts("blurDir", new int[] { 1, 0 });
-            cs.SetTexture(blur, "Input", depthTex);
-            cs.SetTexture(blur, "Output", blurTex);
-            cs.Dispatch(blur, 256 / 16, 256 / 16, 1);
-
-            //GaussianBlur.SetInts("blurDir", new int[] { 0, 1 });
-            //GaussianBlur.SetTexture(GaussianBlur.FindKernel("CSMain"), "Input", Blur);
-            //GaussianBlur.SetTexture(GaussianBlur.FindKernel("CSMain"), "Result", Blur);
-            //GaussianBlur.Dispatch(GaussianBlur.FindKernel("CSMain"), 256 / 8, 256 / 8, 1);
-
-            cs.SetFloats("projMatrixInv", Matrix2FloatArray(GetComponent<Camera>().projectionMatrix.inverse));
-            cs.SetFloats("viewMatrixInv", Matrix2FloatArray(GetComponent<Camera>().worldToCameraMatrix.inverse));
-            cs.SetTexture(normalGeneration, "Input", blurTex);
-            cs.SetTexture(normalGeneration, "Output", normalTex);
-            cs.Dispatch(normalGeneration, 256 / 16, 256 / 16, 1);
-
-            Quaternion lightDirection = Quaternion.LookRotation(Light.GetLights(LightType.Directional, lightLayer.value)[0].transform.localEulerAngles);
-            cs.SetFloats("lightDirection", new float[] { lightDirection.x, lightDirection.y, lightDirection.z });
-            cs.SetTexture(shading, "Input", normalTex);
-            cs.SetTexture(shading, "Output", shadedTex);
-            cs.Dispatch(shading, 256 / 16, 256 / 16, 1);
         }
 
         float[] Matrix2FloatArray(Matrix4x4 mat)
