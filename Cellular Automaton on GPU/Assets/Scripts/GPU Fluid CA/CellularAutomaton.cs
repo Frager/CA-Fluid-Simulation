@@ -12,6 +12,8 @@ namespace GPUFluid
 
     public class CellularAutomaton : MonoBehaviour
     {
+        private ScreenSpaceFluidVisualisation ssfv;
+
         //Compute Shader with update rules
         public ComputeShader cs;
 
@@ -44,6 +46,10 @@ namespace GPUFluid
 
         void Start()
         {
+            ssfv = GetComponentInChildren<ScreenSpaceFluidVisualisation>();
+            if(ssfv != null)
+                ssfv.Initialize(dimensions);
+
             for (int i = 0; i < 8; ++i)
             {
                 KernelOrder[i] = cs.FindKernel(FunctionOrder[i]);
@@ -150,7 +156,11 @@ namespace GPUFluid
             cs.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
 
             if (updateCycle % 2 == 0)
+            {
                 visualization.Render(buffer[updateCycle % 2]);
+                if (ssfv != null)
+                    ssfv.Render(buffer[updateCycle % 2]);
+            }
 
             updateCycle = (updateCycle + 1) % 8;
         }

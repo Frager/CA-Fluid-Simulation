@@ -1,0 +1,170 @@
+﻿#pragma kernel Blur
+#pragma kernel CA2Mesh
+#pragma kernel ComputeNormals
+#pragma kernel Shading
+
+#define PI 3.14159265358979323846
+#define EULER 2.71828182845904523536
+#define NUMBER_OF_ELEMENTS 3
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
+
+struct Cell
+{
+	half content[NUMBER_OF_ELEMENTS];
+	half volume;
+	half temperature;
+};
+
+Texture2D<float> Input;
+RWTexture2D<float4> Output;
+
+float3 lightDirection;
+
+float maxDepth = 50;
+
+float4x4 projMatrixInv;
+float4x4 viewMatrixInv;
+
+int2 blurDir;
+
+static int2 dimensions = int2(25, 25);
+static int stdDev = 5;
+
+const int filterRadius = 10;
+const float blurScale = 0.1;
+const float blurDepthFalloff = 0.8;
+
+StructuredBuffer<Cell> currentGeneration;
+AppendStructuredBuffer<half4> mesh;
+
+uint3 size;
+
+[numthreads(16, 8, 8)]
+void CA2Mesh (uint3 id : SV_DispatchThreadID)
+{
+	if (currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume > 0.1)
+	{
+		mesh.Append(half4(id.x / half(size.x), id.y / half(size.y), id.z / half(size.z), currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume));
+	}
+}
+
+
+[numthreads(16, 16, 1)]
+void Blur(uint3 id : SV_DispatchThreadID)
+{
+	int2 index;
+	float result = 0;
+	for (int x = -dimensions.x; x < dimensions.x; ++x)
+	{
+		for (int y = -dimensions.y; y < dimensions.y; ++y)
+		{
+			index = int2(id.xy) + int2(x, y);
+			if (index.x >= 0 && index.y >= 0 && index.x < 256 && index.y < 256)
+			{
+				result += (1 / (2.0*PI*stdDev*stdDev)) * pow(EULER, -((x*x + y*y) / (2.0*stdDev*stdDev))) * Input[index];
+			}
+		}
+	}
+	Output[id.xy] = result;
+
+	//float depth = Input[id.xy];
+
+	//if (depth == 1.0f) 
+	//{
+	//	Result[id.xy] = 0;
+	//	return;
+	//}
+
+	//float sum = 0;
+	//float wsum = 0;
+	//for (int x = -filterRadius; x <= filterRadius; ++x)
+	//{
+	//	if (id.x + x >= 0 && id.x + x < 256)
+	//	{
+	//		float samp = Input[id.xy + x*blurDir];
+
+	//		// spatial domain
+	//		float r = x * blurScale;
+	//		float w = exp(-r*r);
+
+	//		// range domain
+	//		float r2 = (samp - depth) * blurDepthFalloff;
+	//		float g = exp(-r2*r2);
+	//		sum += samp * w * g;
+	//		wsum += w * g;
+	//	}
+	//}
+	//if (wsum > 0.0) 
+	//{
+	//	sum /= wsum;
+	//}
+
+	//Result[id.xy] = sum;
+}
+
+
+float3 uvToEye(uint2 id, float depth)
+{
+	float2 TexCoord = id / 256.0;
+	float z = depth * 2.0 - 1.0;
+
+	float4 clipSpacePosition = float4(TexCoord * 2.0 - 1.0, z, 1.0);
+	float4 viewSpacePosition = mul(projMatrixInv, clipSpacePosition);
+
+	// Perspective division
+	viewSpacePosition /= viewSpacePosition.w;
+
+	float4 worldSpacePosition = mul(viewMatrixInv, viewSpacePosition);
+
+	return worldSpacePosition.xyz;
+}
+
+[numthreads(16, 16, 1)]
+void ComputeNormals(uint3 id : SV_DispatchThreadID)
+{
+	// read eye-space depth from texture
+	float depth = Input[id.xy].x;
+	if (depth < 0.0001)
+	{
+		Output[id.xy] = 0;
+		return;
+	}
+
+	// calculate eye-space position from depth
+	float3 posEye = uvToEye(id.xy, depth);
+
+	// calculate differences
+	float3 ddx = uvToEye(id.xy + uint2(1, 0), Input[id.xy + uint2(1, 0)].x) - posEye;
+	float3 ddx2 = posEye - uvToEye(id.xy - uint2(1, 0), Input[id.xy - uint2(1, 0)].x);
+
+	if (abs(ddx.z) > abs(ddx2.z))
+	{
+		ddx = ddx2;
+	}
+
+	float3 ddy = uvToEye(id.xy + uint2(0, 1), Input[id.xy + uint2(0, 1)].x) - posEye;
+	float3 ddy2 = posEye - uvToEye(id.xy - uint2(0, 1), Input[id.xy - uint2(0, 1)].x);
+
+	if (abs(ddy2.z) < abs(ddy.z))
+	{
+		ddy = ddy2;
+	}
+
+	// calculate normal
+	float3 n = cross(ddx, ddy);
+	n = (normalize(n) + 1) / 2.0;
+
+	Output[id.xy] = float4(n, 1);
+}
+
+
+[numthreads(16, 16, 1)]
+void Shading(uint3 id : SV_DispatchThreadID)
+{
+	if (length(Input[id.xy]) > 0.1)
+	{
+		Output[id.xy] = max(0.0, dot(Input[id.xy], lightDirection));
+	}
+	else
+		Output[id.xy] = 0;
+}

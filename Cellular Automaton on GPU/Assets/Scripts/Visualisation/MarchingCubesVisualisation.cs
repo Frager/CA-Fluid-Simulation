@@ -6,7 +6,7 @@ namespace GPUFluid
 {
     public enum Type
     {
-        CUBES, SIMPLE, TESSELATION, ScreenSpaceFluids
+        CUBES, SIMPLE, TESSELATION
     }
 
     public enum Shading
@@ -71,10 +71,9 @@ namespace GPUFluid
                 case Type.CUBES: path += "_CUBES"; break;
                 case Type.SIMPLE: path += "_"; break;
                 case Type.TESSELATION: path += "_TESSELATION_"; break;
-                case Type.ScreenSpaceFluids: path = "ScreenSpaceFluids"; break;
             }
 
-            if (!(type.Equals(Type.CUBES)|| type.Equals(Type.ScreenSpaceFluids)))
+            if (!type.Equals(Type.CUBES))
             {
                 switch(shading)
                 {
@@ -102,10 +101,6 @@ namespace GPUFluid
             {
                 mesh = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 4 * 3 * sizeof(float), ComputeBufferType.Append);
             }
-            else if (type.Equals(Type.ScreenSpaceFluids))
-            {
-                mesh = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 4 * sizeof(float), ComputeBufferType.Append);
-            }
             else
             {
                 if (shading.Equals(Shading.FLAT))
@@ -126,10 +121,9 @@ namespace GPUFluid
                 case Type.CUBES: path += "CUBES"; break;
                 case Type.SIMPLE: path += "SIMPLE"; break;
                 case Type.TESSELATION: path += "SIMPLE"; break;
-                case Type.ScreenSpaceFluids: path = "ScreenSpaceFluidRendering"; break;
             }
 
-            if(!(type.Equals(Type.CUBES) || type.Equals(Type.ScreenSpaceFluids)))
+            if(!type.Equals(Type.CUBES))
             {
                 if(shading.Equals(Shading.GOURAUD) || shading.Equals(Shading.PHONG))
                 {
