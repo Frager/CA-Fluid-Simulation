@@ -1,6 +1,5 @@
 ﻿#pragma kernel Blur
 #pragma kernel CA2Mesh
-#pragma kernel ComputeNormals
 #pragma kernel Shading
 
 #define PI 3.14159265358979323846
@@ -16,9 +15,8 @@ struct Cell
 	half temperature;
 };
 
-RWTexture2D<float> DepthTex;
+Texture2D<float> DepthTex;
 RWTexture2D<float> BlurTex;
-RWTexture2D<float4> NormalTex;
 RWTexture2D<float4> ShadedTex;
 
 float3 lightDirection;
@@ -57,29 +55,27 @@ void Blur(uint3 id : SV_DispatchThreadID)
 	int2 index;
 	float result = 0;
 
-	[unroll(2 * DIMENSIONS)]
-	for (int x = -DIMENSIONS; x < DIMENSIONS; ++x)
-	{
-		[unroll(2 * DIMENSIONS)]
-		for (int y = -DIMENSIONS; y < DIMENSIONS; ++y)
-		{
-			index = int2(id.xy) + int2(x, y);
-			if (index.x >= 0 && index.y >= 0 && index.x < 256 && index.y < 256)
-			{
-				result += (1 / (2.0*PI*stdDev*stdDev)) * pow(EULER, -((x*x + y*y) / (2.0*stdDev*stdDev))) * DepthTex[index];
-			}
-		}
-	}
-	BlurTex[id.xy] = result;
+	//[unroll(2 * DIMENSIONS)]
+	//for (int x = -DIMENSIONS; x < DIMENSIONS; ++x)
+	//{
+	//	[unroll(2 * DIMENSIONS)]
+	//	for (int y = -DIMENSIONS; y < DIMENSIONS; ++y)
+	//	{
+	//		index = int2(id.xy) + int2(x, y);
+	//		if (index.x >= 0 && index.y >= 0 && index.x < 256 && index.y < 256)
+	//		{
+	//			result += (1 / (2.0*PI*stdDev*stdDev)) * pow(EULER, -((x*x + y*y) / (2.0*stdDev*stdDev))) * DepthTex[index];
+	//		}
+	//	}
+	//}
+	BlurTex[id.xy] = DepthTex[id.xy];
 
 	//float depth = Input[id.xy];
-
 	//if (depth == 1.0f) 
 	//{
 	//	Result[id.xy] = 0;
 	//	return;
 	//}
-
 	//float sum = 0;
 	//float wsum = 0;
 	//for (int x = -filterRadius; x <= filterRadius; ++x)
@@ -87,11 +83,9 @@ void Blur(uint3 id : SV_DispatchThreadID)
 	//	if (id.x + x >= 0 && id.x + x < 256)
 	//	{
 	//		float samp = Input[id.xy + x*blurDir];
-
 	//		// spatial domain
 	//		float r = x * blurScale;
 	//		float w = exp(-r*r);
-
 	//		// range domain
 	//		float r2 = (samp - depth) * blurDepthFalloff;
 	//		float g = exp(-r2*r2);
@@ -103,7 +97,6 @@ void Blur(uint3 id : SV_DispatchThreadID)
 	//{
 	//	sum /= wsum;
 	//}
-
 	//Result[id.xy] = sum;
 }
 
@@ -125,13 +118,13 @@ float3 uvToEye(uint2 id, float depth)
 }
 
 [numthreads(32, 32, 1)]
-void ComputeNormals(uint3 id : SV_DispatchThreadID)
+void Shading(uint3 id : SV_DispatchThreadID)
 {
 	// read eye-space depth from texture
 	float depth = BlurTex[id.xy].x;
 	if (depth < 0.0001)
 	{
-		NormalTex[id.xy] = 0;
+		ShadedTex[id.xy] = 0;
 		return;
 	}
 
@@ -159,16 +152,9 @@ void ComputeNormals(uint3 id : SV_DispatchThreadID)
 	float3 n = cross(ddx, ddy);
 	n = (normalize(n) + 1) / 2.0;
 
-	NormalTex[id.xy] = float4(n, 1);
-}
-
-
-[numthreads(32, 32, 1)]
-void Shading(uint3 id : SV_DispatchThreadID)
-{
-	if (length(NormalTex[id.xy]) > 0.1)
+	if (length(n) > 0.1)
 	{
-		ShadedTex[id.xy] = max(0.0, dot(NormalTex[id.xy].xyz, lightDirection));
+		ShadedTex[id.xy] = max(0.0, dot(n, lightDirection));
 	}
 	else
 	{
