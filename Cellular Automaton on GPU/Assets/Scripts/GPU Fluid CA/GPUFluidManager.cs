@@ -44,7 +44,6 @@ namespace GPUFluid
             {
                 ca.Fill(new float[] { x, y, z }, elementID);
                 ca.NextGeneration();
-                ca.RigidBodyInteraction();
                 timer -= timeframe;
             }
         }

@@ -1,6 +1,5 @@
 ﻿#pragma kernel Blur
 #pragma kernel CA2Mesh
-#pragma kernel Shading
 
 #define PI 3.14159265358979323846
 #define EULER 2.71828182845904523536
@@ -15,8 +14,8 @@ struct Cell
 	half temperature;
 };
 
-Texture2D<float> DepthTex;
-RWTexture2D<float> BlurTex;
+Texture2D<float2> DepthTex;
+RWTexture2D<float2> BlurTex;
 RWTexture2D<float4> ShadedTex;
 
 float3 lightDirection;
@@ -98,66 +97,4 @@ void Blur(uint3 id : SV_DispatchThreadID)
 	//	sum /= wsum;
 	//}
 	//Result[id.xy] = sum;
-}
-
-
-float3 uvToEye(uint2 id, float depth)
-{
-	float2 TexCoord = id / 256.0;
-	float z = depth * 2.0 - 1.0;
-
-	float4 clipSpacePosition = float4(TexCoord * 2.0 - 1.0, z, 1.0);
-	float4 viewSpacePosition = mul(projMatrixInv, clipSpacePosition);
-
-	// Perspective division
-	viewSpacePosition /= viewSpacePosition.w;
-
-	float4 worldSpacePosition = mul(viewMatrixInv, viewSpacePosition);
-
-	return worldSpacePosition.xyz;
-}
-
-[numthreads(32, 32, 1)]
-void Shading(uint3 id : SV_DispatchThreadID)
-{
-	// read eye-space depth from texture
-	float depth = BlurTex[id.xy].x;
-	if (depth < 0.0001)
-	{
-		ShadedTex[id.xy] = 0;
-		return;
-	}
-
-	// calculate eye-space position from depth
-	float3 posEye = uvToEye(id.xy, depth);
-
-	// calculate differences
-	float3 ddx = uvToEye(id.xy + uint2(1, 0), BlurTex[id.xy + uint2(1, 0)].x) - posEye;
-	float3 ddx2 = posEye - uvToEye(id.xy - uint2(1, 0), BlurTex[id.xy - uint2(1, 0)].x);
-
-	if (abs(ddx.z) > abs(ddx2.z))
-	{
-		ddx = ddx2;
-	}
-
-	float3 ddy = uvToEye(id.xy + uint2(0, 1), BlurTex[id.xy + uint2(0, 1)].x) - posEye;
-	float3 ddy2 = posEye - uvToEye(id.xy - uint2(0, 1), BlurTex[id.xy - uint2(0, 1)].x);
-
-	if (abs(ddy2.z) < abs(ddy.z))
-	{
-		ddy = ddy2;
-	}
-
-	// calculate normal
-	float3 n = cross(ddx, ddy);
-	n = (normalize(n) + 1) / 2.0;
-
-	if (length(n) > 0.1)
-	{
-		ShadedTex[id.xy] = max(0.0, dot(n, lightDirection));
-	}
-	else
-	{
-		ShadedTex[id.xy] = 0;
-	}
 }

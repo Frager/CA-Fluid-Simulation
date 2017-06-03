@@ -12,13 +12,11 @@ namespace GPUFluid
 
     public class CellularAutomaton : MonoBehaviour
     {
-        private ScreenSpaceFluidVisualisation ssfv;
+        public ScreenSpaceFluidVisualisation ssfv;
 
         //Compute Shader with update rules
         public ComputeShader cs;
 
-        public ComputeShader rbInteraction;
-        public Material rbMaterial;
         private ComputeBuffer rigidBodies;
         private ComputeBuffer queryResult;
 
@@ -46,7 +44,6 @@ namespace GPUFluid
 
         void Start()
         {
-            ssfv = GetComponentInChildren<ScreenSpaceFluidVisualisation>();
             if(ssfv != null)
                 ssfv.Initialize(dimensions);
 
@@ -62,8 +59,6 @@ namespace GPUFluid
             InitializeComputeShader();
 
             visualization.Initialize(dimensions);
-
-            rbInteraction.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
 
             rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
             rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
@@ -110,21 +105,6 @@ namespace GPUFluid
 
             cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
             cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
-        }
-
-        public void RigidBodyInteraction()
-        {
-            int kernelHandle = rbInteraction.FindKernel("CSMain2");
-
-            rbInteraction.SetBuffer(kernelHandle, "newPositions2", rigidBodies);
-            rbInteraction.SetBuffer(kernelHandle, "currentGeneration", buffer[updateCycle % 2]);
-
-            rbInteraction.Dispatch(kernelHandle, 1, 1, 1);
-
-            //float[] data = new float[3];
-            //position.GetData(data);
-
-            rbMaterial.SetBuffer("newPositions2", rigidBodies);
         }
 
         /// <summary>
@@ -214,6 +194,14 @@ namespace GPUFluid
             //float[] result = new float[1];
             queryResult.GetData(querry);
             return querry;
+        }
+
+        void OnRenderImage(RenderTexture source, RenderTexture destination)
+        {
+            if (ssfv != null)
+                Graphics.Blit(source, destination, ssfv.blend);
+            else
+                Graphics.Blit(source, destination);
         }
 
         /// <summary>

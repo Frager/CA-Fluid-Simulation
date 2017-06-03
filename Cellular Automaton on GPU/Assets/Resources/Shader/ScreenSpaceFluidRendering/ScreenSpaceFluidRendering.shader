@@ -1,4 +1,6 @@
-﻿Shader "Fluid/ScreenSpaceFluidRendering"
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Fluid/ScreenSpaceFluidRendering"
 {
 	Properties
 	{
@@ -7,7 +9,7 @@
 
 	SubShader
 	{
-		Tags{ "LightMode" = "ForwardBase" }
+		Tags{ "RenderType" = "Opaque" }
 		LOD 100
 
 		Pass
@@ -41,6 +43,15 @@
 				float2 uv : TEXCOOR1;
 			};
 
+			struct PS_OUTPUT
+			{
+				float2 color : SV_TARGET;
+				float depth : SV_DEPTH;
+			};
+
+			float4x4 _v;
+			float4x4 _p;
+
 			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
@@ -56,13 +67,14 @@
 				PS_INPUT pIn = (PS_INPUT)0;
 
 				float4 worldPos = UnityObjectToClipPos(p[0].position.xyz * scale.xyz);
+
 				float particle_size = p[0].position.w * 3;
 
 				float ratio = _ScreenParams.x / _ScreenParams.y;
 
 				float3 viewPos = UnityObjectToViewPos(p[0].position.xyz * scale.xyz);
 
-				pIn.position = worldPos + float4(2, 0, 0, 0);
+				pIn.position = worldPos + float4(2, 0, 0, 0) * particle_size;
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 0);
 				triStream.Append(pIn);
@@ -72,7 +84,7 @@
 				pIn.uv = half2(0, 0);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(2, -3, 0, 0);
+				pIn.position = worldPos + float4(2, -2 * ratio, 0, 0) * particle_size;
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 1);
 				triStream.Append(pIn);
@@ -84,12 +96,12 @@
 				pIn.uv = half2(0, 0);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(0, -3, 0, 0);
+				pIn.position = worldPos + float4(0, -2 * ratio, 0, 0) * particle_size;
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(0, 1);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(2, -3, 0, 0);
+				pIn.position = worldPos + float4(2, -2 * ratio, 0, 0) * particle_size;
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 1);
 				triStream.Append(pIn);
@@ -97,22 +109,29 @@
 				triStream.RestartStrip();
 			}
 
-			fixed frag(PS_INPUT input) : SV_Target
+			PS_OUTPUT frag(PS_INPUT input)
 			{
+				PS_OUTPUT o;
 				float3 N;
 				N.xy = input.uv*2.0 - 1.0;
 				float r2 = dot(N.xy, N.xy);
 
-				if (r2 > 1.0) discard;   // kill pixels outside circle
+				if (r2 > 1.0)
+				{
+					o.color = 1;
+					o.depth = 0;
+					return o;
+				}
+
 				N.z = - sqrt(1.0 - r2);
-				// calculate depth
-				float4 pixelPos = float4(input.viewPos + N, 1.0);
-				float4 clipSpacePos = mul(pixelPos, UNITY_MATRIX_P);
-				float fragDepth = clipSpacePos.z / clipSpacePos.w;
 
-				float diffuse = max(0.0, dot(N, _WorldSpaceLightPos0.xyz));
+				float3 viewPos = input.viewPos + N;
 
-				return fragDepth;
+				float4 clipSpacePos = mul(float4(viewPos, 1.0), UNITY_MATRIX_P);
+
+				o.color = float2(-((viewPos.z)  * _ProjectionParams.w), clipSpacePos.z / clipSpacePos.w);
+				o.depth = input.position.z / input.position.w;
+				return o;
 			}
 
 			ENDCG
