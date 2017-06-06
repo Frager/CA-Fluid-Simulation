@@ -195,7 +195,7 @@ namespace GPUFluid
 
             ComputeBuffer.CopyCount(mesh, args, 0);
             material.SetBuffer("mesh", mesh);
-            Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
+            //Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
         }
 
         /// <summary>

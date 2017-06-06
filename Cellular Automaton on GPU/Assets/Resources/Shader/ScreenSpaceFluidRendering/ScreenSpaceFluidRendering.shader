@@ -4,7 +4,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 {
 	Properties
 	{
-
+		_Offset("Offset", Vector) = (-0,0,-0,0)
 	}
 
 	SubShader
@@ -25,6 +25,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 
 			StructuredBuffer<half4> mesh;
 
+			float4 _Offset;
 
 			struct VS_INPUT
 			{
@@ -45,12 +46,9 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 
 			struct PS_OUTPUT
 			{
-				float2 color : SV_TARGET;
+				float color : SV_TARGET;
 				float depth : SV_DEPTH;
 			};
-
-			float4x4 _v;
-			float4x4 _p;
 
 			float4 scale;
 
@@ -66,15 +64,15 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				float4 worldPos = UnityObjectToClipPos(p[0].position.xyz * scale.xyz);
+				float4 worldPos = UnityObjectToClipPos(p[0].position.xyz * scale.xyz + _Offset);
 
 				float particle_size = p[0].position.w * 3;
 
 				float ratio = _ScreenParams.x / _ScreenParams.y;
 
-				float3 viewPos = UnityObjectToViewPos(p[0].position.xyz * scale.xyz);
+				float3 viewPos = UnityObjectToViewPos(p[0].position.xyz * scale.xyz + _Offset);
 
-				pIn.position = worldPos + float4(2, 0, 0, 0) * particle_size;
+				pIn.position = worldPos + float4(2, 0, 0, 0);
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 0);
 				triStream.Append(pIn);
@@ -84,7 +82,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 				pIn.uv = half2(0, 0);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(2, -2 * ratio, 0, 0) * particle_size;
+				pIn.position = worldPos + float4(2, -2 * ratio * particle_size, 0, 0);
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 1);
 				triStream.Append(pIn);
@@ -96,12 +94,12 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 				pIn.uv = half2(0, 0);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(0, -2 * ratio, 0, 0) * particle_size;
+				pIn.position = worldPos + float4(0, -2 * ratio * particle_size, 0, 0);
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(0, 1);
 				triStream.Append(pIn);
 
-				pIn.position = worldPos + float4(2, -2 * ratio, 0, 0) * particle_size;
+				pIn.position = worldPos + float4(2, -2 * ratio * particle_size, 0, 0);
 				pIn.viewPos = viewPos;
 				pIn.uv = half2(1, 1);
 				triStream.Append(pIn);
@@ -129,7 +127,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 
 				float4 clipSpacePos = mul(float4(viewPos, 1.0), UNITY_MATRIX_P);
 
-				o.color = float2(-((viewPos.z)  * _ProjectionParams.w), clipSpacePos.z / clipSpacePos.w);
+				o.color = float(-((viewPos.z) * _ProjectionParams.w));/*clipSpacePos.z / clipSpacePos.w*/
 				o.depth = input.position.z / input.position.w;
 				return o;
 			}

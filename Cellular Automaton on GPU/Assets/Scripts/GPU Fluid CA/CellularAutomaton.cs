@@ -199,7 +199,15 @@ namespace GPUFluid
         void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             if (ssfv != null)
+            {
+                var p = GL.GetGPUProjectionMatrix(GetComponent<Camera>().projectionMatrix, false);
+                p[2, 3] = p[3, 2] = 0.0f;
+                p[3, 3] = 1.0f;
+                var clipToWorld = Matrix4x4.Inverse(p * GetComponent<Camera>().worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -p[2, 2]), Quaternion.identity, Vector3.one);
+                ssfv.blend.SetMatrix("clipToWorld", clipToWorld);
+                ssfv.blend.SetMatrix("viewProj", GetComponent<Camera>().worldToCameraMatrix * GetComponent<Camera>().projectionMatrix);
                 Graphics.Blit(source, destination, ssfv.blend);
+            }
             else
                 Graphics.Blit(source, destination);
         }

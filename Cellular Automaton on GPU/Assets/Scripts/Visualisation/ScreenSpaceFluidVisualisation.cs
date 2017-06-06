@@ -7,8 +7,6 @@ namespace GPUFluid
     {
         public Material blend;
 
-        public LayerMask lightLayer;
-
         private RenderTexture depthTex;
         private RenderTexture blurTex;
 
@@ -38,12 +36,12 @@ namespace GPUFluid
         {
             this.dimensions = dimensions;
 
-            depthTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 24, RenderTextureFormat.RGFloat);
+            depthTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 24, RenderTextureFormat.RFloat);
             depthTex.enableRandomWrite = true;
             depthTex.Create();
             GetComponent<Camera>().targetTexture = depthTex;
  
-            blurTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0, RenderTextureFormat.RGFloat);
+            blurTex = new RenderTexture(renderTextureSize[0], renderTextureSize[1], 0, RenderTextureFormat.RFloat);
             blurTex.enableRandomWrite = true;
             blurTex.Create();
 
@@ -91,9 +89,6 @@ namespace GPUFluid
             cs.Dispatch(cs2Mesh, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
             cs.Dispatch(blur, renderTextureSize[0] / 32, renderTextureSize[1] / 32, 1);
-
-            Quaternion lightDirection = Quaternion.LookRotation(Light.GetLights(LightType.Directional, lightLayer.value)[0].transform.localEulerAngles);
-            cs.SetFloats("lightDirection", new float[] { lightDirection.x, lightDirection.y, lightDirection.z });
         }
 
         void OnPostRender()
@@ -101,8 +96,6 @@ namespace GPUFluid
             material.SetPass(0);
 
             ComputeBuffer.CopyCount(mesh, args, 0);
-            material.SetMatrix("_v", GetComponent<Camera>().worldToCameraMatrix);
-            material.SetMatrix("_p", GetComponent<Camera>().projectionMatrix);
             material.SetBuffer("mesh", mesh);
             Graphics.DrawProceduralIndirect(MeshTopology.Points, args);
         }
