@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using GPUFluid;
 
 public class FloatableManager : MonoBehaviour {
 
     public CellularAutomaton ca;
+
     public Vector3 gridPosition;
     private Vector3 cellSize;
 
@@ -13,8 +12,8 @@ public class FloatableManager : MonoBehaviour {
     GameObject[] floatableObjects;
     Floatable[] floatableComponents;
 
-    // Use this for initialization
-    void Start () {
+    void Start ()
+    {
         floatableComponents = Object.FindObjectsOfType<Floatable>();
         floatableObjects = new GameObject[floatableComponents.Length];
         for (int i = 0; i < floatableComponents.Length; i++)
@@ -22,11 +21,12 @@ public class FloatableManager : MonoBehaviour {
             floatableObjects[i] = floatableComponents[i].gameObject;
         }
         ca.initializeFloatableBuffer(floatableComponents.Length);
-        cellSize = GetComponent<MarchingCubesVisualisation>().getCellSize();
+        cellSize = ca.visualization.CellSize();
     }
 
     int timer = 30;
     int timerCount = 0;
+
     void Update()
     {
         if (timerCount++ > timer)

@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-Shader "ImageEffects/Overlay"
+﻿Shader "ImageEffects/Overlay"
 {
 	Properties
 	{
@@ -27,13 +25,6 @@ Shader "ImageEffects/Overlay"
 
 			float4x4 clipToWorld;
 			float4x4 viewProj;
-
-			struct v2f
-			{
-				float2 uv : TEXCOORD0;
-				float3 worldDirection : TEXCOORD1;
-				float4 vertex : SV_POSITION;
-			};
 
 			v2f_img vert(appdata_img v)
 			{
@@ -70,15 +61,6 @@ Shader "ImageEffects/Overlay"
 
 				float3 n = cross(ddx, ddy);
 				n = normalize(n);
-
-				//float3 ddxA = uvToWorld(texCoord + float2(1.0 / 512.0, 0));
-				//float3 ddxB = uvToWorld(texCoord - float2(1.0 / 512.0, 0));
-				//float3 ddx = ddxA - ddxB;
-				//float3 ddyA = uvToWorld(texCoord + float2(0, 1.0 / 512.0));
-				//float3 ddyB = uvToWorld(texCoord - float2(0, 1.0 / 512.0));
-				//float3 ddy = ddyA - ddyB;
-				//float3 n = cross(ddx, ddy);
-				//n = normalize(n);
 
 				return n;
 			}
@@ -131,7 +113,7 @@ Shader "ImageEffects/Overlay"
 
 					float angle = acos(dot(normal, worldDirection));
 
-					col = 0.2 * tex2D(_MainTex, i.uv + float2(0.01, 0.01) * angle) + 0.8 * BlinnPhong(worldPos, normal);
+					col = /*0.2 * tex2D(_MainTex, i.uv + float2(0.01, 0.01) * angle) + 0.8 * */BlinnPhong(worldPos, normal);
 				}
 				return col;
 			}

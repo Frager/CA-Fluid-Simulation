@@ -26,7 +26,7 @@ namespace GPUFluid
             ca.Heat(new int[] { 5, 1, 5, 200 });
             if (obstacles != null)
             {
-                List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, GetComponent<MarchingCubesVisualisation>().scale);
+                List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
                 if (cornerList != null)
                     foreach (ObstacleInterface.CornerCoords coords in cornerList)
                     {
@@ -50,7 +50,7 @@ namespace GPUFluid
 
         public void RemoveObstacles()
         {
-            List<ObstacleInterface.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, GetComponent<MarchingCubesVisualisation>().scale);
+            List<ObstacleInterface.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
             if (cornerList != null)
                 foreach (ObstacleInterface.CornerCoords coords in cornerList)
                 {

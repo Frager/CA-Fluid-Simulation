@@ -12,10 +12,8 @@ namespace GPUFluid
 
     public class CellularAutomaton : MonoBehaviour
     {
-        public ScreenSpaceFluidVisualisation ssfv;
-
         //Compute Shader with update rules
-        public ComputeShader cs;
+        public ComputeShader cellularAutomaton;
 
         private ComputeBuffer rigidBodies;
         private ComputeBuffer queryResult;
@@ -27,7 +25,7 @@ namespace GPUFluid
         private int elementCount = 3;
 
         //The visualisation for this cellular automaton
-        public MarchingCubesVisualisation visualization;
+        public GPUVisualisation visualization;
 
         //This cellular automaton consists of two buffers: One for the current state (read) and one for the next generation (write).
         //After an update the buffers are swapped.
@@ -42,21 +40,18 @@ namespace GPUFluid
         private int[][] threadGroups;
 
 
-        void Start()
+        void Awake()
         {
-            if(ssfv != null)
-                ssfv.Initialize(dimensions);
-
             for (int i = 0; i < 8; ++i)
             {
-                KernelOrder[i] = cs.FindKernel(FunctionOrder[i]);
+                KernelOrder[i] = cellularAutomaton.FindKernel(FunctionOrder[i]);
             }
 
             threadGroups = new int[][] { new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 }, new int[] { dimensions.x, dimensions.y, dimensions.z * 2 } };
 
             buffer = new ComputeBuffer[] { new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory), new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, (elementCount + 2) * sizeof(float), ComputeBufferType.GPUMemory) };
 
-            InitializeComputeShader();
+            InitializeComputeBuffer();
 
             visualization.Initialize(dimensions);
 
@@ -66,45 +61,45 @@ namespace GPUFluid
         }
 
 
-        private void InitializeComputeShader()
+        private void InitializeComputeBuffer()
         {
-            int kernelHandle = cs.FindKernel("Initialize");
+            int kernelHandle = cellularAutomaton.FindKernel("Initialize");
 
-            cs.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
+            cellularAutomaton.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
         }
 
         public void SetObstacle(int[] obstacleStart, int[] obstacleEnd)
         {
-            int kernelHandle = cs.FindKernel("SetObstacle");
+            int kernelHandle = cellularAutomaton.FindKernel("SetObstacle");
 
-            cs.SetInts("obstacleStart", obstacleStart);
-            cs.SetInts("obstacleEnd", obstacleEnd);
+            cellularAutomaton.SetInts("obstacleStart", obstacleStart);
+            cellularAutomaton.SetInts("obstacleEnd", obstacleEnd);
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
         }
 
         public void RemoveObstacle(int[] obstacleStart, int[] obstacleEnd)
         {
-            int kernelHandle = cs.FindKernel("RemoveObstacle");
+            int kernelHandle = cellularAutomaton.FindKernel("RemoveObstacle");
 
-            cs.SetInts("obstacleStart", obstacleStart);
-            cs.SetInts("obstacleEnd", obstacleEnd);
+            cellularAutomaton.SetInts("obstacleStart", obstacleStart);
+            cellularAutomaton.SetInts("obstacleEnd", obstacleEnd);
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
 
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
-            cs.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[1]);
+            cellularAutomaton.Dispatch(kernelHandle, dimensions.x, dimensions.y * 2, dimensions.z * 2);
         }
 
         /// <summary>
@@ -113,7 +108,7 @@ namespace GPUFluid
         /// <param name="fill">An array of size 4. The first three values determine the position, where fluid will be filled in (a coordinate outside the borders will stop filling). The last value determines the element-type.</param>
         public void Fill(float[] fill, int element)
         {
-            cs.SetInts("fill", new int[] { (int)(fill[0] * dimensions.x * 16.0), (int)(fill[1] * dimensions.y * 16.0), (int)(fill[2] * dimensions.z * 16.0), element });
+            cellularAutomaton.SetInts("fill", new int[] { (int)(fill[0] * dimensions.x * 16.0), (int)(fill[1] * dimensions.y * 16.0), (int)(fill[2] * dimensions.z * 16.0), element });
         }
 
         /// <summary>
@@ -122,7 +117,7 @@ namespace GPUFluid
         /// <param name="heat">An array of size 4. The first three values determine the position and the last value determines the temperature in degree Celsius.</param>
         public void Heat(int[] heat)
         {
-            cs.SetInts("heat", heat);
+            cellularAutomaton.SetInts("heat", heat);
         }
 
         /// <summary>
@@ -130,16 +125,14 @@ namespace GPUFluid
         /// </summary>
         public void NextGeneration()
         {
-            cs.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
-            cs.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
-            cs.SetInts("offset", offset[updateCycle]);
-            cs.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
+            cellularAutomaton.SetBuffer(KernelOrder[updateCycle], "newGeneration", buffer[updateCycle % 2]);
+            cellularAutomaton.SetBuffer(KernelOrder[updateCycle], "currentGeneration", buffer[(updateCycle + 1) % 2]);
+            cellularAutomaton.SetInts("offset", offset[updateCycle]);
+            cellularAutomaton.Dispatch(KernelOrder[updateCycle], threadGroups[updateCycle][0], threadGroups[updateCycle][1], threadGroups[updateCycle][2]);
 
             if (updateCycle % 2 == 0)
             {
                 visualization.Render(buffer[updateCycle % 2]);
-                if (ssfv != null)
-                    ssfv.Render(buffer[updateCycle % 2]);
             }
 
             updateCycle = (updateCycle + 1) % 8;
@@ -185,31 +178,15 @@ namespace GPUFluid
             }
             
             queryResult.SetData(querry);
-            int kernelHandle = cs.FindKernel("GetHeight");
-            cs.SetBuffer(kernelHandle, "queryResult", queryResult);
-            cs.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
+            int kernelHandle = cellularAutomaton.FindKernel("GetHeight");
+            cellularAutomaton.SetBuffer(kernelHandle, "queryResult", queryResult);
+            cellularAutomaton.SetBuffer(kernelHandle, "newGeneration", buffer[0]);
             //cs.SetInts("queryCellCoord", coordinates);
             //cs.SetFloat("queryDensity", density);
-            cs.Dispatch(kernelHandle, coordinates.Length / 3, 1, 1);
+            cellularAutomaton.Dispatch(kernelHandle, coordinates.Length / 3, 1, 1);
             //float[] result = new float[1];
             queryResult.GetData(querry);
             return querry;
-        }
-
-        void OnRenderImage(RenderTexture source, RenderTexture destination)
-        {
-            if (ssfv != null)
-            {
-                var p = GL.GetGPUProjectionMatrix(GetComponent<Camera>().projectionMatrix, false);
-                p[2, 3] = p[3, 2] = 0.0f;
-                p[3, 3] = 1.0f;
-                var clipToWorld = Matrix4x4.Inverse(p * GetComponent<Camera>().worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -p[2, 2]), Quaternion.identity, Vector3.one);
-                ssfv.blend.SetMatrix("clipToWorld", clipToWorld);
-                ssfv.blend.SetMatrix("viewProj", GetComponent<Camera>().worldToCameraMatrix * GetComponent<Camera>().projectionMatrix);
-                Graphics.Blit(source, destination, ssfv.blend);
-            }
-            else
-                Graphics.Blit(source, destination);
         }
 
         /// <summary>

@@ -127,7 +127,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 
 				float4 clipSpacePos = mul(float4(viewPos, 1.0), UNITY_MATRIX_P);
 
-				o.color = float(-((viewPos.z) * _ProjectionParams.w));/*clipSpacePos.z / clipSpacePos.w*/
+				o.color = float(-((viewPos.z) * _ProjectionParams.w));
 				o.depth = input.position.z / input.position.w;
 				return o;
 			}
