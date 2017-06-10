@@ -142,7 +142,7 @@ namespace GPUFluid
         /// Initializes ComputeBuffer for floatable calculation
         /// </summary>
         /// <param name="numFloatables">Number of total Floatables in szene</param>
-        public void initializeFloatableBuffer(int numFloatables)
+        public void InitializeFloatableBuffer(int numFloatables)
         {
             queryResult = new ComputeBuffer(numFloatables * 4, sizeof(float));
         }
@@ -172,9 +172,9 @@ namespace GPUFluid
             for(int i = 0; i < coordinates.Length / 3; i++)
             {
                 querry[i * 4] = coordinates[i * 3];
-                querry[i * 4 +1] = coordinates[i * 3 +1];
-                querry[i * 4 +2] = coordinates[i * 3 +2];
-                querry[i * 4 +3] = densities[i];
+                querry[i * 4 + 1] = coordinates[i * 3 + 1];
+                querry[i * 4 + 2] = coordinates[i * 3 + 2];
+                querry[i * 4 + 3] = densities[i];
             }
             
             queryResult.SetData(querry);

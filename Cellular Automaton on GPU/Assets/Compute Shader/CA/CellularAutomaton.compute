@@ -156,17 +156,24 @@ void GetHeight(uint3 id : SV_DispatchThreadID) {
 	int z = queryResult[id.x * 4 + 2];
 	float density = queryResult[id.x * 4 + 3];
 
-	for (int dy = 1; dy > -3; --dy){
+	for (int dy = 1; dy > -3; --dy)
+	{
 		result = 0;
-		for (uint d = 0; d < NUMBER_OF_ELEMENTS ; ++d)
-		if(Densities[d] >= density) {
-			//if(x>= 0 && (y + dy) >= 0 && z >= 0 && x < size.x && (y + dy) > size.y && z < size.z)
-			if(newGeneration[ADDRESS(x, (y + dy), z, size)].volume > 0){
-				result += newGeneration[ADDRESS(x, (y + dy), z, size)].content[d];
+		[unroll(NUMBER_OF_ELEMENTS)]
+		for (uint d = 0; d < NUMBER_OF_ELEMENTS; ++d)
+		{
+			if (Densities[d] >= density) 
+			{
+				//if(x>= 0 && (y + dy) >= 0 && z >= 0 && x < size.x && (y + dy) > size.y && z < size.z)
+				if (newGeneration[ADDRESS(x, (y + dy), z, size)].volume > 0) 
+				{
+					result += newGeneration[ADDRESS(x, (y + dy), z, size)].content[d];
+				}
 			}
 		}
-		if(result > 0){
-			queryResult[id.x * 4 + 3] = result + y + dy -1 ;
+		if(result > 0)
+		{
+			queryResult[id.x * 4 + 3] = result + y + dy -1;
 			return;
 		}
 	}
@@ -211,6 +218,8 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)];
 	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)];
 
+	half2 oldVolume = half2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume);
+
 	if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < -0.5 ||
 		currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < -0.5)
 	{
@@ -220,7 +229,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	half amount, bottom, difference, vol = 0;
 
 	half2 temperature = half2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature);
-	half2 volume = half2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume);
+	half2 volume = oldVolume;
 
 	half content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content;
 	half content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content;
@@ -243,8 +252,8 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 		if (difference > 0)
 		{
-			half sumWeightedTemps = temperature.x * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * difference;
-			temperature.x = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume + difference);
+			half sumWeightedTemps = temperature.x * oldVolume.x + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * difference;
+			temperature.x = sumWeightedTemps / (oldVolume.x + difference);
 		}
 
 		content1[i] += difference;
@@ -255,8 +264,8 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 
 		if (difference < 0)
 		{
-			half sumWeightedTemps = temperature.y * currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
-			temperature.y = sumWeightedTemps / (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume - difference);
+			half sumWeightedTemps = temperature.y * oldVolume.y + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
+			temperature.y = sumWeightedTemps / (oldVolume.y - difference);
 		}
 
 		content2[i] += difference;

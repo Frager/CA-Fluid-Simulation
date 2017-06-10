@@ -20,7 +20,7 @@ public class FloatableManager : MonoBehaviour {
         {
             floatableObjects[i] = floatableComponents[i].gameObject;
         }
-        ca.initializeFloatableBuffer(floatableComponents.Length);
+        ca.InitializeFloatableBuffer(floatableComponents.Length);
         cellSize = ca.visualization.CellSize();
     }
 
