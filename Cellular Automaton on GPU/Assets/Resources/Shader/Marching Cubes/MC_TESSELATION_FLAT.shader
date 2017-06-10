@@ -51,6 +51,7 @@
 
 			sampler3D _MainTex;
 
+			float4 offset;
 			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
@@ -118,17 +119,17 @@
 				normal = normalize(cross(p[0].positions[2] - p[0].positions[1], p[0].positions[1] - pointZero));
 				light = BlinnPhong((p[0].positions[2] + p[0].positions[1] + pointZero) / 3.0, normal);
 	
-				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
 				pIn.uv = p[0].positions[2];
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
 				pIn.uv = p[0].positions[1];
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
 				pIn.uv = pointZero;
 				pIn.light = light;
 				triStream.Append(pIn);
@@ -140,17 +141,17 @@
 				normal = normalize(cross(p[0].positions[1] - p[0].positions[0], p[0].positions[1] - pointZero));
 				light = BlinnPhong((p[0].positions[0] + p[0].positions[1] + pointZero) / 3.0, normal);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
 				pIn.uv = p[0].positions[1];
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
 				pIn.uv = p[0].positions[0];
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
 				pIn.uv = pointZero;
 				pIn.light = light;
 				triStream.Append(pIn);
@@ -162,17 +163,17 @@
 				normal = normalize(cross(p[0].positions[0] - p[0].positions[2], p[0].positions[2] - pointZero));
 				light = BlinnPhong((p[0].positions[0] + p[0].positions[2] + pointZero) / 3.0, normal);
 
-				pIn.position = UnityObjectToClipPos(pointZero * scale);
+				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
 				pIn.uv = pointZero;
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
 				pIn.uv = p[0].positions[0];
 				pIn.light = light;
 				triStream.Append(pIn);
 
-				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale);
+				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
 				pIn.uv = p[0].positions[2];
 				pIn.light = light;
 				triStream.Append(pIn);

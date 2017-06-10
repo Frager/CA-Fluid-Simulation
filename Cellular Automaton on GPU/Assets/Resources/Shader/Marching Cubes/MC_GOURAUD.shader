@@ -46,6 +46,7 @@ Shader "MarchingCubes/Gouraud"
 
 			float _Shininess;
 
+			float4 offset;
 			float4 scale;
 
 			struct VS_INPUT
@@ -131,7 +132,7 @@ Shader "MarchingCubes/Gouraud"
 				[unroll(3)]
 				for (int i = 2; i >= 0; --i)
 				{
-					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
+					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale + offset);
 					pIn.uv = p[0].positions[i];
 					pIn.light = BlinnPhong(mul(p[0].positions[i] * scale, unity_ObjectToWorld), p[0].normals[i]);
 

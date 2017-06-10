@@ -54,6 +54,7 @@
 
 			sampler3D _MainTex;
 
+			float3 offset;
 			float4 scale;
 
 			float _Shininess;
@@ -123,10 +124,10 @@
 				fixed3 normal = (p[0].normals[2] + p[0].normals[1] + p[0].normals[0]) / 3.0;
 				fixed4 pointZero = mean + fixed4(0.006 * normal * acos(dot(fixed3(0,1,0), normal)), 1);
 
-				fixed4 position_0 = UnityObjectToClipPos(p[0].positions[0] * scale);
-				fixed4 position_1 = UnityObjectToClipPos(p[0].positions[1] * scale);
-				fixed4 position_2 = UnityObjectToClipPos(p[0].positions[2] * scale);
-				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale);
+				fixed4 position_0 = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
+				fixed4 position_1 = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
+				fixed4 position_2 = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
+				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale + offset);
 
 				fixed4 light_0 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[0] * scale), p[0].normals[0]);
 				fixed4 light_1 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[1] * scale), p[0].normals[1]);

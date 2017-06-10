@@ -4,7 +4,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 {
 	Properties
 	{
-		_Offset("Offset", Vector) = (-0,0,-0,0)
+
 	}
 
 	SubShader
@@ -24,8 +24,6 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 
 
 			StructuredBuffer<half4> mesh;
-
-			float4 _Offset;
 
 			struct VS_INPUT
 			{
@@ -50,6 +48,7 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 				float depth : SV_DEPTH;
 			};
 
+			float4 offset;
 			float4 scale;
 
 			GS_INPUT vert(VS_INPUT input)
@@ -64,13 +63,13 @@ Shader "Fluid/ScreenSpaceFluidRendering"
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-				float4 worldPos = UnityObjectToClipPos(p[0].position.xyz * scale.xyz + _Offset);
+				float4 worldPos = UnityObjectToClipPos(p[0].position.xyz * scale.xyz + offset);
 
 				float particle_size = p[0].position.w * 3;
 
 				float ratio = _ScreenParams.x / _ScreenParams.y;
 
-				float3 viewPos = UnityObjectToViewPos(p[0].position.xyz * scale.xyz + _Offset);
+				float3 viewPos = UnityObjectToViewPos(p[0].position.xyz * scale.xyz + offset);
 
 				pIn.position = worldPos + float4(2, 0, 0, 0);
 				pIn.viewPos = viewPos;

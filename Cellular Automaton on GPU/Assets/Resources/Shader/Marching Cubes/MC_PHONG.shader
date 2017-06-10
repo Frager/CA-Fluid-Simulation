@@ -53,6 +53,7 @@
 
 			float _Shininess;
 
+			float4 offset;
 			float4 scale;
 
 			struct VS_INPUT
@@ -108,15 +109,15 @@
 				[unroll(3)]
 				for (int i = 2; i >= 0; --i)
 				{
-					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale);
+					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale + offset);
 					pIn.uv = p[0].positions[i];
-					pIn.wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale);
+					pIn.wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale + offset);
 #ifdef REALISTIC
-					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale);
+					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale + offset);
 					temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;
 					pIn.bumpuv[0] = temp.xy * fixed2(.4, .45);
 					pIn.bumpuv[1] = temp.wz;
-					pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[i] * scale));
+					pIn.viewDir.xzy = normalize(WorldSpaceViewDir(p[0].positions[i] * scale + offset));
 #else
 					pIn.normal = p[0].normals[i];
 #endif
