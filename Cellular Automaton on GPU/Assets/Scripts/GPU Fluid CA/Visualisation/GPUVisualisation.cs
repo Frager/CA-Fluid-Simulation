@@ -89,7 +89,7 @@ namespace GPUFluid
             texture3D.enableRandomWrite = true;
             texture3D.Create();
 
-            texture3DCS = Resources.Load<ComputeShader>("ComputeShader/CA2Texture3D"); ;
+            texture3DCS = Resources.Load<ComputeShader>("ComputeShader/Visualisation/CA2Texture3D"); ;
 
             texture3DCS.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
             texture3DCSKernel = texture3DCS.FindKernel("CSMain");
