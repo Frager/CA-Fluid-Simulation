@@ -101,7 +101,7 @@ namespace GPUFluid
                 }
             }
 
-            marchingCubesCS = Resources.Load<ComputeShader>("ComputeShader/Marching Cubes/" + path);
+            marchingCubesCS = Resources.Load<ComputeShader>("ComputeShader/Visualisation/Marching Cubes/" + path);
             marchingCubesCSKernel = marchingCubesCS.FindKernel("CSMain");
 
             marchingCubesCS.SetInts("size", new int[] { dimensions.x * 16, dimensions.y * 16, dimensions.z * 16 });
