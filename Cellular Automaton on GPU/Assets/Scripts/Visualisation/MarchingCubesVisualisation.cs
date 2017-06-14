@@ -90,7 +90,7 @@ namespace GPUFluid
                 case Type.CUBES: path += "CUBES"; break;
                 case Type.SIMPLE: path += "SIMPLE"; break;
                 case Type.TESSELATION: path += "SIMPLE"; break;
-                case Type.MULTIPLE_FLUIDS: path += "MultipleFluids"; break;
+                case Type.MULTIPLE_FLUIDS: path += "MULTIPLE"; break;
             }
 
             if (!type.Equals(Type.CUBES))
@@ -123,7 +123,7 @@ namespace GPUFluid
                 case Type.MULTIPLE_FLUIDS: path += "_"; break;
             }
 
-            if (!(type.Equals(Type.CUBES) || type.Equals(Type.MULTIPLE_FLUIDS)))
+            if (!type.Equals(Type.CUBES))
             {
                 switch (shading)
                 {

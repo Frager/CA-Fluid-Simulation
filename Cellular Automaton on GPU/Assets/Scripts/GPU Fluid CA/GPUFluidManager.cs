@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 namespace GPUFluid
 {
+    public enum Fluid
+    {
+        NONE, GAS, OIL, WATER
+    }
+
     public class GPUFluidManager : MonoBehaviour
     {
         public CellularAutomaton ca;
@@ -15,8 +20,7 @@ namespace GPUFluid
         [Range(0f, 1f)]
         public float x, y, z;
 
-        [Range(-1, 2)]
-        public int elementID = 2;
+        public Fluid element;
 
         private float timer = 0;
 
@@ -42,7 +46,7 @@ namespace GPUFluid
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                ca.Fill(new float[] { x, y, z }, elementID);
+                ca.Fill(new float[] { x, y, z }, (int)element - 1);
                 ca.NextGeneration();
                 timer -= timeframe;
             }
