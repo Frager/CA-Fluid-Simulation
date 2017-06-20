@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Floatable : MonoBehaviour {
 
@@ -13,8 +11,8 @@ public class Floatable : MonoBehaviour {
     public float waterLevel = 0;
     private Rigidbody rb;
 
-	// Use this for initialization
-	void Start () {
+	void Start ()
+    {
         rb = GetComponent<Rigidbody>();
 	}
 	
@@ -27,11 +25,13 @@ public class Floatable : MonoBehaviour {
     Vector3 actionPoint;
     Vector3 upLift;
 
-    void Update () {
+    void Update ()
+    {
         if (floatHeight > 0)
         {
             actionPoint = transform.position + transform.TransformDirection(buoyancyCentreOffset);
             forcefactor = 1f - ((actionPoint.y - waterLevel) / floatHeight);
+            forcefactor *= (1f + Time.deltaTime * 10);
             if (forcefactor > 0f)
             {
                 upLift = -Physics.gravity * (forcefactor - rb.velocity.y * bounceDamp);

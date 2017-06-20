@@ -17,8 +17,9 @@
 	{
 		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
-
-		Blend SrcAlpha OneMinusSrcAlpha
+		
+		ZWrite Off
+		Blend One OneMinusSrcAlpha
 
 		Pass
 		{
@@ -184,7 +185,7 @@
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 #else			
-				col = tex3D(_MainTex, input.uv) * BlinnPhong(input.wpos, input.normal);
+				col = tex3D(_MainTex, input.uv + half3(1/64.0, 0, 1/64.0)) * BlinnPhong(input.wpos, input.normal);
 #endif
 				return col;
 			}

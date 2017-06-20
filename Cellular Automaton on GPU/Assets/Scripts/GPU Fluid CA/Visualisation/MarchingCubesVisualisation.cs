@@ -22,6 +22,8 @@ namespace GPUFluid
     /// </summary>
     public class MarchingCubesVisualisation : GPUVisualisation
     {
+        public SecondCamera cam2;
+
         //The basic primitive type of Marching Cubes
         public Type type;
 
@@ -46,6 +48,7 @@ namespace GPUFluid
 
             ComputeBuffer.CopyCount(mesh, args, 0);
 
+            cam2.args = args;
 #if REALISTIC
             if(!type.Equals(Type.CUBES))
                 RenderRealisticWater();
@@ -134,6 +137,8 @@ namespace GPUFluid
             }
 
             material = new Material(Resources.Load<Shader>("Shader/Marching Cubes/" + path));
+
+            cam2.material = material;
         }
 
 

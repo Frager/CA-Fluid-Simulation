@@ -5,7 +5,7 @@
 
 static half4 Colors[] =
 {
-	half4(0,1,1,0.2),
+	half4(0,0,0,0),
 	half4(1,1,0,0.98),
 	half4(0.2,0.5,1,0.9)
 };
@@ -17,32 +17,28 @@ struct Cell
 	half temperature;
 };
 
-typedef vector <half, NUMBER_OF_ELEMENTS> cellType;
-
 StructuredBuffer<Cell> currentGeneration;
 RWTexture3D<half4> Result;
 
 uint3 size;
 
+half4 ColorOfCell(uint id)
+{
+	Cell cell = currentGeneration[id];
+
+	half4 color = half4(0, 0, 0, 0);
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		color += (cell.content[i] / cell.volume) * Colors[i];
+	}
+
+	return color;
+}
+
 [numthreads(16,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-	Cell cell = currentGeneration[ADDRESS(id.x, id.y, id.z, size)];
-
-	if (cell.volume <= 0 || cell.volume > 1)
-	{
-		Result[id] = half4(0.2, 0.5, 1, 0.9);
-		return;
-	}
-
-	uint pos = 0;
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint i = 1; i < NUMBER_OF_ELEMENTS; ++i)
-	{
-		if (cell.content[i] >= cell.content[pos])
-		{
-			pos = i;
-		}
-	}
-	Result[id] = Colors[pos];
+	Result[id] = ColorOfCell(ADDRESS(id.x, id.y, id.z, size));
 }
