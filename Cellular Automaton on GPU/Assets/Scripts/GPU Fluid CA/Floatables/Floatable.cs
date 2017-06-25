@@ -25,13 +25,13 @@ public class Floatable : MonoBehaviour {
     Vector3 actionPoint;
     Vector3 upLift;
 
-    void Update ()
+    void FixedUpdate ()
     {
         if (floatHeight > 0)
         {
             actionPoint = transform.position + transform.TransformDirection(buoyancyCentreOffset);
             forcefactor = 1f - ((actionPoint.y - waterLevel) / floatHeight);
-            forcefactor *= (1f + Time.deltaTime * 10);
+            forcefactor *= (1.5f + Time.deltaTime * 50f);
             if (forcefactor > 0f)
             {
                 upLift = -Physics.gravity * (forcefactor - rb.velocity.y * bounceDamp);
