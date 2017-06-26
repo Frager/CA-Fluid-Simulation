@@ -17,6 +17,7 @@ struct Triangle
 {
 	half3 vertex[3];
 	half3 normal[3];
+	int element;
 };
 
 struct GridCell
@@ -324,7 +325,7 @@ StructuredBuffer<Cell> currentGeneration;
 
 AppendStructuredBuffer<Triangle> mesh;
 
-void Polygonise(GridCell grid)
+void Polygonise(GridCell grid, int element)
 {
 	int cubeindex;
 	half3 vertlist[12];
@@ -438,6 +439,8 @@ void Polygonise(GridCell grid)
 		tris.normal[1] = normlist[triTable[cubeindex][i + 1]];
 		tris.normal[2] = normlist[triTable[cubeindex][i + 2]];
 
+		tris.element = element;
+
 		mesh.Append(tris);
 	}
 }
@@ -458,7 +461,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	cell.p[7] = half3(id.x, id.y + 1, id.z) * _scale;
 
 	[unroll(NUMBER_OF_ELEMENTS)]
-	for (uint index = 0; index < NUMBER_OF_ELEMENTS; ++index)
+	for (uint index = 1; index < NUMBER_OF_ELEMENTS; ++index)
 	{
 		cell.val[0] = (currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].content[index]);
 		cell.val[1] = (currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].content[index]);
@@ -469,6 +472,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 		cell.val[6] = (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].content[index]);
 		cell.val[7] = (currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].content[index]);
 
-		Polygonise(cell);
+		Polygonise(cell, index);
 	}
 }

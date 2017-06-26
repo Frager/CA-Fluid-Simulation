@@ -330,28 +330,28 @@ void Polygonise(GridCell grid)
 
 	cubeindex = 0;
 
-	if (grid.val[0] > 0.001)
+	if (grid.val[0] > 0)
 		cubeindex |= 1;
 
-	if (grid.val[1] > 0.001)
+	if (grid.val[1] > 0)
 		cubeindex |= 2;
 
-	if (grid.val[2] > 0.001)
+	if (grid.val[2] > 0)
 		cubeindex |= 4;
 
-	if (grid.val[3] > 0.001)
+	if (grid.val[3] > 0)
 		cubeindex |= 8;
 
-	if (grid.val[4] > 0.001)
+	if (grid.val[4] > 0)
 		cubeindex |= 16;
 
-	if (grid.val[5] > 0.001)
+	if (grid.val[5] > 0)
 		cubeindex |= 32;
 
-	if (grid.val[6] > 0.001)
+	if (grid.val[6] > 0)
 		cubeindex |= 64;
 
-	if (grid.val[7] > 0.001)
+	if (grid.val[7] > 0)
 		cubeindex |= 128;
 
 
@@ -439,14 +439,27 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	cell.p[6] = half3(id.x + 1, id.y + 1, id.z) * _scale;
 	cell.p[7] = half3(id.x, id.y + 1, id.z) * _scale;
 
-	cell.val[0] = (currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].volume);
-	cell.val[1] = (currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].volume);
-	cell.val[2] = (currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].volume);
-	cell.val[3] = (currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume);
-	cell.val[4] = (currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].volume);
-	cell.val[5] = (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].volume);
-	cell.val[6] = (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].volume);
-	cell.val[7] = (currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].volume);
+	cell.val[0] = 0;
+	cell.val[1] = 0;
+	cell.val[2] = 0;
+	cell.val[3] = 0;
+	cell.val[4] = 0;
+	cell.val[5] = 0;
+	cell.val[6] = 0;
+	cell.val[7] = 0;
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint index = 1; index < NUMBER_OF_ELEMENTS; ++index)
+	{
+		cell.val[0] += (currentGeneration[ADDRESS(id.x, id.y, (id.z + 1), size)].content[index]);
+		cell.val[1] += (currentGeneration[ADDRESS((id.x + 1), id.y, (id.z + 1), size)].content[index]);
+		cell.val[2] += (currentGeneration[ADDRESS((id.x + 1), id.y, id.z, size)].content[index]);
+		cell.val[3] += (currentGeneration[ADDRESS(id.x, id.y, id.z, size)].content[index]);
+		cell.val[4] += (currentGeneration[ADDRESS(id.x, (id.y + 1), (id.z + 1), size)].content[index]);
+		cell.val[5] += (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), (id.z + 1), size)].content[index]);
+		cell.val[6] += (currentGeneration[ADDRESS((id.x + 1), (id.y + 1), id.z, size)].content[index]);
+		cell.val[7] += (currentGeneration[ADDRESS(id.x, (id.y + 1), id.z, size)].content[index]);
+	}
 
 	Polygonise(cell);
 }

@@ -96,6 +96,10 @@ namespace GPUFluid
             texture3DCS.SetTexture(texture3DCSKernel, "Result", texture3D);
         }
 
+        void OnDrawGizmosSelected()
+        {
+            Gizmos.DrawWireCube(offset + scale/2, scale);
+        }
 
         void OnPostRender()
         {

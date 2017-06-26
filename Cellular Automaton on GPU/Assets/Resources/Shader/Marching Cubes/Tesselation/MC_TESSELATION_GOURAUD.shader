@@ -1,4 +1,4 @@
-﻿Shader "MarchingCubes/Tesselation_Phong"
+﻿Shader "MarchingCubes/Tesselation/Gouraud"
 {
 	Properties
 	{
@@ -11,7 +11,8 @@
 		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
 
-		Blend SrcAlpha OneMinusSrcAlpha
+		ZWrite Off
+		Blend SrcAlpha  OneMinusSrcAlpha
 
 		Pass
 		{
@@ -48,14 +49,13 @@
 			struct PS_INPUT
 			{
 				float4 position : SV_POSITION;
-				float4 wpos : POSITION1;
 				float3 uv : TEXCOORDS;
-				float3 normal : NORMAL;
+				float4 light : COLOR;
 			};
 
 			sampler3D _MainTex;
 
-			float4 offset;
+			float3 offset;
 			float4 scale;
 
 			float _Shininess;
@@ -120,7 +120,7 @@
 			{
 				PS_INPUT pIn = (PS_INPUT)0;
 
-
+		
 				fixed4 mean = (p[0].positions[2] + p[0].positions[1] + p[0].positions[0]) / 3.0;
 				fixed3 normal = (p[0].normals[2] + p[0].normals[1] + p[0].normals[0]) / 3.0;
 				fixed4 pointZero = mean + fixed4(0.006 * normal * acos(dot(fixed3(0,1,0), normal)), 1);
@@ -128,50 +128,44 @@
 				fixed4 position_0 = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
 				fixed4 position_1 = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
 				fixed4 position_2 = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
-				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale);
+				fixed4 position_3 = UnityObjectToClipPos(pointZero * scale + offset);
 
-				fixed4 wpos_0 = mul(unity_ObjectToWorld, p[0].positions[0] * scale + offset);
-				fixed4 wpos_1 = mul(unity_ObjectToWorld, p[0].positions[1] * scale + offset);
-				fixed4 wpos_2 = mul(unity_ObjectToWorld, p[0].positions[2] * scale + offset);
-				fixed4 wpos_3 = mul(unity_ObjectToWorld, pointZero * scale + offset);
+				fixed4 light_0 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[0] * scale), p[0].normals[0]);
+				fixed4 light_1 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[1] * scale), p[0].normals[1]);
+				fixed4 light_2 = BlinnPhong(mul(unity_ObjectToWorld, p[0].positions[2] * scale), p[0].normals[2]);
+				fixed4 light_3 = BlinnPhong(mul(unity_ObjectToWorld, pointZero * scale), normal);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2];
-				pIn.normal = p[0].normals[2];
-				pIn.wpos = wpos_2;
+				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_2;
 				triStream.Append(pIn);
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1];
-				pIn.normal = p[0].normals[1];
-				pIn.wpos = wpos_1;
+				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero;
-				pIn.normal = normal;
-				pIn.wpos = wpos_3;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_3;
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
 
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1];
-				pIn.normal = p[0].normals[1];
-				pIn.wpos = wpos_1;
+				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0];
-				pIn.normal = p[0].normals[0];
-				pIn.wpos = wpos_0;
+				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero;
-				pIn.normal = normal;
-				pIn.wpos = wpos_3;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_3;
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
@@ -179,21 +173,18 @@
 
 
 				pIn.position = position_3;
-				pIn.uv = pointZero;
-				pIn.normal = normal;
-				pIn.wpos = wpos_3;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_3;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0];
-				pIn.normal = p[0].normals[0];
-				pIn.wpos = wpos_0;
+				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2];
-				pIn.normal = p[0].normals[2];
-				pIn.wpos = wpos_2;
+				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.light = light_2;
 				triStream.Append(pIn);
 
 				triStream.RestartStrip();
@@ -201,7 +192,7 @@
 
 			fixed4 frag(PS_INPUT input) : SV_Target
 			{
-				return tex3D(_MainTex, input.uv) *  BlinnPhong(input.wpos, input.normal);
+				return tex3D(_MainTex, input.uv) * input.light;
 			}
 			ENDCG
 		}

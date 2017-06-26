@@ -22,8 +22,6 @@ namespace GPUFluid
     /// </summary>
     public class MarchingCubesVisualisation : GPUVisualisation
     {
-        public SecondCamera cam2;
-
         //The basic primitive type of Marching Cubes
         public Type type;
 
@@ -48,7 +46,6 @@ namespace GPUFluid
 
             ComputeBuffer.CopyCount(mesh, args, 0);
 
-            cam2.args = args;
 #if REALISTIC
             if(!type.Equals(Type.CUBES))
                 RenderRealisticWater();
@@ -69,6 +66,13 @@ namespace GPUFluid
             if (type.Equals(Type.CUBES))
             {
                 mesh = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 4 * 3 * sizeof(float), ComputeBufferType.Append);
+            }
+            else if(type.Equals(Type.MULTIPLE_FLUIDS))
+            {
+                if (shading.Equals(Shading.FLAT))
+                    mesh = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 3 * 3 * sizeof(float) + sizeof(int), ComputeBufferType.Append);
+                else
+                    mesh = new ComputeBuffer((dimensions.x * dimensions.y * dimensions.z) * 4096, 6 * 3 * sizeof(float) + sizeof(int), ComputeBufferType.Append);
             }
             else
             {
@@ -116,14 +120,14 @@ namespace GPUFluid
         /// </summary>
         override protected void InitializeMaterial()
         {
-            string path = "MC";
+            string path = "";
 
             switch (type)
             {
-                case Type.CUBES: path += "_CUBES"; break;
-                case Type.SIMPLE: path += "_"; break;
-                case Type.TESSELATION: path += "_TESSELATION_"; break;
-                case Type.MULTIPLE_FLUIDS: path += "_"; break;
+                case Type.CUBES: path += "MC_CUBES"; break;
+                case Type.SIMPLE: path += "Simple/MC_"; break;
+                case Type.TESSELATION: path += "Tesselation/MC_TESSELATION_"; break;
+                case Type.MULTIPLE_FLUIDS: path += "Multiple/MC_MULTIPLE_"; break;
             }
 
             if (!type.Equals(Type.CUBES))
@@ -137,8 +141,6 @@ namespace GPUFluid
             }
 
             material = new Material(Resources.Load<Shader>("Shader/Marching Cubes/" + path));
-
-            cam2.material = material;
         }
 
 

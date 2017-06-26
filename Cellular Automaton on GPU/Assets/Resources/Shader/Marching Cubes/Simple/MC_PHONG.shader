@@ -19,11 +19,12 @@
 		LOD 100
 		
 		ZWrite Off
-		Blend One OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
 			CGPROGRAM
+
 			#include "UnityLightingCommon.cginc"
 			#include "UnityCG.cginc"
 			#pragma target 5.0
@@ -31,6 +32,12 @@
 			#pragma geometry geom
 			#pragma fragment frag
 
+			static half4 Colors[3] =
+			{
+				half4(0,0,0,0),
+				half4(1,1,0,0.5),
+				half4(0.2,0.5,1,0.3)
+			};
 
 			//Thats the ouput type of the Marching Cubes-algorithm Compute Shader
 			struct Triangle
@@ -72,7 +79,7 @@
 			{
 				float4 position : SV_POSITION;
 				float4 wpos : POSITION2;
-				float3 uv : TEXCOORDS;
+				float3 uv : TEXCOORD1;
 				float3 normal : NORMAL;
 #ifdef REALISTIC
 				float2 bumpuv[2] : TEXCOORD0;
@@ -90,6 +97,7 @@
 				o.normals[0] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[0]);
 				o.normals[1] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[1]);
 				o.normals[2] = UnityObjectToWorldNormal(mesh[input.vertexid].normal[2]);
+
 				return o;
 			}
 
@@ -111,7 +119,7 @@
 				for (int i = 2; i >= 0; --i)
 				{
 					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale + offset);
-					pIn.uv = p[0].positions[i];
+					pIn.uv = p[0].positions[i] + half3(1 / 64.0, 0, 1 / 64.0);
 					pIn.wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale + offset);
 #ifdef REALISTIC
 					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale + offset);
@@ -185,7 +193,7 @@
 				col.rgb = tex3D(_MainTex, input.uv).xyz * lerp(water.rgb, _horizonColor.rgb, water.a);
 				col.a = _horizonColor.a;
 #else			
-				col = tex3D(_MainTex, input.uv + half3(1/64.0, 0, 1/64.0)) * BlinnPhong(input.wpos, input.normal);
+				col = tex3D(_MainTex, input.uv) * BlinnPhong(input.wpos, input.normal);
 #endif
 				return col;
 			}

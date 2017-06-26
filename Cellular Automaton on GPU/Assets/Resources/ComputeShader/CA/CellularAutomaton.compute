@@ -301,25 +301,25 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content = ZeroArray;
 	}
 
-	[unroll(NUMBER_OF_ELEMENTS)]
-	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
-	{
-		if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
-		{
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
-			{
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
-			}
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
-			{
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
-				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
-			}
-		}
-	}
+	//[unroll(NUMBER_OF_ELEMENTS)]
+	//for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	//{
+	//	if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
+	//	{
+	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
+	//		{
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
+	//		}
+	//		if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
+	//		{
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+	//			newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
+	//		}
+	//	}
+	//}
 
 	if (distance(uint3(id.x, (id.y * 2 + offset.y), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.5)
 	{

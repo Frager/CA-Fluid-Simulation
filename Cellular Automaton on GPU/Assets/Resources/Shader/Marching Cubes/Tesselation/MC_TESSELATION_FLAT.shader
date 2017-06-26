@@ -1,4 +1,4 @@
-﻿Shader "MarchingCubes/Tesselation"
+﻿Shader "MarchingCubes/Tesselation/Flat"
 {
 	Properties
 	{
@@ -10,7 +10,8 @@
 		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
 
-		Blend SrcAlpha OneMinusSrcAlpha
+		ZWrite Off
+		Blend SrcAlpha  OneMinusSrcAlpha
 
 		Pass
 		{
@@ -120,17 +121,17 @@
 				light = BlinnPhong((p[0].positions[2] + p[0].positions[1] + pointZero) / 3.0, normal);
 	
 				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
-				pIn.uv = p[0].positions[2];
+				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
-				pIn.uv = p[0].positions[1];
+				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
-				pIn.uv = pointZero;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
@@ -142,17 +143,17 @@
 				light = BlinnPhong((p[0].positions[0] + p[0].positions[1] + pointZero) / 3.0, normal);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[1] * scale + offset);
-				pIn.uv = p[0].positions[1];
+				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
-				pIn.uv = p[0].positions[0];
+				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
-				pIn.uv = pointZero;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
@@ -164,17 +165,17 @@
 				light = BlinnPhong((p[0].positions[0] + p[0].positions[2] + pointZero) / 3.0, normal);
 
 				pIn.position = UnityObjectToClipPos(pointZero * scale + offset);
-				pIn.uv = pointZero;
+				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[0] * scale + offset);
-				pIn.uv = p[0].positions[0];
+				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
 				pIn.position = UnityObjectToClipPos(p[0].positions[2] * scale + offset);
-				pIn.uv = p[0].positions[2];
+				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
 				pIn.light = light;
 				triStream.Append(pIn);
 
