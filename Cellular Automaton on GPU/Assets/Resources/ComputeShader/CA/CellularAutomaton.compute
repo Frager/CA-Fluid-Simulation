@@ -107,17 +107,19 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 
 		difference += ((volume.y + content2[i] - difference) > meanVolume) * (volume.y + content2[i] - difference - meanVolume);
 
-		if (difference > 0)
+		if (difference > 0.01)
 		{
 			half sumWeightedTemps = temperature.x * currentGeneration[cell_1].volume + currentGeneration[cell_2].temperature * difference;
 			temperature.x = sumWeightedTemps / (currentGeneration[cell_1].volume + difference);
 		}
-		else if (difference < 0)
+		else if (difference < -0.01)
 		{
-			half sumWeightedTemps = temperature.y * volume.x - temperature.x * difference;
-			temperature.y = sumWeightedTemps / (volume.y - difference);
+			//half sumWeightedTemps = temperature.y * volume.x - temperature.x * difference;
+			//temperature.y = sumWeightedTemps / (volume.y - difference);
+			half sumWeightedTemps = temperature.x * -difference + currentGeneration[cell_2].temperature * currentGeneration[cell_2].volume;
+			temperature.y = sumWeightedTemps / (currentGeneration[cell_2].volume - difference);
 		}
-		else if (abs(difference) < 0.01)
+		else
 		{
 			half diff = (temperature.x - temperature.y) / temperatureSpread;
 			temperature += half2(-(diff / (volume.x + 1)), diff / (volume.y + 1));

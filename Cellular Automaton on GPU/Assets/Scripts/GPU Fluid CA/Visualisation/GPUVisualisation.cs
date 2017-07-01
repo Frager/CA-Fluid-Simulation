@@ -47,6 +47,7 @@ namespace GPUFluid
 
             material.SetVector("offset", new Vector4(offset.x, offset.y, offset.z, 1));
             material.SetVector("scale", new Vector4(scale.x, scale.y, scale.z, 1));
+            material.SetVector("dimensions", new Vector4( 1.0f / (dimensions.x * 32), 1.0f / (dimensions.y * 32), 1.0f / (dimensions.z * 32), 1 ));
             material.SetTexture("_MainTex", texture3D);
             material.SetBuffer("mesh", mesh);
         }

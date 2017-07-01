@@ -55,8 +55,9 @@
 
 			sampler3D _MainTex;
 
-			float3 offset;
+			float4 offset;
 			float4 scale;
+			float4 dimensions;
 
 			float _Shininess;
 
@@ -136,17 +137,17 @@
 				fixed4 light_3 = BlinnPhong(mul(unity_ObjectToWorld, pointZero * scale), normal);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[2] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_2;
 				triStream.Append(pIn);
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[1] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_3;
 				triStream.Append(pIn);
 
@@ -154,17 +155,17 @@
 
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[1] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[0] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_3;
 				triStream.Append(pIn);
 
@@ -173,17 +174,17 @@
 
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_3;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[0] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[2] + half3(dimensions.x, 0, dimensions.z);
 				pIn.light = light_2;
 				triStream.Append(pIn);
 

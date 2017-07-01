@@ -58,6 +58,7 @@
 
 			float4 offset;
 			float4 scale;
+			float4 dimensions;
 
 			float _Shininess;
 
@@ -137,19 +138,19 @@
 				fixed4 wpos_3 = mul(unity_ObjectToWorld, pointZero * scale + offset);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[2] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[2];
 				pIn.wpos = wpos_2;
 				triStream.Append(pIn);
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[1] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[1];
 				pIn.wpos = wpos_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = normal;
 				pIn.wpos = wpos_3;
 				triStream.Append(pIn);
@@ -158,19 +159,19 @@
 
 
 				pIn.position = position_1;
-				pIn.uv = p[0].positions[1] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[1] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[1];
 				pIn.wpos = wpos_1;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[0] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[0];
 				pIn.wpos = wpos_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = normal;
 				pIn.wpos = wpos_3;
 				triStream.Append(pIn);
@@ -180,19 +181,19 @@
 
 
 				pIn.position = position_3;
-				pIn.uv = pointZero + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = pointZero + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = normal;
 				pIn.wpos = wpos_3;
 				triStream.Append(pIn);
 
 				pIn.position = position_0;
-				pIn.uv = p[0].positions[0] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[0] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[0];
 				pIn.wpos = wpos_0;
 				triStream.Append(pIn);
 
 				pIn.position = position_2;
-				pIn.uv = p[0].positions[2] + half3(1 / 64.0, 0, 1 / 64.0);
+				pIn.uv = p[0].positions[2] + half3(dimensions.x, 0, dimensions.z);
 				pIn.normal = p[0].normals[2];
 				pIn.wpos = wpos_2;
 				triStream.Append(pIn);

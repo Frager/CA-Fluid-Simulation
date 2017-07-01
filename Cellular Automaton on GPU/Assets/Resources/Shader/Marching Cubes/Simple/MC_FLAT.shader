@@ -73,6 +73,7 @@
 
 			float4 offset;
 			float4 scale;
+			float4 dimensions;
 
 			GS_INPUT vert(VS_INPUT input)
 			{
@@ -101,7 +102,7 @@
 				for (int i = 2; i >= 0; --i)
 				{
 					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale + offset);
-					pIn.uv = p[0].positions[i] + half3(1 / 64.0, 0, 1 / 64.0);
+					pIn.uv = p[0].positions[i] + half3(dimensions.x, 0, dimensions.z);
 		#ifdef REALISTIC
 					wpos = mul(unity_ObjectToWorld, p[0].positions[i] * scale + offset);
 					temp.xyzw = wpos.xzxz * _WaveScale + _WaveOffset;

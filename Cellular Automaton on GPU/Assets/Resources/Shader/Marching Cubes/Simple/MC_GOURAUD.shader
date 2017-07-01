@@ -49,6 +49,7 @@ Shader "MarchingCubes/Gouraud"
 
 			float4 offset;
 			float4 scale;
+			float2 dimensions;
 
 			struct VS_INPUT
 			{
@@ -134,7 +135,7 @@ Shader "MarchingCubes/Gouraud"
 				for (int i = 2; i >= 0; --i)
 				{
 					pIn.position = UnityObjectToClipPos(p[0].positions[i] * scale + offset);
-					pIn.uv = p[0].positions[i] + half3(1 / 64.0, 0, 1 / 64.0);
+					pIn.uv = p[0].positions[i] + half3(dimensions.x, 0, dimensions.z);
 					pIn.light = BlinnPhong(mul(p[0].positions[i] * scale, unity_ObjectToWorld), p[0].normals[i]);
 
 					triStream.Append(pIn);
