@@ -153,39 +153,6 @@ void Initialize(uint3 id : SV_DispatchThreadID)
 	}
 }
 
-[numthreads(1, 1, 1)]
-void GetHeight(uint3 id : SV_DispatchThreadID) {
-
-	half result = 0;
-
-	int x = queryResult[id.x * 4];
-	int y = queryResult[id.x * 4 + 1];
-	int z = queryResult[id.x * 4 + 2];
-	float density = queryResult[id.x * 4 + 3];
-
-	for (int dy = 1; dy > -3; --dy)
-	{
-		result = 0;
-		[unroll(NUMBER_OF_ELEMENTS)]
-		for (uint d = 0; d < NUMBER_OF_ELEMENTS; ++d)
-		{
-			if (Densities[d] >= density) 
-			{
-				//if(x>= 0 && (y + dy) >= 0 && z >= 0 && x < size.x && (y + dy) > size.y && z < size.z)
-				if (newGeneration[ADDRESS(x, (y + dy), z, size)].volume > 0) 
-				{
-					result += newGeneration[ADDRESS(x, (y + dy), z, size)].content[d];
-				}
-			}
-		}
-		if(result > 0)
-		{
-			queryResult[id.x * 4 + 3] = result + y + dy -1;
-			return;
-		}
-	}
-	queryResult[id.x * 4 + 3] = 0;
-}
 
 [numthreads(16, 8, 8)]
 void SetObstacle(uint3 id : SV_DispatchThreadID)
@@ -211,6 +178,41 @@ void RemoveObstacle(uint3 id : SV_DispatchThreadID)
 	{
 		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
 	}
+}
+
+[numthreads(1, 1, 1)]
+void GetHeight(uint3 id : SV_DispatchThreadID) {
+
+	half result = 0;
+
+	int x = queryResult[id.x * 4];
+	int y = queryResult[id.x * 4 + 1];
+	int z = queryResult[id.x * 4 + 2];
+	float density = queryResult[id.x * 4 + 3];
+
+	for (int dy = 1; dy > -3; --dy)
+	{
+		result = 0;
+		[unroll(NUMBER_OF_ELEMENTS)]
+		for (uint d = 0; d < NUMBER_OF_ELEMENTS; ++d)
+		{
+			if (Densities[d] >= density) 
+			{
+				//if(x>= 0 && (y + dy) >= 0 && z >= 0 && x < size.x && (y + dy) > size.y && z < size.z)
+				if (newGeneration[ADDRESS(x, (y + dy), z, size)].volume > 0) 
+				{
+					half cellContent = newGeneration[ADDRESS(x, (y + dy), z, size)].content[d];
+					result += (cellContent > 1)? 1 : cellContent ;
+				}
+			}
+		}
+		if(result > 0)
+		{
+			queryResult[id.x * 4 + 3] = result + y + dy -1;
+			return;
+		}
+	}
+	queryResult[id.x * 4 + 3] = 0;
 }
 
 [numthreads(8, 16, 8)]
