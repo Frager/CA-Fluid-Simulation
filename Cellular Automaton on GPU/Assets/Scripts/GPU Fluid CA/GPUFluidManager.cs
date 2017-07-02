@@ -11,8 +11,8 @@ namespace GPUFluid
     public class GPUFluidManager : MonoBehaviour
     {
         public CellularAutomaton ca;
-        public ObstacleInterface obstacles;
-        public ObstacleInterface removeObstacles;
+        public IObstacle obstacles;
+        public IObstacle removeObstacles;
 
         [Range(0.01f, 100f)]
         public float timeframe = 0.01f;
@@ -30,9 +30,9 @@ namespace GPUFluid
             ca.Heat(new int[] { 5, 1, 5, 200 });
             if (obstacles != null)
             {
-                List<ObstacleInterface.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
+                List<IObstacle.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
                 if (cornerList != null)
-                    foreach (ObstacleInterface.CornerCoords coords in cornerList)
+                    foreach (IObstacle.CornerCoords coords in cornerList)
                     {
                         int[] start = { coords.xStart, coords.yStart, coords.zStart };
                         int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
@@ -54,9 +54,9 @@ namespace GPUFluid
 
         public void RemoveObstacles()
         {
-            List<ObstacleInterface.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
+            List<IObstacle.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
             if (cornerList != null)
-                foreach (ObstacleInterface.CornerCoords coords in cornerList)
+                foreach (IObstacle.CornerCoords coords in cornerList)
                 {
                     int[] start = { coords.xStart, coords.yStart, coords.zStart };
                     int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };

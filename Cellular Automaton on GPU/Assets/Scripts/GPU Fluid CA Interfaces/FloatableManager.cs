@@ -9,18 +9,18 @@ public class FloatableManager : MonoBehaviour {
     private Vector3 cellSize;
 
 
-    GameObject[] floatableObjects;
-    Floatable[] floatableComponents;
+    GameObject[] floatingGameObjects;
+    IFloatable[] iFloatables;
 
     void Start ()
     {
-        floatableComponents = Object.FindObjectsOfType<Floatable>();
-        floatableObjects = new GameObject[floatableComponents.Length];
-        for (int i = 0; i < floatableComponents.Length; i++)
+        iFloatables = Object.FindObjectsOfType<IFloatable>();
+        floatingGameObjects = new GameObject[iFloatables.Length];
+        for (int i = 0; i < iFloatables.Length; i++)
         {
-            floatableObjects[i] = floatableComponents[i].gameObject;
+            floatingGameObjects[i] = iFloatables[i].gameObject;
         }
-        ca.InitializeFloatableBuffer(floatableComponents.Length);
+        ca.InitializeFloatableBuffer(iFloatables.Length);
         cellSize = ca.visualization.CellSize();
     }
 
@@ -31,23 +31,23 @@ public class FloatableManager : MonoBehaviour {
     {
         if (timerCount++ > timer)
         {
-            int[] coords = new int[floatableComponents.Length * 3];
-            float[] densities = new float[floatableComponents.Length];
-            for (int i = 0; i < floatableComponents.Length; i++)
+            int[] coords = new int[iFloatables.Length * 3];
+            float[] densities = new float[iFloatables.Length];
+            for (int i = 0; i < iFloatables.Length; i++)
             {
-                Vector3 position = floatableObjects[i].transform.position - gridPosition;
-                coords[i * 3] = (int)(position.x / cellSize.x);
-                coords[i * 3 + 1] = (int)(position.y / cellSize.y);
-                coords[i * 3 + 2] = (int)(position.z / cellSize.z);
-                densities[i] = floatableComponents[i].density;
+                Vector3 floatablePosition = floatingGameObjects[i].transform.position - gridPosition;
+                coords[i * 3] = (int)(floatablePosition.x / cellSize.x);
+                coords[i * 3 + 1] = (int)(floatablePosition.y / cellSize.y);
+                coords[i * 3 + 2] = (int)(floatablePosition.z / cellSize.z);
+                densities[i] = iFloatables[i].density;
             }
 
             //ca.getFluidHeightsAtCoordinates(coords, densities); returns [forece x, force y, force z,floatHeight*]
             float[] waterlevels = ca.getFluidHeightsAtCoordinates(coords, densities);
-            for (int i = 0; i < floatableComponents.Length; i++)
+            for (int i = 0; i < iFloatables.Length; i++)
             {
                 //if(waterlevels[i * 4 + 3] > 0)
-                    floatableComponents[i].waterLevel = waterlevels[i * 4 + 3] * cellSize.y;
+                    iFloatables[i].waterLevel = waterlevels[i * 4 + 3] * cellSize.y;
             }
             timerCount -= timer;
         }

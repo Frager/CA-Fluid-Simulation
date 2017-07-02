@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleInterface : MonoBehaviour {
+public class IObstacle : MonoBehaviour {
 
     protected List<CornerCoords> cornerCoordList = new List<CornerCoords>();
 

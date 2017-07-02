@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleContainer : ObstacleInterface
+public class ObstacleContainer : IObstacle
 {
     public Vector3 gridPosition;
     private Vector3 cellSize;
