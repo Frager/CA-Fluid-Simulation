@@ -28,17 +28,7 @@ namespace GPUFluid
         private void Start()
         {
             ca.Heat(new int[] { 5, 1, 5, 200 });
-            if (obstacles != null)
-            {
-                List<IObstacle.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
-                if (cornerList != null)
-                    foreach (IObstacle.CornerCoords coords in cornerList)
-                    {
-                        int[] start = { coords.xStart, coords.yStart, coords.zStart };
-                        int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
-                        ca.SetObstacle(start, end);
-                    }
-            }
+            SetObstacles();
         }
 
         void Update()
@@ -52,16 +42,34 @@ namespace GPUFluid
             }
         }
 
+        public void SetObstacles()
+        {
+            if (obstacles != null)
+            {
+                List<IObstacle.CornerCoords> cornerList = obstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
+                if (cornerList != null)
+                    foreach (IObstacle.CornerCoords coords in cornerList)
+                    {
+                        int[] start = { coords.xStart, coords.yStart, coords.zStart };
+                        int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
+                        ca.SetObstacle(start, end);
+                    }
+            }
+        }
+
         public void RemoveObstacles()
         {
-            List<IObstacle.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
-            if (cornerList != null)
-                foreach (IObstacle.CornerCoords coords in cornerList)
-                {
-                    int[] start = { coords.xStart, coords.yStart, coords.zStart };
-                    int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
-                    ca.RemoveObstacle(start, end);
-                }
+            if (removeObstacles != null)
+            {
+                List<IObstacle.CornerCoords> cornerList = removeObstacles.getObstacleCorners(GetComponent<CellularAutomaton>().dimensions, ca.visualization.scale);
+                if (cornerList != null)
+                    foreach (IObstacle.CornerCoords coords in cornerList)
+                    {
+                        int[] start = { coords.xStart, coords.yStart, coords.zStart };
+                        int[] end = { coords.xEnd, coords.yEnd, coords.zEnd };
+                        ca.RemoveObstacle(start, end);
+                    }
+            }
         }
     }
 }
