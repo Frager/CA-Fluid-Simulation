@@ -7,11 +7,10 @@
 
 	SubShader
 	{
-		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Transparent" "Queue" = "Transparent" }
+		Tags{ "LightMode" = "ForwardBase" "RenderType" = "Opaque"}
 		LOD 100
 
-		ZWrite Off
-		Blend SrcAlpha  OneMinusSrcAlpha
+		ZWrite On
 
 		Pass
 		{

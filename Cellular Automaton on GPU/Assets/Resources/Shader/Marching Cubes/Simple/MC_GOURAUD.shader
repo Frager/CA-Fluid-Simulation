@@ -49,7 +49,7 @@ Shader "MarchingCubes/Gouraud"
 
 			float4 offset;
 			float4 scale;
-			float2 dimensions;
+			float3 dimensions;
 
 			struct VS_INPUT
 			{

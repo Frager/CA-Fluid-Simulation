@@ -29,8 +29,8 @@ half Volume(Cell cell)
 	{
 		volume += cell.content[index];
 	}
-
-	return saturate(volume);
+	return cell.volume;
+	//return saturate(volume);
 }
 
 [numthreads(16, 8, 8)]
