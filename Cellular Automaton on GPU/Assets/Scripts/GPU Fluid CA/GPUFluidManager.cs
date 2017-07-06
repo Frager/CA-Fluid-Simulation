@@ -3,31 +3,38 @@ using System.Collections.Generic;
 
 namespace GPUFluid
 {
+    //Enumeration that stores the available fluids for the cellular automaton.
+    //If you add something here you also have to update the ComputeShader.
     public enum Fluid
     {
         NONE, GAS, OIL, WATER
     }
 
+    /// <summary>
+    /// This class is responsible for controlling the cellular automaton. 
+    /// </summary>
     public class GPUFluidManager : MonoBehaviour
     {
         public CellularAutomaton ca;
+
         public IObstacle obstacles;
         public IObstacle removeObstacles;
 
+        //The update-rate of the cellular automaton. Number of updates per second = 1 / timeframe.
         [Range(0.01f, 100f)]
         public float timeframe = 0.01f;
 
+        private float timer = 0;
+
+        //The coordinates, where fluid is filled in.
         [Range(0f, 1f)]
         public float x, y, z;
 
+        //The type of fluid, that is filled in.
         public Fluid element;
 
-        private float timer = 0;
-
-
-        private void Start()
+        void Start()
         {
-            ca.Heat(new int[] { 5, 1, 5, 200 });
             SetObstacles();
         }
 

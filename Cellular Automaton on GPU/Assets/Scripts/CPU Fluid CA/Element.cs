@@ -1,15 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace CPUFluid
+﻿namespace CPUFluid
 {
     /// <summary>
     /// Data structure representing the properties of elements
     /// </summary>
     public struct Element
     {
-        int id;
+        //int id;
         public int viscosity;
         public float density;
         //the temperature in celcius at whitch the element will change state to element with evaporateElementId
@@ -21,7 +17,7 @@ namespace CPUFluid
 
         public Element(int id, int viscosity, float density)
         {
-            this.id = id;
+            //this.id = id;
             this.viscosity = viscosity;
             this.density = density;
             evaporateTemperature = float.MaxValue;

@@ -19,6 +19,13 @@ struct Cell
 	half temperature;
 };
 
+
+/*
+* The following arrays cotain the fluid-data for every element declared in the Fluid-Enumeration in GPUFluidManager.cs
+* If you want to change the fluids or addd more, you have to change or extend the arrays and update the NUMBER_OF_ELEMENTS.
+* The ZeroArray must have the length equal to NUMBER_OF_ELEMENTS and must be filled with 0.
+*/
+
 static half Viscosities[] =
 {
 	1, 0.7, 0.9
@@ -48,16 +55,27 @@ static int2 AggregationChangeElements[] =
 	int2(0, -1)
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 static half temperatureSpread = 32;
 
+//Buffer that contains the current generation. Since nothing will be written into it, we use a normal StructuredBuffer.
 StructuredBuffer<Cell> currentGeneration;
+
+//Buffer for the next generation. Since we will write into it, we must use a RWStructuredBuffer.
 RWStructuredBuffer<Cell> newGeneration;
 
-
+//The size of the cellular automaton.
 uint3 size;
+
+//The offset, used by the DualCell-update.
 uint3 offset;
 
+//fill.xyz describes the coordinate where fluid is filled in. fill.w is the element, that ís filled in, a value equal to -1, means that no fluid will be filled in.
 int4 fill;
+
+//Equal to fill, but this sets the temperature of a cell.
 uint4 heat;
 
 uint3 obstacleStart;
@@ -71,9 +89,11 @@ uint3 queryCellCoord;
 
 void HorizontalUpdate(uint cell_1, uint cell_2)
 {
+	//Copy the old generation to the new generation.
 	newGeneration[cell_1] = currentGeneration[cell_1];
 	newGeneration[cell_2] = currentGeneration[cell_2];
 
+	//Break, if a cell is blocked or no content is inside of the cells.
 	if (currentGeneration[cell_1].volume < 0 ||
 		currentGeneration[cell_2].volume < 0 ||
 		(abs(currentGeneration[cell_1].volume) + abs(currentGeneration[cell_2].volume) < 0.01))
@@ -81,15 +101,22 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 		return;
 	}
 
+	//This "force" is used to prevent the fluid spreads to the side when there is still space under it
 	half gravityForce = abs(currentGeneration[cell_1 - size[0]].volume) + abs(currentGeneration[cell_2 - size[0]].volume);
 
-	half mean, difference;
+	/*
+	* The following local variables store the data of the old generation, because it is faster to read from local variables than from the StructuredBuffer.
+	*/
 	half2 temperature = half2(currentGeneration[cell_1].temperature, currentGeneration[cell_2].temperature);
-	half2 volume = half2(0, 0);
 
 	half content1[NUMBER_OF_ELEMENTS] = currentGeneration[cell_1].content;
 	half content2[NUMBER_OF_ELEMENTS] = currentGeneration[cell_2].content;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	half mean, difference;
+	half2 volume = half2(0, 0);
+
+	//The mean volume of the two cells. This computation is neccessary because the pressure can cause volums greater than 1.
 	half meanVolume = max((currentGeneration[cell_1].volume + currentGeneration[cell_2].volume) / 2.0, 1);
 
 	[unroll(NUMBER_OF_ELEMENTS)]
@@ -114,8 +141,6 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 		}
 		else if (difference < -0.01)
 		{
-			//half sumWeightedTemps = temperature.y * volume.x - temperature.x * difference;
-			//temperature.y = sumWeightedTemps / (volume.y - difference);
 			half sumWeightedTemps = temperature.x * -difference + currentGeneration[cell_2].temperature * currentGeneration[cell_2].volume;
 			temperature.y = sumWeightedTemps / (currentGeneration[cell_2].volume - difference);
 		}
@@ -131,6 +156,9 @@ void HorizontalUpdate(uint cell_1, uint cell_2)
 		volume += half2(content1[i], content2[i]);
 	}
 
+	/*
+	* In the follwoing the local variables are copied into the StructuredBuffer for the next generation.
+	*/
 	newGeneration[cell_1].volume = volume.x;
 	newGeneration[cell_2].volume = volume.y;
 
@@ -330,6 +358,7 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.5;
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.5;
 	}
+	
 	if (distance(uint3(id.x, (id.y * 2 + offset.y + 1), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.5)
 	{
 		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.5;

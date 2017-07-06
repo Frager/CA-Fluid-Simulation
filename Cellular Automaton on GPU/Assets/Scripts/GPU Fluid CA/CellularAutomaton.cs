@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 
 namespace GPUFluid
 {
@@ -18,11 +19,11 @@ namespace GPUFluid
         private ComputeBuffer rigidBodies;
         private ComputeBuffer queryResult;
 
+        //The dimensions of the cellular automaton.
         public GridDimensions dimensions;
 
         //The number of different elements in the simulation
-        //Warning: This value must be identical to that in the shaders
-        private int elementCount = 3;
+        private int elementCount = Enum.GetNames(typeof(Fluid)).Length - 1;
 
         //The visualisation for this cellular automaton
         public GPUVisualisation visualization;
@@ -35,6 +36,7 @@ namespace GPUFluid
         //The order of the update rules
         private string[] FunctionOrder = { "UpdateX", "UpdateY", "UpdateZ", "UpdateY", "UpdateX", "UpdateY", "UpdateZ", "UpdateY" };
 
+        //These arrays save things that are needed every time a new generation is computed.
         private int[] KernelOrder = new int[8];
         private int[][] offset = { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 1, 0 }, new int[] { 1, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 1 }, new int[] { 0, 1, 0 } };
         private int[][] threadGroups;
@@ -57,7 +59,6 @@ namespace GPUFluid
 
             rigidBodies = new ComputeBuffer(1, sizeof(float) * 6);
             rigidBodies.SetData(new float[] { 1, 1, 1, 15, 15, 12 });
-
         }
 
 

@@ -2,6 +2,11 @@
 
 namespace GPUFluid
 {
+    /// <summary>
+    /// This class is the superclass for the visualisations of a cellular automaton, that runs on the GPU and is therefore stored in a ComputeBuffer.
+    /// Every subclass has to create a mesh, that will be drawn in the OnPostRender-method.
+    /// The colouring is done via a 3D-Texture in this class.
+    /// </summary>
     [RequireComponent(typeof(Camera))]
     public abstract class GPUVisualisation : MonoBehaviour
     {
@@ -32,7 +37,6 @@ namespace GPUFluid
         public Vector3 CellSize()
         {
             return new Vector3(scale.x / (dimensions.x * 16), scale.y / (dimensions.y * 16), scale.z / (dimensions.z * 16));
-            //return new Vector3((dimensions.x * 16) / scale.x, (dimensions.y * 16) / scale.y, (dimensions.z * 16) / scale.z);
         }
 
         public void Initialize(GridDimensions dimensions)

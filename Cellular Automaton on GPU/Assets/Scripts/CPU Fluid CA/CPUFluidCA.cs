@@ -1,15 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace CPUFluid
+﻿namespace CPUFluid
 {
     //Create
     public class CPUFluidCA
     {
-
-        private int elementCount = 1;
-        private int gridSize = 8;
+        //private int elementCount = 1;
+        //private int gridSize = 8;
 
         private Cell[,,] grid;
 
@@ -22,8 +17,8 @@ namespace CPUFluid
         /// <returns> A threedimensional array of initialized cells</returns>
         public Cell[,,] initGrid(int gridSize, int maxVolume, int elementCount)
         {
-            this.gridSize = gridSize;
-            this.elementCount = elementCount;
+            //this.gridSize = gridSize;
+            //this.elementCount = elementCount;
             initCells(gridSize, maxVolume, elementCount);
             return grid;
         }

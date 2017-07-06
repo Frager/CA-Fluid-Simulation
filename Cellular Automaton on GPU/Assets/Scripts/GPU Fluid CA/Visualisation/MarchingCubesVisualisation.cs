@@ -1,4 +1,5 @@
-﻿//#define REALISTIC
+﻿//Realistic water is not supported yet.
+//#define REALISTIC
 
 using UnityEngine;
 
