@@ -21,7 +21,7 @@ public class ObstacleContainer : IObstacle
 
                 position -= gridPosition;
 
-                CornerCoords coords = getCornerCoords(position, scale);
+                CornerCoords coords = getCornerCoords(position, scale, dimensions);
                 cornerCoordList.Add(coords);
 
                 //snaps Obstacle position and scale to grid
@@ -36,33 +36,27 @@ public class ObstacleContainer : IObstacle
         return cornerCoordList;
     }
 
-    private CornerCoords getCornerCoords(Vector3 position, Vector3 scale)
+    private CornerCoords getCornerCoords(Vector3 position, Vector3 scale, GPUFluid.GridDimensions dimensions)
     {
         CornerCoords coords = new CornerCoords();
 
         float corner = position.x - scale.x / 2f;
-        coords.xStart = Mathf.RoundToInt(corner / cellSize.x);
-        coords.xStart = (coords.xStart < 0) ? 0 : coords.xStart;
+        coords.xStart = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.x, 0, dimensions.x * 16));
 
         corner = position.x + scale.x / 2f;
-        coords.xEnd = Mathf.RoundToInt(corner / cellSize.x);
-        coords.xEnd = (coords.xEnd < 0) ? 0 : coords.xEnd;
+        coords.xEnd = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.x, 0, dimensions.x * 16));
 
         corner = position.y - scale.y / 2f;
-        coords.yStart = Mathf.RoundToInt(corner / cellSize.y);
-        coords.yStart = (coords.yStart < 0) ? 0 : coords.yStart;
+        coords.yStart = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.y, 0, dimensions.y * 16));
 
         corner = position.y + scale.y / 2f;
-        coords.yEnd = Mathf.RoundToInt(corner / cellSize.y);
-        coords.yEnd = (coords.yEnd < 0) ? 0 : coords.yEnd;
+        coords.yEnd = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.y, 0, dimensions.y * 16));
 
         corner = position.z - scale.z / 2f;
-        coords.zStart = Mathf.RoundToInt(corner / cellSize.z);
-        coords.zStart = (coords.zStart < 0) ? 0 : coords.zStart;
+        coords.zStart = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.z, 0, dimensions.z * 16));
 
         corner = position.z + scale.z / 2f;
-        coords.zEnd = Mathf.RoundToInt(corner / cellSize.z);
-        coords.zEnd = (coords.zEnd < 0) ? 0 : coords.zEnd;
+        coords.zEnd = Mathf.RoundToInt(Mathf.Clamp(corner / cellSize.z, 0, dimensions.z * 16));
 
         return coords;
     }
