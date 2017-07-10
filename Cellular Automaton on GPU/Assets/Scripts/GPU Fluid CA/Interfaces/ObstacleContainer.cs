@@ -1,16 +1,18 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class ObstacleContainer : IObstacle
 {
-    public Vector3 gridPosition;
+    public List<Transform> obstacles;
+    private Vector3 gridPosition;
     private Vector3 cellSize;
 
     public override List<CornerCoords> getObstacleCorners(GPUFluid.GridDimensions dimensions, Vector3 _scale)
     {
+        gridPosition = new Vector3(-(1.0f / dimensions.x), -(1.0f / dimensions.y), -(1.0f / dimensions.z));
         cellSize = new Vector3(_scale.x / (dimensions.x * 16.0f), _scale.y / (dimensions.y * 16.0f), _scale.z / (dimensions.z * 16.0f));
 
-        foreach (Transform child in transform)
+        foreach (Transform child in obstacles)
         {
             if (child.gameObject.activeSelf)
             {

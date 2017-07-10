@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class IFloatable : MonoBehaviour {
 
     public float density;
@@ -16,14 +17,9 @@ public class IFloatable : MonoBehaviour {
         rb = GetComponent<Rigidbody>();
 	}
 	
-    public void SetWaterLevel(float waterLevel)
-    {
-        this.waterLevel = waterLevel;
-    }
-
-    float forceFactor;
-    Vector3 floatingPoint;
-    Vector3 upLift;
+    private float forceFactor;
+    private Vector3 floatingPoint;
+    private Vector3 upLift;
 
     void FixedUpdate ()
     {
@@ -39,4 +35,10 @@ public class IFloatable : MonoBehaviour {
             }
         }
 	}
+
+    public void SetWaterLevel(float waterLevel)
+    {
+        this.waterLevel = waterLevel;
+    }
+
 }

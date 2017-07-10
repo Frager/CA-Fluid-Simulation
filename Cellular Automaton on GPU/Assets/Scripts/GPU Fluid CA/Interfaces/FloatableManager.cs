@@ -5,7 +5,7 @@ public class FloatableManager : MonoBehaviour {
 
     public CellularAutomaton ca;
 
-    public Vector3 gridPosition;
+    private Vector3 gridPosition;
     private Vector3 cellSize;
 
 
@@ -14,6 +14,7 @@ public class FloatableManager : MonoBehaviour {
 
     void Start ()
     {
+        gridPosition = new Vector3(-(1.0f / ca.dimensions.x), -(1.0f / ca.dimensions.y), -(1.0f / ca.dimensions.z));
         iFloatables = Object.FindObjectsOfType<IFloatable>();
         floatingGameObjects = new GameObject[iFloatables.Length];
         for (int i = 0; i < iFloatables.Length; i++)
