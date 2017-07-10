@@ -42,21 +42,27 @@ public class ObstacleContainer : IObstacle
 
         float corner = position.x - scale.x / 2f;
         coords.xStart = Mathf.RoundToInt(corner / cellSize.x);
+        coords.xStart = (coords.xStart < 0) ? 0 : coords.xStart;
 
         corner = position.x + scale.x / 2f;
         coords.xEnd = Mathf.RoundToInt(corner / cellSize.x);
+        coords.xEnd = (coords.xEnd < 0) ? 0 : coords.xEnd;
 
         corner = position.y - scale.y / 2f;
         coords.yStart = Mathf.RoundToInt(corner / cellSize.y);
+        coords.yStart = (coords.yStart < 0) ? 0 : coords.yStart;
 
         corner = position.y + scale.y / 2f;
         coords.yEnd = Mathf.RoundToInt(corner / cellSize.y);
+        coords.yEnd = (coords.yEnd < 0) ? 0 : coords.yEnd;
 
         corner = position.z - scale.z / 2f;
         coords.zStart = Mathf.RoundToInt(corner / cellSize.z);
+        coords.zStart = (coords.zStart < 0) ? 0 : coords.zStart;
 
         corner = position.z + scale.z / 2f;
         coords.zEnd = Mathf.RoundToInt(corner / cellSize.z);
+        coords.zEnd = (coords.zEnd < 0) ? 0 : coords.zEnd;
 
         return coords;
     }
