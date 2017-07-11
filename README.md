@@ -60,3 +60,38 @@ The only paramter you need is a reference to the [CellularAutomaton](https://git
 You can see five paramters that determine the behaviour of the GameObject. The "Density" is the most important one, since it influences on what type of fluid the GameObjects floats. For example the density value 2 means, that an object only floats on fluids with a density greater or equal 2. The "Float Height" can be used to indicate how high a floating object should protrude from the fluid.
 
 ## Extending the Simulation by your own Fluids
+
+Our project contains three default fluids, that are wtaer, oil and gas. It is probably that you want to use other fluids in your project, so we show you how to do it. First of all, here are all the files you need to change: The [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs) script, the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader and the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader you want to use.
+
+Let us start with the simplest, the [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs). Inside the class is an enumeration, in that you can write the fluids you need. But "NONE" always has to be the first value.
+
+    public enum Fluid
+    {
+        NONE, GAS, OIL, WATER
+	}
+
+
+The next step is very costly: you have to define your fluids in the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader. Initially you have to set the NUMBER_OF_ELEMENTS defintion to the number of fluids you want to use.
+
+	#define NUMBER_OF_ELEMENTS 3
+
+After that, you have to set the specific attributes of the fluids and store them in the global arrays:
+
+	static half Viscosities[] =
+	{
+		1, 0.7, 0.9
+	};
+	
+	static half Densities[] =
+	{
+		0.45, 1, 2
+	};
+
+The order of the elements inside the arrays is ths same as in the enumeration (without the "NONE"). BE CAREFUL: You have to set the order of elements according to their density-value from lowest to highest. You must also fill the ZeroArray with zeros in the number of elements.
+
+	static half ZeroArray[] = 
+	{
+		0, 0, 0
+	};
+
+The next step concerns the aggregation states and phase transitions. You have to do this, even if you won't use it in your project.
