@@ -57,7 +57,7 @@ The only paramter you need is a reference to the [CellularAutomaton](https://git
 
 ![](Images/IFloatableInspector.PNG)
 
-To Influence the floating behavior of a Gamebject you can change the falues of five paramters in the Inspector of the IFloatable Component. The "Density" describes on what liquids the Gameobject will float. For example a density value 2 means, that the object will only float on fluids with a density greater or equal to 2, ignoring liquids with a lower density. The "Float Height" can be used to change how high a floating object will protrude from the fluid. "Boyance Damp" changes how much a object will 'bounce' on the liquid surface. A value of 0.05 works well. Higher values reduce the bouncing while lower will increase it. The "Buoyancy Offset" is the point of the onject the upwards force will be applied to. Changing it from (0,0,0) will result in a 'top side' while floating. You can think of it as the negated Vector of the centre of the Gameobject to its center of gravity. You can ignore the "Water Level". This Value will be overriden by the [FloatableManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/Interfaces/FloatableManager.cs) during the simulation but it can be used for debugging at runtime.
+To Influence the floating behavior of a Gamebject you can change the falues of five paramters in the Inspector of the IFloatable Component. The "Density" describes on what liquids the Gameobject will float. For example a density value 2 means, that the object will only float on fluids with a density greater or equal to 2, ignoring liquids with a lower density. The "Float Height" can be used to change how high a floating object will protrude from the fluid. "Boyance Damp" changes how much a object will 'bounce' on the liquid surface. A value of 0.05 works well. Higher values reduce the bouncing while lower will increase it. The "Buoyancy Offset" is the point of the object the upwards force will be applied to. Changing it from (0,0,0) will result in a 'top side' while floating. You can think of it as the negated vector of the centre of the Gameobject to its center of gravity. You can ignore the "Water Level". This value will be overriden by the [FloatableManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/Interfaces/FloatableManager.cs) during the simulation but it can be used for debugging at runtime.
 
 ## Extending the Simulation by your own Fluids
 
@@ -71,7 +71,10 @@ Let us start with the simplest, the [GPUFluidManager](https://github.com/Frager/
 	}
 
 
-The next step is very costly: you have to define your fluids in the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader. Initially you have to set the NUMBER_OF_ELEMENTS defintion to the number of fluids you want to use.
+----------
+
+
+The next step is very costly: you have to define your fluids in the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader. Initially you have to set the NUMBER\_OF\_ELEMENTS defintion to the number of fluids you want to use.
 
 	#define NUMBER_OF_ELEMENTS 3
 
@@ -94,4 +97,42 @@ The order of the elements inside the arrays is ths same as in the enumeration (w
 		0, 0, 0
 	};
 
-The next step concerns the aggregation states and phase transitions. You have to do this, even if you won't use it in your project.
+The next step concerns the aggregation states and phase transitions. You have to do this, even if you won't use it in your project. The following array is for the temperatures, that cause phase transitions:
+
+	static half2 AggregationChangeTemperatures[] =
+	{
+		half2(MAX_TEMPERATURE, 10),
+		half2(MAX_TEMPERATURE, MIN_TEMPERATURE),
+		half2(100, MIN_TEMPERATURE)
+	};
+
+Each element of the array is a tuple that consist of two temperatures. The first one is the boiling point, the second one is the freezing point. if you want to disable phase transitions for an element you have to set the tuple to half2(MAX\_TEMPERATURE, MIN\_TEMPERATURE). In our example OIL has no phase transitions.
+
+If you want to use phase transitions, you must also declare in which element an element is converted at reaching a threshold temperature. This is done in the following array:
+
+	static int2 AggregationChangeElements[] =
+	{
+		int2(-1, 2),
+		int2(-1, -1),
+		int2(0, -1)
+	};
+
+The principle is simple, because the structure matches with the array above. When an element reaches one of the above temperatures, it is converted to the element with the corresponding ID from this array. For example, if WATER reaches 100°C it is converted to the element with ID equal zero, that is GAS.
+
+
+----------
+
+We are almost finished now. Depending on which visualisation you use, you have to change one of the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader. But it doesn' matter which one, because the change is everytime the same: you have to set the NUMBER\_OF\_ELEMENTS defintion to the number of fluids you want to use.
+
+	#define NUMBER_OF_ELEMENTS 3
+
+If you use one of the MarchingCubes_MULTIPLE compute shader you also have to change the corresponding [Vertex/Fragment](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/Shader/Marching%20Cubes/Multiple)-shader. In these files you can find an array with colours:
+
+	static half4 Colors[3] =
+	{
+		half4(0,0,0,0),
+		half4(1,1,0,0.5),
+		half4(0.2,0.5,1,0.5)
+	};
+
+This are the colours used to paint the different fluids.
