@@ -63,6 +63,8 @@ To Influence the floating behavior of a Gamebject you can change the falues of f
 
 Our project contains three default fluids, that are wtaer, oil and gas. It is probably that you want to use other fluids in your project, so we show you how to do it. First of all, here are all the files you need to change: The [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs) script, the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader and the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader you want to use.
 
+### 1. Step
+
 Let us start with the simplest, the [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs). Inside the class is an enumeration, in that you can write the fluids you need. But "NONE" always has to be the first value.
 
     public enum Fluid
@@ -120,7 +122,7 @@ If you want to use phase transitions, you must also declare in which element an 
 The principle is simple, because the structure matches with the array above. When an element reaches one of the above temperatures, it is converted to the element with the corresponding ID from this array. For example, if WATER reaches 100°C it is converted to the element with ID equal zero, that is GAS.
 
 
-----------
+### 2. Step
 
 We are almost finished now. Depending on which visualisation you use, you have to change one of the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader. But it doesn' matter which one, because the change is everytime the same: you have to set the NUMBER\_OF\_ELEMENTS defintion to the number of fluids you want to use.
 
@@ -135,4 +137,10 @@ If you use one of the MarchingCubes_MULTIPLE compute shader you also have to cha
 		half4(0.2,0.5,1,0.5)
 	};
 
-This are the colours used to paint the different fluids.
+These are the colours used to paint the different fluids. You can write in every colour you want to have for the different fluids.
+
+
+### 3. Step
+
+
+If you use toher shaders than the MarchingCubes_MULTIPLE compute shader, you have to change one last file, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader. After changing the value of NUMBER\_OF\_ELEMENTS you also have to change the array with  thecolours for the fluids.
