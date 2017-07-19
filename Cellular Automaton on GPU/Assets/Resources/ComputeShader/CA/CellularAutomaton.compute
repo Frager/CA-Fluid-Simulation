@@ -1,0 +1,379 @@
+﻿#pragma kernel GetHeight
+#pragma kernel Initialize
+#pragma kernel RemoveObstacle
+#pragma kernel SetObstacle
+#pragma kernel UpdateX
+#pragma kernel UpdateY
+#pragma kernel UpdateZ
+
+#define MIN_TEMPERATURE -275
+#define MAX_TEMPERATURE 1000000
+
+#define NUMBER_OF_ELEMENTS 3
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
+
+struct Cell
+{
+	half content[NUMBER_OF_ELEMENTS];
+	half volume;
+	half temperature;
+};
+
+
+/*
+* The following arrays cotain the fluid-data for every element declared in the Fluid-Enumeration in GPUFluidManager.cs
+* If you want to change the fluids or addd more, you have to change or extend the arrays and update the NUMBER_OF_ELEMENTS.
+* The ZeroArray must have the length equal to NUMBER_OF_ELEMENTS and must be filled with 0.
+*/
+
+static half Viscosities[] =
+{
+	1, 0.7, 0.9
+};
+
+static half Densities[] =
+{
+	0.45, 1, 2
+};
+
+static half ZeroArray[] = 
+{
+	0, 0, 0
+};
+
+static half2 AggregationChangeTemperatures[] =
+{
+	half2(MAX_TEMPERATURE, 10),
+	half2(MAX_TEMPERATURE, MIN_TEMPERATURE),
+	half2(100, MIN_TEMPERATURE)
+};
+
+static int2 AggregationChangeElements[] =
+{
+	int2(-1, 2),
+	int2(-1, -1),
+	int2(0, -1)
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+static half temperatureSpread = 32;
+
+//Buffer that contains the current generation. Since nothing will be written into it, we use a normal StructuredBuffer.
+StructuredBuffer<Cell> currentGeneration;
+
+//Buffer for the next generation. Since we will write into it, we must use a RWStructuredBuffer.
+RWStructuredBuffer<Cell> newGeneration;
+
+//The size of the cellular automaton.
+uint3 size;
+
+//The offset, used by the DualCell-update.
+uint3 offset;
+
+//fill.xyz describes the coordinate where fluid is filled in. fill.w is the element, that ís filled in, a value equal to -1, means that no fluid will be filled in.
+int4 fill;
+
+//Equal to fill, but this sets the temperature of a cell.
+uint4 heat;
+
+uint3 obstacleStart;
+uint3 obstacleEnd;
+
+RWStructuredBuffer<half> queryResult;
+half queryDensity;
+half3 queryVector;
+uint3 queryCellCoord;
+
+
+void HorizontalUpdate(uint cell_1, uint cell_2)
+{
+	//Copy the old generation to the new generation.
+	newGeneration[cell_1] = currentGeneration[cell_1];
+	newGeneration[cell_2] = currentGeneration[cell_2];
+
+	//Break, if a cell is blocked or no content is inside of the cells.
+	if (currentGeneration[cell_1].volume < 0 ||
+		currentGeneration[cell_2].volume < 0 ||
+		(abs(currentGeneration[cell_1].volume) + abs(currentGeneration[cell_2].volume) < 0.01))
+	{
+		return;
+	}
+
+	//This "force" is used to prevent the fluid spreads to the side when there is still space under it
+	half gravityForce = abs(currentGeneration[cell_1 - size[0]].volume) + abs(currentGeneration[cell_2 - size[0]].volume);
+
+	/*
+	* The following local variables store the data of the old generation, because it is faster to read from local variables than from the StructuredBuffer.
+	*/
+	half2 temperature = half2(currentGeneration[cell_1].temperature, currentGeneration[cell_2].temperature);
+
+	half content1[NUMBER_OF_ELEMENTS] = currentGeneration[cell_1].content;
+	half content2[NUMBER_OF_ELEMENTS] = currentGeneration[cell_2].content;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	half mean, difference;
+	half2 volume = half2(0, 0);
+
+	//The mean volume of the two cells. This computation is neccessary because the pressure can cause volums greater than 1.
+	half meanVolume = max((currentGeneration[cell_1].volume + currentGeneration[cell_2].volume) / 2.0, 1);
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	{
+		mean = (content1[i] + content2[i]) / 2.0;
+
+		difference = (mean - content1[i]) * Viscosities[i];
+
+		difference *= (abs(difference) > 0.001);
+
+		difference *= (gravityForce > 0.6 * min(Densities[i], 1));
+
+		difference -= ((volume.x + content1[i] + difference) > meanVolume) * (volume.x + content1[i] + difference - meanVolume);
+
+		difference += ((volume.y + content2[i] - difference) > meanVolume) * (volume.y + content2[i] - difference - meanVolume);
+
+		if (difference > 0.01)
+		{
+			half sumWeightedTemps = temperature.x * currentGeneration[cell_1].volume + currentGeneration[cell_2].temperature * difference;
+			temperature.x = sumWeightedTemps / (currentGeneration[cell_1].volume + difference);
+		}
+		else if (difference < -0.01)
+		{
+			half sumWeightedTemps = temperature.x * -difference + currentGeneration[cell_2].temperature * currentGeneration[cell_2].volume;
+			temperature.y = sumWeightedTemps / (currentGeneration[cell_2].volume - difference);
+		}
+		else
+		{
+			half diff = (temperature.x - temperature.y) / temperatureSpread;
+			temperature += half2(-(diff / (volume.x + 1)), diff / (volume.y + 1));
+		}
+
+		content1[i] += difference;
+		content2[i] -= difference;
+
+		volume += half2(content1[i], content2[i]);
+	}
+
+	/*
+	* In the follwoing the local variables are copied into the StructuredBuffer for the next generation.
+	*/
+	newGeneration[cell_1].volume = volume.x;
+	newGeneration[cell_2].volume = volume.y;
+
+	newGeneration[cell_1].temperature = temperature.x;
+	newGeneration[cell_2].temperature = temperature.y;
+
+	newGeneration[cell_1].content = content1;
+	newGeneration[cell_2].content = content2;
+}
+
+[numthreads(16, 8, 8)]
+void Initialize(uint3 id : SV_DispatchThreadID)
+{
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].temperature = 20;
+	newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -(id.x == 0 || id.y == 0 || id.z == 0 || id.x == size.x - 1 || id.y == size.y - 1 || id.z == size.z - 1);
+
+	for (uint i = 0; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].content[i] = 0.0;
+	}
+}
+
+
+[numthreads(16, 8, 8)]
+void SetObstacle(uint3 id : SV_DispatchThreadID)
+{
+	if (
+		id.x >= obstacleStart.x && id.x < obstacleEnd.x &&
+		id.y >= obstacleStart.y && id.y < obstacleEnd.y &&
+		id.z >= obstacleStart.z && id.z < obstacleEnd.z
+		)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = -1;
+	}
+}
+
+[numthreads(16, 8, 8)]
+void RemoveObstacle(uint3 id : SV_DispatchThreadID)
+{
+	if (
+		id.x >= obstacleStart.x && id.x < obstacleEnd.x &&
+		id.y >= obstacleStart.y && id.y < obstacleEnd.y &&
+		id.z >= obstacleStart.z && id.z < obstacleEnd.z
+		)
+	{
+		newGeneration[ADDRESS(id.x, id.y, id.z, size)].volume = 0;
+	}
+}
+
+[numthreads(1, 1, 1)]
+void GetHeight(uint3 id : SV_DispatchThreadID) {
+
+	half result = 0;
+
+	int x = queryResult[id.x * 4];
+	int y = queryResult[id.x * 4 + 1];
+	int z = queryResult[id.x * 4 + 2];
+	float density = queryResult[id.x * 4 + 3];
+
+	for (int dy = 1; dy > -3; --dy)
+	{
+		result = 0;
+		[unroll(NUMBER_OF_ELEMENTS)]
+		for (uint d = 0; d < NUMBER_OF_ELEMENTS; ++d)
+		{
+			if (Densities[d] >= density) 
+			{
+				//if(x>= 0 && (y + dy) >= 0 && z >= 0 && x < size.x && (y + dy) > size.y && z < size.z)
+				if (newGeneration[ADDRESS(x, (y + dy), z, size)].volume > 0) 
+				{
+					half cellContent = newGeneration[ADDRESS(x, (y + dy), z, size)].content[d];
+					result += (cellContent > 1)? 1 : cellContent ;
+				}
+			}
+		}
+		if(result > 0)
+		{
+			queryResult[id.x * 4 + 3] = result + y + dy -1;
+			return;
+		}
+	}
+	queryResult[id.x * 4 + 3] = 0;
+}
+
+[numthreads(8, 16, 8)]
+void UpdateX(uint3 id : SV_DispatchThreadID)
+{
+	HorizontalUpdate(ADDRESS((id.x * 2 + offset.x), id.y, id.z, size), ADDRESS((id.x * 2 + offset.x + 1), id.y, id.z, size));
+}
+
+[numthreads(16, 8, 8)]
+void UpdateY(uint3 id : SV_DispatchThreadID)
+{
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)];
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)];
+
+	half2 oldVolume = half2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume);
+
+	if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < -0.5 ||
+		currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < -0.5)
+	{
+		return;
+	}
+
+	half amount, bottom, difference, vol = 0;
+
+	half2 temperature = half2(currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature, currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature);
+	half2 volume = oldVolume;
+
+	half content1[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content;
+	half content2[NUMBER_OF_ELEMENTS] = currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content;
+
+	half maxVol = max((volume.x + volume.y) / 2 * 1.2, 1);
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	{
+		//Zusammengezählter Inhalt des aktuellen Elements in beiden Zellen
+		amount = (content1[i] + content2[i]);
+
+		//Wie viel davon passt noch in die untere Zelle?
+		bottom = min(maxVol - vol, amount) * min(Densities[i], 1.0);
+
+		//Wie viel kann zusätzlich zum aktuellen Inhalt noch aufgenommen werden?
+		difference = (bottom - content1[i]) * Viscosities[i];
+
+		vol += bottom;
+
+		if (difference > 0)
+		{
+			half sumWeightedTemps = temperature.x * oldVolume.x + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature * difference;
+			temperature.x = sumWeightedTemps / (oldVolume.x + difference);
+		}
+
+		content1[i] += difference;
+		volume.x += difference;
+
+		//Wie viel wird aus der oberen Zelle entnommen?
+		difference = (amount - bottom - content2[i]) * Viscosities[i];
+
+		if (difference < 0)
+		{
+			half sumWeightedTemps = temperature.y * oldVolume.y - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
+			temperature.y = sumWeightedTemps / (oldVolume.y - difference);
+		}
+
+		content2[i] += difference;
+		volume.y += difference;
+
+		half tempDifference = (temperature.y - temperature.x) / temperatureSpread;
+		temperature += half2(tempDifference / (volume.x + 1), -tempDifference / (volume.y + 1));
+	}
+
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume = volume.x;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = volume.y;
+
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = temperature.x;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].temperature = temperature.y;
+
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content = content1;
+	newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content = content2;
+
+	if (volume.x < 0.001)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume = 0;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content = ZeroArray;
+	}
+
+	if (volume.y < 0.001)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume = 0;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content = ZeroArray;
+	}
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (i = NUMBER_OF_ELEMENTS - 1; i >= 0; --i)
+	{
+		if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
+		{
+			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
+			{
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
+			}
+			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
+			{
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
+				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].y] += 0.2;
+			}
+		}
+	}
+
+	if (distance(uint3(id.x, (id.y * 2 + offset.y), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume < 0.5)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[fill.w] += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].volume += 0.5;
+	}
+	
+	if (distance(uint3(id.x, (id.y * 2 + offset.y + 1), id.z), fill.xyz) < 1 && fill.w >= 0 && newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume < 0.5)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].content[fill.w] += 0.5;
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y + 1), id.z, size)].volume += 0.5;
+	}
+
+	if (id.x == heat.x && id.y * 2 + offset.y == heat.y && id.z == heat.z)
+	{
+		newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature = heat.w;
+	}
+}
+
+[numthreads(16, 16, 4)]
+void UpdateZ(uint3 id : SV_DispatchThreadID)
+{
+	HorizontalUpdate(ADDRESS(id.x, id.y, (id.z * 2 + offset.z), size), ADDRESS(id.x, id.y, (id.z * 2 + offset.z + 1), size));
+}
+

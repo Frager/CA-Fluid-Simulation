@@ -1,0 +1,52 @@
+﻿#pragma kernel CSMain
+
+#define NUMBER_OF_ELEMENTS 3
+#define ADDRESS(x,y,z,size) x + y * size[0] + z * size[0] * size[1]
+
+static half4 Colors[] =
+{
+	half4(0,0,0,0),
+	half4(1,1,0,0.98),
+	half4(0.2,0.5,1,0.9)
+};
+
+struct Cell
+{
+	half content[NUMBER_OF_ELEMENTS];
+	half volume;
+	half temperature;
+};
+
+StructuredBuffer<Cell> currentGeneration;
+RWTexture3D<half4> Result;
+
+uint3 size;
+
+half4 ColorOfCell(uint id)
+{
+	Cell cell = currentGeneration[id];
+
+	half4 color = half4(0, 0, 0, 0);
+
+	[unroll(NUMBER_OF_ELEMENTS)]
+	for (uint i = 1; i < NUMBER_OF_ELEMENTS; ++i)
+	{
+		color += (cell.content[i] / cell.volume) * Colors[i];
+	}
+
+	return color;
+}
+
+[numthreads(16,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	//if (id.y > 0)
+	//{
+	//	float vol = saturate(currentGeneration[ADDRESS(id.x, id.y, id.z, size)].volume);
+	//	Result[id] = vol * ColorOfCell(ADDRESS(id.x, id.y, id.z, size)) + (1 - vol) * ColorOfCell(ADDRESS(id.x, id.y - 1, id.z, size));
+	//}
+	//else
+	//{
+		Result[id] = ColorOfCell(ADDRESS(id.x, id.y, id.z, size));
+	//}
+}
