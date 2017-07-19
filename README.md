@@ -61,7 +61,7 @@ To Influence the floating behavior of a Gamebject you can change the falues of f
 
 ## Adding further fluids to the simulation
 
-Our project contains three default fluids: water, oil and gas. It is probably that you want to use other fluids in your project, so we show you how to do it. First of all, here are all the files you need to change: The [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs) script, the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader and the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader you want to use.
+Our project contains three default fluids: water, oil and gas. If you want to add some more fluids or gases, just follow the next few steps. First of all, these are the files you need to change: The [GPUFluidManager](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Scripts/GPU%20Fluid%20CA/GPUFluidManager.cs) script, the [CellularAutomaton](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/CA/CellularAutomaton.compute) compute shader, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader and the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader you want to use.
 
 ### 1. Step
 
@@ -80,7 +80,7 @@ The next step is very costly: you have to define your fluids in the [CellularAut
 
 	#define NUMBER_OF_ELEMENTS 3
 
-After that, you have to set the specific attributes of the fluids and store them in the global arrays:
+After that, you have to set the specific attributes of the fluids and store them in the global arrays: 
 
 	static half Viscosities[] =
 	{
@@ -143,4 +143,4 @@ These are the colours used to paint the different fluids. You can write in every
 ### 3. Step
 
 
-If you use toher shaders than the MarchingCubes_MULTIPLE compute shader, you have to change one last file, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader. After changing the value of NUMBER\_OF\_ELEMENTS you also have to change the array with  thecolours for the fluids.
+If you use other shaders than the MarchingCubes_MULTIPLE compute shader, you have to change one last file, the [CA2Texture3D](https://github.com/Frager/CA-Fluid-Simulation/blob/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/CA2Texture3D.compute) compute shader. After changing the value of NUMBER\_OF\_ELEMENTS you also have to change the array with  thecolours for the fluids.
