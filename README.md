@@ -124,7 +124,7 @@ The principle is simple, because the structure matches with the array above. Whe
 
 ### 2. Step
 
-We are almost finished now. Depending on which visualisation you use, you have to change one of the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader. But it doesn' matter which one, because the change is everytime the same: you have to set the NUMBER\_OF\_ELEMENTS defintion to the number of fluids you want to use.
+We are almost finished now. Depending on the visualisation you use, you have to change one of the [Marching Cubes](https://github.com/Frager/CA-Fluid-Simulation/tree/master/Cellular%20Automaton%20on%20GPU/Assets/Resources/ComputeShader/Visualisation/Marching%20Cubes) compute shader. But it doesn' matter which one, because the change is everytime the same: you have to set the NUMBER\_OF\_ELEMENTS defintion to the number of fluids you want to use.
 
 	#define NUMBER_OF_ELEMENTS 3
 
