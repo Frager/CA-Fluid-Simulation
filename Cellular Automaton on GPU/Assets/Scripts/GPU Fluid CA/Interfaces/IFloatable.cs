@@ -12,6 +12,8 @@ public class IFloatable : MonoBehaviour {
     public float waterLevel = 0;
     private Rigidbody rb;
 
+    private bool floating;
+
 	void Start ()
     {
         rb = GetComponent<Rigidbody>();
@@ -34,11 +36,19 @@ public class IFloatable : MonoBehaviour {
                 rb.AddForceAtPosition(upLift, floatingPoint);
             }
         }
-	}
+        //maybe not the best solution to calculate if floating
+        if (waterLevel + ((2f*floatHeight)/3f) > transform.position.y) floating = true;
+        else floating = false;
+    }
 
     public void SetWaterLevel(float waterLevel)
     {
         this.waterLevel = waterLevel;
+    }
+
+    public bool isFloating()
+    {
+        return floating;
     }
 
 }
