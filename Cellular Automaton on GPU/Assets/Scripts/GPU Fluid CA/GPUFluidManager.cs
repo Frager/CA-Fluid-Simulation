@@ -30,6 +30,9 @@ namespace GPUFluid
         [Range(0f, 1f)]
         public float x, y, z;
 
+        [Range(1, 3)]
+        public int radius;
+
         //The type of fluid, that is filled in.
         public Fluid element;
 
@@ -43,7 +46,7 @@ namespace GPUFluid
             timer += Time.deltaTime;
             if (timer >= timeframe)
             {
-                ca.Fill(new float[] { x, y, z }, (int)element - 1);
+                ca.Fill(new float[] { x, y, z }, (int)element - 1, radius);
                 ca.NextGeneration();
                 timer -= timeframe;
             }

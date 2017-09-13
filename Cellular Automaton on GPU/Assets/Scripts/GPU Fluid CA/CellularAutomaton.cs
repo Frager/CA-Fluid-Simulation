@@ -106,9 +106,12 @@ namespace GPUFluid
         /// <summary>
         /// This function determines where and whether fluid will be filled in the cellular automaton.
         /// </summary>
-        /// <param name="fill">An array of size 4. The first three values determine the position, where fluid will be filled in (a coordinate outside the borders will stop filling). The last value determines the element-type.</param>
-        public void Fill(float[] fill, int element)
+        /// <param name="fill">An array of size 4. The first three values determine the position, where fluid will be filled in (a coordinate outside the borders will stop filling).</param>
+        /// <param name="element">The type of element, that is filled in.</param>
+        /// <param name="radius">The radius.</param>
+        public void Fill(float[] fill, int element, int radius)
         {
+            cellularAutomaton.SetInt("radius", radius);
             cellularAutomaton.SetInts("fill", new int[] { (int)(fill[0] * dimensions.x * 16.0), (int)(fill[1] * dimensions.y * 16.0), (int)(fill[2] * dimensions.z * 16.0), element });
         }
 
