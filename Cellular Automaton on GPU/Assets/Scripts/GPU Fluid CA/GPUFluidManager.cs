@@ -136,6 +136,7 @@ namespace GPUFluid
             var property = new ProfilerProperty();
 
             float meanValue = 0;
+            int i = 0;
 
             for (int frameIndex = ProfilerDriver.firstFrameIndex; frameIndex <= ProfilerDriver.lastFrameIndex; ++frameIndex)
             {
@@ -150,12 +151,13 @@ namespace GPUFluid
                     if (shouldSaveProperty)
                     {
                         meanValue += float.Parse(property.GetColumn(ProfilerColumn.TotalGPUTime));
+                        ++i;
                     }
                 }
                 property.Cleanup();
             }
 
-            meanValue /= (ProfilerDriver.lastFrameIndex - ProfilerDriver.firstFrameIndex);
+            meanValue /= i;
 
             return meanValue;
         }
