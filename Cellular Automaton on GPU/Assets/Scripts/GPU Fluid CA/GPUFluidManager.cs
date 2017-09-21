@@ -67,14 +67,23 @@ namespace GPUFluid
 
             if (testRun)
             {
-                x += 0.001f;
-                y += 0.001f;
-                z += 0.001f;
-
-                if (counter == 850)
-                    element = Fluid.OIL;
+                if (counter < 1000)
+                {
+                    x += 0.001f;
+                    y += 0.001f;
+                    z += 0.001f;
+                }
+                else
+                {
+                    x -= 0.001f;
+                    y -= 0.001f;
+                    z -= 0.001f;
+                }
 
                 if (counter == 1000)
+                    element = Fluid.OIL;
+
+                if (counter == 2000)
                 {
                     PrintMeasurements();
                     EditorApplication.isPlaying = false;
