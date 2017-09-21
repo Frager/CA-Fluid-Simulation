@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UnityEditor;
+using UnityEditorInternal;
 using System.Collections.Generic;
 
 namespace GPUFluid
@@ -36,10 +38,22 @@ namespace GPUFluid
         //The type of fluid, that is filled in.
         public Fluid element;
 
+        public bool testRun;
+
         void Start()
         {
             SetObstacles();
+
+            if (testRun)
+            {
+                x = 0;
+                y = 0;
+                z = 0;
+                element = Fluid.WATER;
+            }
         }
+
+        private int counter = 0;
 
         void Update()
         {
@@ -49,6 +63,24 @@ namespace GPUFluid
                 ca.Fill(new float[] { x, y, z }, (int)element - 1, radius);
                 ca.NextGeneration();
                 timer -= timeframe;
+            }
+
+            if (testRun)
+            {
+                x += 0.001f;
+                y += 0.001f;
+                z += 0.001f;
+
+                if (counter == 850)
+                    element = Fluid.OIL;
+
+                if (counter == 1000)
+                {
+                    PrintMeasurements();
+                    EditorApplication.isPlaying = false;
+                }
+
+                ++counter;
             }
         }
 
@@ -80,6 +112,43 @@ namespace GPUFluid
                         ca.RemoveObstacle(start, end);
                     }
             }
+        }
+
+        public static void PrintMeasurements()
+        {
+            Debug.Log("Cellular Automaton: " + GetDataMean("Update.ScriptRunBehaviourUpdate/BehaviourUpdate/GPUFluidManager.Update()/CellularAutomaton.NextGeneration()/ComputeShader.Dispatch()"));
+            Debug.Log("Marching Cubes: " + GetDataMean("Update.ScriptRunBehaviourUpdate/BehaviourUpdate/GPUFluidManager.Update()/CellularAutomaton.NextGeneration()/MarchingCubesVisualisation.Render()/ComputeShader.Dispatch()"));
+        }
+
+        public static float GetDataMean(string selectedPropertyPath = "")
+        {
+            var profilerSortColumn = ProfilerColumn.TotalTime;
+            var viewType = ProfilerViewType.Hierarchy;
+            var property = new ProfilerProperty();
+
+            float meanValue = 0;
+
+            for (int frameIndex = ProfilerDriver.firstFrameIndex; frameIndex <= ProfilerDriver.lastFrameIndex; ++frameIndex)
+            {
+                property.SetRoot(frameIndex, profilerSortColumn, viewType);
+                property.onlyShowGPUSamples = false;
+
+                const bool enterChildren = true;
+
+                while (property.Next(enterChildren))
+                {
+                    bool shouldSaveProperty = string.IsNullOrEmpty(selectedPropertyPath) || property.propertyPath == selectedPropertyPath;
+                    if (shouldSaveProperty)
+                    {
+                        meanValue += float.Parse(property.GetColumn(ProfilerColumn.TotalGPUTime));
+                    }
+                }
+                property.Cleanup();
+            }
+
+            meanValue /= (ProfilerDriver.lastFrameIndex - ProfilerDriver.firstFrameIndex);
+
+            return meanValue;
         }
     }
 }

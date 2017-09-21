@@ -299,16 +299,16 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 		volume.x += difference;
 
 		//Wie viel wird aus der oberen Zelle entnommen?
-		difference = (amount - bottom - content2[i]) * Viscosities[i];
+		//difference = (amount - bottom - content2[i]) * Viscosities[i];
 
 		if (difference < 0)
 		{
-			half sumWeightedTemps = temperature.y * oldVolume.y - currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
-			temperature.y = sumWeightedTemps / (oldVolume.y - difference);
+			half sumWeightedTemps = temperature.y * oldVolume.y + currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature * difference;
+			temperature.y = sumWeightedTemps / (oldVolume.y + difference);
 		}
 
-		content2[i] += difference;
-		volume.y += difference;
+		content2[i] -= difference;
+		volume.y -= difference;
 
 		half tempDifference = (temperature.y - temperature.x) / temperatureSpread;
 		temperature += half2(tempDifference / (volume.x + 1), -tempDifference / (volume.y + 1));
@@ -340,13 +340,13 @@ void UpdateY(uint3 id : SV_DispatchThreadID)
 	{
 		if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] > 0.2)
 		{
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
+			if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature >= AggregationChangeTemperatures[i].x)
 			{
 				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature -= 2;
 				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
 				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[AggregationChangeElements[i].x] += 0.2;
 			}
-			if (currentGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
+			if (newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature < AggregationChangeTemperatures[i].y)
 			{
 				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].temperature += 2;
 				newGeneration[ADDRESS(id.x, (id.y * 2 + offset.y), id.z, size)].content[i] -= 0.2;
